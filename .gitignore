@@ -1,0 +1,13 @@
+# Ignore Run results directory
+**/Run*/**
+
+# Ignore work (nextflow work folder) directory
+**/work/**
+
+# Ignore nextflow log files
+*.log*
+
+# Ignore kraken2 db (over size limit for git)
+**/kraken2_db/**
+
+.nextflow/**
