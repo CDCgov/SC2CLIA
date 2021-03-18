@@ -21,7 +21,7 @@ if [ -z "${DATA}" ]; then
 fi
 
 if [ ! -d "Cecret" ]; then
-    echo "Error! Can't find Cecret directory";
+    echo "Error!  Can't find Cecret directory";
     exit 1;
 fi
 
