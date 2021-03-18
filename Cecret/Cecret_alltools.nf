@@ -24,7 +24,7 @@ params.reference_genome = workflow.projectDir + "/configs/MN908947.3.fasta"
 params.gff_file = workflow.projectDir + "/configs/MN908947.3.gff"
 params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
-params.trimmer = 'ivar'
+params.trimmer = 'samtools' // ivar
 params.cleaner = 'seqyclean'
 params.aligner = 'bwa'
 
@@ -434,9 +434,14 @@ process ivar_trim {
     ivar trim -e -i !{bam} -b !{primer_bed} -p ivar_trim/!{sample}.primertrim 2>> $err_file >> $log_file
 
     # sorting and indexing the trimmed bams
-    samtools sort ivar_trim/!{sample}.primertrim.bam -o ivar_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
-    #samtools fixmate -u ivar_trim/!{sample}.primertrim.bam | \
-    #samtools sort - -o ivar_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file    
+    #samtools sort ivar_trim/!{sample}.primertrim.bam -o ivar_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
+
+    # by Rong 
+    samtools sort -n ivar_trim/!{sample}.primertrim.bam -o ivar_trim/!{sample}.primertrim.sortbyname.bam 
+    samtools fixmate -u ivar_trim/!{sample}.primertrim.sortbyname.bam ivar_trim/!{sample}.primertrim.fixmate.bam
+    samtools sort ivar_trim/!{sample}.primertrim.fixmate.bam -o ivar_trim/!{sample}.primertrim.sorted.bam \
+    2>> $err_file >> $log_file 
+    
     samtools index ivar_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
   '''
 }
@@ -469,11 +474,21 @@ process samtools_trim {
     samtools --version >> $log_file
 
     # trimming the reads
-    samtools ampliconclip -b !{primer_bed} !{bam} 2>> $err_file | \
-      samtools sort 2>> $err_file |  \
-      samtools view -F 4 -o samtools_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
+    # samtools ampliconclip -b !{primer_bed} !{bam} 2>> $err_file | (back slash here.)
+    samtools ampliconclip -b !{primer_bed} --fail-len 20 -u !{bam} 2>> $err_file | \
+           samtools sort -n -o samtools_trim/!{sample}.primertrim.sortbyname.bam 
+           samtools fixmate -u samtools_trim/!{sample}.primertrim.sortbyname.bam  samtools_trim/!{sample}.primertrim.fixmate.bam
+           samtools sort samtools_trim/!{sample}.primertrim.fixmate.bam 2>> $err_file |  \
+           samtools view -F 4 -o samtools_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
+
+      #samtools sort 2>> $err_file |  \
+      #samtools view -F 4 -o samtools_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
 
     samtools index samtools_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
+
+ 
+
+
   '''
 }
 
@@ -925,7 +940,7 @@ process samtools_ampliconstats {
     date | tee -a $log_file $err_file > /dev/null
     samtools --version >> $log_file
 
-    samtools ampliconstats -t 100 !{primer_bed} !{bam} 2>> $err_file > samtools_ampliconstats/!{sample}_ampliconstats.txt
+    samtools ampliconstats !{primer_bed} !{bam} 2>> $err_file > samtools_ampliconstats/!{sample}_ampliconstats.txt
 
     num_failed_amplicons=$(grep ^FREADS samtools_ampliconstats/!{sample}_ampliconstats.txt | cut -f 2- | tr '\t' '\n' | awk '{ if ($1 < 20) print $0 }' | wc -l)
     if [ -z "$num_failed_amplicons" ] ; then num_failed_amplicons=0 ; fi
