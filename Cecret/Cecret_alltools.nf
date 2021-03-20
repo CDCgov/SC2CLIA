@@ -1097,7 +1097,8 @@ process combined_summary {
 
   output:
   file("summary.txt")
-  file("run_results.txt")
+  //file("run_results.txt")
+  file("run_results.txt") into combined_summary
   file("logs/summary/summary.${workflow.sessionId}.{log,err}")
 
   shell:
@@ -1408,6 +1409,29 @@ process combine_fastas {
     cat *genbank.fa | tee submission_files/genbank_submission.fasta submission_files/genbank_submission_!{workflow.sessionId}.fasta
     cat *gisaid.fa  | tee submission_files/gisaid_submission.fasta submission_files/gisaid_submission_!{workflow.sessionId}.fasta
   '''
+}
+
+process post_process {
+  tag "EDLB QA/QC metrics"
+
+  input:
+  file run_results from combined_summary
+  
+  script:
+  """
+  // this file might be confusing, it is the same as the 'summary.txt' under each Run folder
+  rm $workflow.launchDir/$run_results
+
+  // parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
+  python3 $workflow.launchDir/vcf_parser.py -d $params.outdir/bcftools_variants -o $params.outdir/summary.txt
+
+  // parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
+  python3 $workflow.launchDir/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
+  -o $params.outdir/amplicon_dropout_summary
+
+  """
+
+
 }
 
 workflow.onComplete {
