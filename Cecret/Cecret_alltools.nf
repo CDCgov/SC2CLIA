@@ -24,7 +24,7 @@ params.reference_genome = workflow.projectDir + "/configs/MN908947.3.fasta"
 params.gff_file = workflow.projectDir + "/configs/MN908947.3.gff"
 params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
-params.trimmer = 'samtools' // ivar
+params.trimmer = 'ivar' //  samtools
 params.cleaner = 'seqyclean'
 params.aligner = 'bwa'
 
@@ -437,7 +437,8 @@ process ivar_trim {
     #samtools sort ivar_trim/!{sample}.primertrim.bam -o ivar_trim/!{sample}.primertrim.sorted.bam 2>> $err_file >> $log_file
 
     # by Rong 
-    samtools sort -n ivar_trim/!{sample}.primertrim.bam -o ivar_trim/!{sample}.primertrim.sortbyname.bam 
+    samtools ampliconclip -b !{primer_bed} --fail-len 20 -u ivar_trim/!{sample}.primertrim.bam 2>> $err_file | \
+    samtools sort -n -o ivar_trim/!{sample}.primertrim.sortbyname.bam 
     samtools fixmate -u ivar_trim/!{sample}.primertrim.sortbyname.bam ivar_trim/!{sample}.primertrim.fixmate.bam
     samtools sort ivar_trim/!{sample}.primertrim.fixmate.bam -o ivar_trim/!{sample}.primertrim.sorted.bam \
     2>> $err_file >> $log_file 
