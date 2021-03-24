@@ -1424,10 +1424,10 @@ process post_process {
   rm $workflow.launchDir/$run_results
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
-  python3 $workflow.launchDir/vcf_parser.py -d $params.outdir/bcftools_variants -o $params.outdir/summary.txt
+  python3 $workflow.launchDir/script/vcf_parser.py -d $params.outdir/bcftools_variants -o $params.outdir/summary.txt
 
   # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
-  python3 $workflow.launchDir/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
+  python3 $workflow.launchDir/script/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
   -o $params.outdir/amplicon_dropout_summary
 
   """
