@@ -6,12 +6,16 @@
 
 # NOTE:
 # this script should only be ran in $CECRET_BASE or your local git repo folder
+# this script can be called upon as: ./run_cecret.sh -d sample_folder -p true  
+# -p is optioal to turn on pacbam process
 
-usage() { echo "Usage: $0 <-d  specify data folder> " 1>&2; exit 1; }
+usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> " 1>&2; exit 1; }
 
-while getopts "d:" o; do
+PB=false
+while getopts "d:p:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
+        p) PB=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
@@ -36,7 +40,9 @@ current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 #OUTDIR=$CECRET_BASE/Run_$current_time
 OUTDIR=$PWD/Run_$current_time
 
-$CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR --kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db
+$CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
+							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
+							--pacbam $PB
 
 # -- the following scripts are moved to nextflow workflow instead --
 
