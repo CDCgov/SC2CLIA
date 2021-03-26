@@ -24,6 +24,9 @@ params.reference_genome = workflow.projectDir + "/configs/MN908947.3.fasta"
 params.gff_file = workflow.projectDir + "/configs/MN908947.3.gff"
 params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
+params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
+params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
+
 params.trimmer = 'ivar' //  samtools
 params.cleaner = 'seqyclean'
 params.aligner = 'bwa'
@@ -54,6 +57,8 @@ params.nextclade = true // Rong turn it on
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
+params.pacbam = true // for running pacbam
+params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 
 // for optional contamination determination
 params.kraken2 = false
@@ -1412,19 +1417,46 @@ process combine_fastas {
   '''
 }
 
+process ivar_vcf {
+  tag "converting tsv to vcf"
+
+  input:
+  file run_results from combined_summary
+
+  output:
+  file("run_results.txt") into ivar_vcf
+
+  when:
+  params.ivar_vcf
+
+  script:
+  """
+  # convert ivar_variants tsv files into vcf files under ivar_vcf folder
+  python3 $workflow.launchDir/script/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
+
+  """
+
+
+}
+
 process post_process {
   tag "EDLB QA/QC metrics"
 
   input:
-  file run_results from combined_summary
+  file run_results from ivar_vcf
+
+  output:
+  file("run_results.txt") into post_process
   
   script:
   """
   # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
-  rm $workflow.launchDir/$run_results
+  if [ -f "$workflow.launchDir/$run_results" ]; then
+    rm $workflow.launchDir/$run_results
+  fi
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
-  python3 $workflow.launchDir/script/vcf_parser.py -d $params.outdir/bcftools_variants -o $params.outdir/summary.txt
+  python3 $workflow.launchDir/script/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
 
   # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
   python3 $workflow.launchDir/script/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
@@ -1432,6 +1464,30 @@ process post_process {
 
   """
 
+}
+
+process pacbam {
+  tag "pacbaming"
+
+  input:
+  file run_results from post_process
+
+  when:
+  params.pacbam
+
+  script:
+  """
+  # run pacbam with odd numbered bed file
+  $workflow.launchDir/script/run_pacbam.sh -d $params.pacbam_odd_bed \
+    -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
+    -s odd -o $params.outdir/pacbam 
+
+  # run pacbam with even numbered bed file
+  $workflow.launchDir/script/run_pacbam.sh -d $params.pacbam_even_bed \
+    -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
+    -s even -o $params.outdir/pacbam 
+
+  """
 
 }
 

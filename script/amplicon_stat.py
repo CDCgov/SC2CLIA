@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-import vcf
+#!/usr/bin/env python3
 import glob
 import argparse
 import re
