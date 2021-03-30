@@ -57,7 +57,7 @@ params.nextclade = true // Rong turn it on
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
-params.pacbam = true // for running pacbam
+params.pacbam = false // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 
 // for optional contamination determination
@@ -1432,7 +1432,7 @@ process ivar_vcf {
   script:
   """
   # convert ivar_variants tsv files into vcf files under ivar_vcf folder
-  python3 $workflow.launchDir/script/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
+  python3 $workflow.launchDir/Cecret/bin/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
 
   """
 
@@ -1456,13 +1456,14 @@ process post_process {
   fi
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
-  python3 $workflow.launchDir/script/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
+  python3 $workflow.launchDir/Cecret/bin/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
 
   # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
-  python3 $workflow.launchDir/script/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
+  python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
   -o $params.outdir/amplicon_dropout_summary
 
   """
+
 
 }
 
@@ -1478,12 +1479,12 @@ process pacbam {
   script:
   """
   # run pacbam with odd numbered bed file
-  $workflow.launchDir/script/run_pacbam.sh -d $params.pacbam_odd_bed \
+  $workflow.launchDir/Cecret/bin/run_pacbam.sh -d $params.pacbam_odd_bed \
     -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
     -s odd -o $params.outdir/pacbam 
 
   # run pacbam with even numbered bed file
-  $workflow.launchDir/script/run_pacbam.sh -d $params.pacbam_even_bed \
+  $workflow.launchDir/Cecret/bin/run_pacbam.sh -d $params.pacbam_even_bed \
     -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
     -s even -o $params.outdir/pacbam 
 
