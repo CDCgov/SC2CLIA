@@ -6,6 +6,7 @@ println("email: eriny@utah.gov")
 println("Version: v.20210211")
 println("")
 
+
 // TBA plot-ampliconstats
 // plot-ampliconstats results_SAMPLEID ampliconstats.txt
 
@@ -26,6 +27,10 @@ params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
 params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
 params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
+
+
+params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
+
 
 params.trimmer = 'ivar' //  samtools
 params.cleaner = 'seqyclean'
@@ -59,6 +64,8 @@ params.bamsnap = false // can be really slow
 params.rename = false
 params.pacbam = true // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
+params.vadr = true
+
 
 // for optional contamination determination
 params.kraken2 = false
@@ -568,7 +575,7 @@ process ivar_consensus {
   set val(sample), file(bam), file(reference_genome) from trimmed_bams_ivar_consensus
 
   output:
-  tuple sample, file("consensus/${sample}.consensus.fa") into consensus_pangolin, consensus_nextclade
+  tuple sample, file("consensus/${sample}.consensus.fa") into consensus_pangolin, consensus_nextclade, consensus_vadr
   tuple sample, file("consensus/${sample}.consensus.fa"), env(num_ACTG) into consensus_rename
   tuple sample, file("consensus/qc_consensus/15000/${sample}.consensus.fa") optional true into qc_consensus_15000_mafft
   file("logs/ivar_consensus/${sample}.${workflow.sessionId}.{log,err}")
@@ -1009,7 +1016,7 @@ process nextclade {
 
   shell:
   '''
-    mkdir -p nextclade logs/nextclade
+    mkdir  -p nextclade logs/nextclade
     log_file=logs/nextclade/!{sample}.!{workflow.sessionId}.log
     err_file=logs/nextclade/!{sample}.!{workflow.sessionId}.err
 
@@ -1166,7 +1173,7 @@ process mafft {
 
 process snpdists {
   publishDir "${params.outdir}", mode: 'copy'
-  tag "createing snp matrix with snp-dists"
+  tag "Creating snp matrix with snp-dists"
   echo false
   cpus params.medcpus
 
@@ -1488,6 +1495,34 @@ process pacbam {
     -s even -o $params.outdir/pacbam 
 
   """
+
+}
+
+process vadr {
+  tag "Darth VADR"
+  echo true
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.vadr  
+
+  input:
+  set val(sample), file(fasta) from consensus_vadr
+  
+  output:
+  file("vadr/${sample}/${sample}.vadr.pass.list") into vadr_passlist
+  file("vadr/${sample}/${sample}.vadr.fail.list") into vadr_faillist
+
+
+  shell:
+  '''
+  mkdir vadr
+  v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
+                --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
+                --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
+                --mdir !{params.vadr_mdir} !{fasta} vadr/!{sample}
+
+  '''
 
 }
 
