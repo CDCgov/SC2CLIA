@@ -28,9 +28,8 @@ params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
 params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
 
-
-params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
-
+// model files for SARS-CoV-2 (currently unusued param; not in config/)
+// params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
 
 params.trimmer = 'ivar' //  samtools
 params.cleaner = 'seqyclean'
@@ -67,7 +66,7 @@ params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 
 
-// for optional contamination determination
+// for optional contamination determination with kraken
 params.kraken2 = false
 params.kraken2_db = ''
 
@@ -84,6 +83,7 @@ params.sample_file = workflow.launchDir + '/covid_samples.csv'
 params.gisaid_threshold = '25000'
 params.genbank_threshold = '15000'
 
+// Set the number of CPUs to use
 params.maxcpus = Runtime.runtime.availableProcessors()
 println("The maximum number of CPUS used in this workflow is ${params.maxcpus}")
 if ( params.maxcpus < 5 ) {
@@ -92,10 +92,11 @@ if ( params.maxcpus < 5 ) {
   params.medcpus = 5
 }
 
-// This is where the results will be
+// Print path to run directory and the location of run results and summary file
 println("The files and directory for results is " + params.outdir)
 println("A table summarizing results will be created: ${params.outdir}/summary.txt and ${workflow.launchDir}/run_results.txt\n")
 
+// Initialize channels
 Channel
   .fromPath(params.reference_genome, type:'file')
   .ifEmpty{
@@ -145,6 +146,9 @@ paired_reads
 
 println("") // just for aesthetics
 
+// -------------------------
+// Main processes start here
+// -------------------------
 process seqyclean {
   publishDir "${params.outdir}", mode: 'copy'
   tag "${sample}"
@@ -1499,8 +1503,8 @@ process pacbam {
 }
 
 process vadr {
-  tag "Darth VADR"
-  echo true
+  tag "${sample}"
+  echo false
   publishDir "${params.outdir}", mode: 'copy'
 
   when:
@@ -1516,11 +1520,15 @@ process vadr {
 
   shell:
   '''
+  # Downoad the VADR model files.
+  # @ToDo: Edit wget command to work for future updated model files at that index
+  wget -nc "https://ftp.ncbi.nlm.nih.gov/pub/nawrocki/vadr-models/coronaviridae/CURRENT/vadr-models-corona-1.1.3-1.tar.gz"
+  tar xvf vadr-models-corona-1.1.3-1.tar.gz
   mkdir vadr
   v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
                 --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
                 --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
-                --mdir !{params.vadr_mdir} !{fasta} vadr/!{sample}
+                --mdir vadr-models-corona-1.1.3-1 !{fasta} vadr/!{sample}
 
   '''
 
