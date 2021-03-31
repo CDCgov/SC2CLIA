@@ -544,7 +544,7 @@ process ivar_variants {
   set val(sample), file(bam), file(reference_genome), file(gff_file) from trimmed_bams_ivar_variants
 
   output:
-  tuple sample, file("ivar_variants/${sample}.variants.tsv") into ivar_variant_file
+  tuple sample, file("ivar_variants/${sample}.variants.tsv") into ivar_variant_file, ivar_variant_vcf
   file("logs/ivar_variants/${sample}.${workflow.sessionId}.{log,err}")
   tuple sample, env(variants_num) into ivar_variants_results
 
@@ -1429,13 +1429,14 @@ process combine_fastas {
 }
 
 process ivar_vcf {
-  tag "converting tsv to vcf"
+  publishDir "${params.outdir}", mode: 'copy',  pattern: "ivar_vcf/*.vcf"
+  tag "${sample}"
 
   input:
-  file run_results from combined_summary
+  tuple val(sample), file(tsv) from ivar_variant_vcf
 
   output:
-  file("run_results.txt") into ivar_vcf
+  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf
 
   when:
   params.ivar_vcf
@@ -1443,7 +1444,13 @@ process ivar_vcf {
   script:
   """
   # convert ivar_variants tsv files into vcf files under ivar_vcf folder
-  python3 $workflow.launchDir/Cecret/bin/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
+
+  # old method: grabbing all data externally
+  #python3 $workflow.launchDir/Cecret/bin/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
+
+  mkdir -p ivar_vcf
+  # new method: utilizing nextflow internal data queuing
+  python3 $workflow.launchDir/Cecret/bin/ivar_variants_to_vcf.py  ${tsv}  ivar_vcf/${sample}.vcf
 
   """
 
@@ -1454,7 +1461,7 @@ process post_process {
   tag "EDLB QA/QC metrics"
 
   input:
-  file run_results from ivar_vcf
+  file run_results from combined_summary
 
   output:
   file("run_results.txt") into post_process

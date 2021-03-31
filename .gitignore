@@ -10,6 +10,9 @@
 # Ignore kraken2 db (over size limit for git)
 **/kraken2_db/**
 
+
+**/SINGULARITY_CACHE/**
+
 .nextflow/**
 
 *nextflow
