@@ -9,14 +9,15 @@
 # this script can be called upon as: ./run_cecret.sh -d sample_folder -p true  
 # -p is optioal to turn on pacbam process
 
-usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> " 1>&2; exit 1; }
+usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
 PB=false
 VADR=false
-while getopts "d:p:" o; do
+while getopts "d:p:v:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
         p) PB=${OPTARG} ;;
+		v) VADR=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
