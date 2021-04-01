@@ -1532,11 +1532,22 @@ process vadr {
   # @ToDo: Edit wget command to work for future updated model files at that index
   wget -nc "https://ftp.ncbi.nlm.nih.gov/pub/nawrocki/vadr-models/coronaviridae/CURRENT/vadr-models-corona-1.1.3-1.tar.gz"
   tar xvf vadr-models-corona-1.1.3-1.tar.gz
-  mkdir vadr
-  v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
-                --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
-                --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
-                --mdir vadr-models-corona-1.1.3-1 !{fasta} vadr/!{sample}
+  mkdir -p vadr
+  
+  # Check if file is big enough
+  myfilesize=$(wc -c !{fasta} | awk '{print $1}')
+  
+  if (( myfilesize > 500 )); then
+    v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
+                  --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
+                  --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
+                  --mdir vadr-models-corona-1.1.3-1 !{fasta} vadr/!{sample}
+  else
+    mkdir vadr/!{sample}
+    touch vadr/!{sample}/!{sample}.vadr.pass.list
+    touch vadr/!{sample}/!{sample}.vadr.fail.list
+    echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
+  fi
 
   '''
 
