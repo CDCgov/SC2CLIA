@@ -1095,9 +1095,12 @@ process summary {
     date | tee -a $log_file $err_file > /dev/null
 
     sample_id=$(echo !{sample} | cut -f 1 -d "-" )
+    total_reads_analyzed=$(( !{raw_1} < !{raw_2} ? !{raw_1} : !{raw_2} ))
+    div=$(( !{num_N} * 100 / !{num_total} ))
+    percent_N=$(( !{num_total} == 0 ? 0 : $div ))
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1473,8 +1476,16 @@ process post_process {
     rm $workflow.launchDir/$run_results
   fi
 
+  #$workflow.launchDir/Cecret/bin/run_SC2ref_read.sh -r $params.outdir
+  run_SC2ref_read.sh -r $params.outdir
+
+
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
-  python3 $workflow.launchDir/Cecret/bin/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
+  #python3 $workflow.launchDir/Cecret/bin/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
+  python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
+          -s $params.outdir/sc2.txt -o $params.outdir/summary.txt
+
+  rm $params.outdir/sc2.txt
 
   # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
   python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
