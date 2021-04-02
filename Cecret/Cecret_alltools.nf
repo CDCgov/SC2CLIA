@@ -1497,14 +1497,7 @@ process pacbam {
   set val(sample), file(vcf) from ivar_vcf_pacbam
 
   output:
-  file("pacbam/${sample}/odd/${sample}.primertrim.sorted.pabs")
-  file("pacbam/${sample}/odd/${sample}.primertrim.sorted.pileup")
-  file("pacbam/${sample}/odd/${sample}.primertrim.sorted.rc")
-  file("pacbam/${sample}/odd/${sample}.primertrim.sorted.snps")
-  file("pacbam/${sample}/even/${sample}.primertrim.sorted.pabs")
-  file("pacbam/${sample}/even/${sample}.primertrim.sorted.pileup")
-  file("pacbam/${sample}/even/${sample}.primertrim.sorted.rc")
-  file("pacbam/${sample}/even/${sample}.primertrim.sorted.snps")
+  file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
 
   when:
   params.pacbam

@@ -34,17 +34,6 @@ done
 #     exit 1;
 # fi
 
-  # run pacbam with odd numbered bed file
-  # $workflow.launchDir/Cecret/bin/run_pacbam.sh -d !{params.pacbam_odd_bed} \
-  #   -b !{params.outdir}/ivar_trim -v !{params.outdir}/ivar_vcf -f !{params.reference_genome} \
-  #   -s odd -o $params.outdir/pacbam 
-
-
-  # # run pacbam with even numbered bed file
-  # $workflow.launchDir/Cecret/bin/run_pacbam.sh -d !{params.pacbam_even_bed} \
-  #   -b !{params.outdir}/ivar_trim -v !{params.outdir}/ivar_vcf -f !{params.reference_genome} \
-  #   -s even -o !{params.outdir}/pacbam 
-
 for file in $BAM/*bam; do 
 	sample=$(basename ${file} | cut -d'.' -f 1);
 	if [ ! -d "$OUTDIR/$sample/$SUFFIX" ]; then
