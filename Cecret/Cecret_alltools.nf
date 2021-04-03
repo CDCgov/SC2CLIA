@@ -32,8 +32,8 @@ params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.b
 // params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
 
 params.trimmer = 'ivar' //  samtools
-params.cleaner = 'seqyclean'
-params.aligner = 'bwa'
+params.cleaner = 'seqyclean' // fastp
+params.aligner = 'bwa' // minimap2
 
 // minimap2 paramaters
 params.minimap2_K = '20M' // stolen from monroe
@@ -1497,7 +1497,9 @@ process pacbam {
   set val(sample), file(vcf) from ivar_vcf_pacbam
 
   output:
-  file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
+  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
+  file("pacbam/${sample}/{odd,even}/*") into pacbam_out
+
 
   when:
   params.pacbam
@@ -1506,8 +1508,15 @@ process pacbam {
   '''
   mkdir -p pacbam/!{sample}/odd
   mkdir -p pacbam/!{sample}/even
-  pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20;
-  pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20;
+
+  last=$( tail -n1 !{vcf} )
+  if [[ $last =~ ^#CHROM* ]]; then
+    touch pacbam/!{sample}/odd/NO_VCF
+    touch pacbam/!{sample}/even/NO_VCF
+  else
+    pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20;
+    pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20;
+  fi
 
   '''
 }
