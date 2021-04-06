@@ -64,6 +64,7 @@ params.rename = false
 params.pacbam = false // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
+params.aocd = true // for calculating average overall coverage depth
 
 
 // for optional contamination determination with kraken
@@ -162,7 +163,7 @@ process seqyclean {
   set val(sample), file(reads), val(paired_single) from fastq_reads_seqyclean
 
   output:
-  tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq") optional true into seqyclean_paired_files
+  tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq") optional true into seqyclean_paired_files, seqyclean_aocd
   tuple sample, file("seqyclean/${sample}_cln_SE.fastq") optional true into seqyclean_single_file
   tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq"), val(paired_single) optional true into seqyclean_paired_files_classification
   tuple sample, file("seqyclean/${sample}_cln_SE.fastq"), val(paired_single) optional true into seqyclean_single_file_classification
@@ -355,7 +356,7 @@ process fastqc {
   set val(sample), file(raw), val(type) from fastq_reads_fastqc
 
   output:
-  file("fastqc/*.{html,zip}")
+  file("fastqc/*.{html,zip}") into fastqc_results
   tuple sample, env(raw_1) into fastqc_1_results
   tuple sample, env(raw_2) into fastqc_2_results
   file("logs/fastqc/${sample}.${workflow.sessionId}.{log,err}")
@@ -579,7 +580,7 @@ process ivar_consensus {
   set val(sample), file(bam), file(reference_genome) from trimmed_bams_ivar_consensus
 
   output:
-  tuple sample, file("consensus/${sample}.consensus.fa") into consensus_pangolin, consensus_nextclade, consensus_vadr
+  tuple sample, file("consensus/${sample}.consensus.fa") into consensus_pangolin, consensus_nextclade, consensus_vadr, consensus_aocd
   tuple sample, file("consensus/${sample}.consensus.fa"), env(num_ACTG) into consensus_rename
   tuple sample, file("consensus/qc_consensus/15000/${sample}.consensus.fa") optional true into qc_consensus_15000_mafft
   file("logs/ivar_consensus/${sample}.${workflow.sessionId}.{log,err}")
@@ -1033,6 +1034,68 @@ process nextclade {
   '''
 }
 
+
+seqyclean_aocd
+  .join(consensus_aocd, remainder: false, by:0)
+  .set { pre_aocd_bwa }
+
+process aocd_bwa {
+  tag "${sample}"
+  echo false
+  //publishDir "${params.outdir}/consensus/consensus-aligned/", mode: 'copy', pattern: '*.sam'
+
+  when:
+  params.aocd
+
+  input:
+  tuple val(sample), file(fastq), file(fa) from pre_aocd_bwa
+
+  output:
+  tuple sample, file(fa), file("${sample}.sam") into aocd_samfile
+
+  shell:
+  '''
+  #mkdir -p consensus/consensus-aligned
+
+  bwa index !{fa}
+  bwa mem -t 10  !{fa} !{fastq} > !{sample}.sam
+
+  '''
+}
+
+process aocd_samtools {
+  tag "${sample}"
+  echo false
+  //publishDir "${params.outdir}", mode: 'copy', overwrite: true
+
+  when:
+  params.aocd
+
+  input:
+  tuple sample, file(fa), file (sam) from aocd_samfile
+  
+  output:
+  //file ("depth.txt")
+  tuple sample, env(aocd_result) into aocd_samtools_results
+
+  shell:
+  '''
+
+  #samtools sort consensus/consensus-aligned/!{sample}.sam | samtools view -F 4 -o \
+  #              consensus/consensus-aligned/!{sample}.sorted.bam
+  #result=`samtools mpileup -a -d 8000 -f !{fa} consensus/consensus-aligned/!{sample}.sorted.bam | \
+  #       awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {print SUM/COUNT} else {print -1} }'`
+
+  samtools sort !{sam} | samtools view -F 4 -o !{sample}.sorted.bam
+  aocd_result=`samtools mpileup -a -d 8000 -f !{fa} !{sample}.sorted.bam | \
+         awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {print SUM/COUNT} else {print -1} }'`
+
+  #echo !{sample} $aocd_result >> depth.txt
+  '''
+
+}
+
+
 consensus_results
 //tuple sample, env(num_N), env(num_ACTG), env(num_degenerate), env(num_total) into consensus_results
   .join(fastqc_1_results, remainder: true, by: 0)
@@ -1053,6 +1116,7 @@ consensus_results
   .join(samtools_ampliconstats_results, remainder: true, by: 0)
   .join(aligner_version, remainder: true, by:0)
   .join(ivar_version, remainder: true, by: 0)
+  .join(aocd_samtools_results, remainder: true, by: 0)
   .set { results }
 
 process summary {
@@ -1080,7 +1144,8 @@ process summary {
     val(bedtools_num_failed_amplicons),
     val(samtools_num_failed_amplicons),
     val(bwa_version),
-    val(ivar_version) from results
+    val(ivar_version),
+    val(aocd_result) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1095,12 +1160,14 @@ process summary {
     date | tee -a $log_file $err_file > /dev/null
 
     sample_id=$(echo !{sample} | cut -f 1 -d "-" )
+
+    # for QA/QC metrics: total_reads_analyzed percent_N
     total_reads_analyzed=$(( !{raw_1} < !{raw_2} ? !{raw_1} : !{raw_2} ))
     div=$(( !{num_N} * 100 / !{num_total} ))
     percent_N=$(( !{num_total} == 0 ? 0 : $div ))
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1476,12 +1543,11 @@ process post_process {
     rm $workflow.launchDir/$run_results
   fi
 
-  #$workflow.launchDir/Cecret/bin/run_SC2ref_read.sh -r $params.outdir
+  # @ToDo: this can be converted into a separate nf process, like the aocd_* process
   run_SC2ref_read.sh -r $params.outdir
 
-
-  # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result fil
-  #python3 $workflow.launchDir/Cecret/bin/vcf_parser.py -d $params.outdir/ivar_vcf -o $params.outdir/summary.txt
+  # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
+  # also include Reads_Matching_SC2_Ref to the result file
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -s $params.outdir/sc2.txt -o $params.outdir/summary.txt
 
@@ -1495,6 +1561,7 @@ process post_process {
 
 
 }
+
 
 process pacbam {
   tag "pacbaming"
@@ -1561,6 +1628,27 @@ process vadr {
   fi
 
   '''
+
+}
+
+process mqc {
+  tag "multi-QC"
+  echo false
+  publishDir "${params.outdir}/MultiQC", mode: 'copy'
+
+  input:
+  file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
+
+  output:
+  file "multiqc_report.html" into multiqc_report
+  file "multiqc_data"
+
+  script:
+  """
+  multiqc .
+
+  """
+
 
 }
 
