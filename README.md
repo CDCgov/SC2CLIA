@@ -44,8 +44,8 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 
 ## USAGE
 
-1. Run the following scrit at your base folder(replace `data_folder` with the path to your data)  
- `./run_cecret.sh - d data_folder`  
+1. Run the following scrit at your base folder(replace `data_folder` with the path to your data; p is for pacbam; v is for vadr)  
+ `./run_cecret.sh - d data_folder -p true(default false) -v true(default false)`  
 
 ## Note
 
