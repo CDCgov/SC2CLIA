@@ -1487,14 +1487,19 @@ process post_process {
   """
 }
 
+trimmed_bam_bai
+.join(ivar_vcf_pacbam, remainder:true, by:0)
+.set { pre_pacbam }
+
 process pacbam {
   tag "${sample}"
   echo false
   publishDir "${params.outdir}", mode: 'copy'
 
   input:
-  set val(sample), file(bam), file(bai) from trimmed_bam_bai
-  set val(sample), file(vcf) from ivar_vcf_pacbam
+  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
+  //set val(sample), file(vcf) from ivar_vcf_pacbam
+  tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam
 
   output:
   // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
@@ -1514,8 +1519,8 @@ process pacbam {
     touch pacbam/!{sample}/odd/NO_VCF
     touch pacbam/!{sample}/even/NO_VCF
   else
-    pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20;
-    pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20;
+    pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20 #;
+    pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20 #;
   fi
 
   '''
