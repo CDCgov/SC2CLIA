@@ -32,8 +32,8 @@ params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.b
 // params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
 
 params.trimmer = 'ivar' //  samtools
-params.cleaner = 'seqyclean'
-params.aligner = 'bwa'
+params.cleaner = 'seqyclean' // fastp
+params.aligner = 'bwa' // minimap2
 
 // minimap2 paramaters
 params.minimap2_K = '20M' // stolen from monroe
@@ -514,6 +514,14 @@ ivar_bams
   .concat(samtools_bams)
   .into { trimmed_bams ; trimmed_bams4 ; trimmed_bams5 }
 
+ivar_bam_bai
+  .concat(samtools_bam_bai)
+  .into { trimmed_bam_bai ; trimmed_bam_bai2 }
+
+trimmed_bam_bai2
+  .combine(primer_bed_bedtools)
+  .set { trimmed_bam_bai_bed }
+
 trimmed_bams5
   .combine(primer_bed_ampliconstats)
   .set { trimmed_bams_ampliconstats }
@@ -526,10 +534,6 @@ trimmed_bams_genome
  .combine(gff_file)
  .set { trimmed_bams_ivar_variants }
 
-ivar_bam_bai
-  .concat(samtools_bam_bai)
-  .combine(primer_bed_bedtools)
-  .set { trimmed_bam_bai }
 
 process ivar_variants {
   publishDir "${params.outdir}", mode: 'copy',  pattern: "logs/ivar_variants/*.{log,err}"
@@ -893,6 +897,8 @@ process kraken2 {
   '''
 }
 
+
+
 process bedtools {
   publishDir "${params.outdir}", mode: 'copy'
   tag "${sample}"
@@ -903,7 +909,7 @@ process bedtools {
   params.bedtools
 
   input:
-  set val(sample), file(bam), file(bai), file(primer_bed) from trimmed_bam_bai
+  set val(sample), file(bam), file(bai), file(primer_bed) from trimmed_bam_bai_bed
 
   output:
   file("bedtools/${sample}.multicov.txt")
@@ -1507,10 +1513,10 @@ process ivar_vcf {
   tag "${sample}"
 
   input:
-  tuple val(sample), file(tsv) from ivar_variant_vcf
+  set val(sample), file(tsv) from ivar_variant_vcf
 
   output:
-  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf
+  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam
 
   when:
   params.ivar_vcf
@@ -1527,8 +1533,6 @@ process ivar_vcf {
   python3 $workflow.launchDir/Cecret/bin/ivar_variants_to_vcf.py  ${tsv}  ivar_vcf/${sample}.vcf
 
   """
-
-
 }
 
 process post_process {
@@ -1562,34 +1566,45 @@ process post_process {
   -o $params.outdir/amplicon_dropout_summary
 
   """
-
-
 }
 
+trimmed_bam_bai
+.join(ivar_vcf_pacbam, remainder:true, by:0)
+.set { pre_pacbam }
 
 process pacbam {
-  tag "pacbaming"
+  tag "${sample}"
+  echo false
+  publishDir "${params.outdir}", mode: 'copy'
 
   input:
-  file run_results from post_process
+  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
+  //set val(sample), file(vcf) from ivar_vcf_pacbam
+  tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam
+
+  output:
+  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
+  file("pacbam/${sample}/{odd,even}/*") into pacbam_out
+
 
   when:
   params.pacbam
 
-  script:
-  """
-  # run pacbam with odd numbered bed file
-  $workflow.launchDir/Cecret/bin/run_pacbam.sh -d $params.pacbam_odd_bed \
-    -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
-    -s odd -o $params.outdir/pacbam 
+  shell:
+  '''
+  mkdir -p pacbam/!{sample}/odd
+  mkdir -p pacbam/!{sample}/even
 
-  # run pacbam with even numbered bed file
-  $workflow.launchDir/Cecret/bin/run_pacbam.sh -d $params.pacbam_even_bed \
-    -b $params.outdir/ivar_trim -v $params.outdir/ivar_vcf -f $params.reference_genome \
-    -s even -o $params.outdir/pacbam 
+  last=$( tail -n1 !{vcf} )
+  if [[ $last =~ ^#CHROM* ]]; then
+    touch pacbam/!{sample}/odd/NO_VCF
+    touch pacbam/!{sample}/even/NO_VCF
+  else
+    pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20 #;
+    pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20 #;
+  fi
 
-  """
-
+  '''
 }
 
 process vadr {
@@ -1611,7 +1626,6 @@ process vadr {
   shell:
   '''
   # Downoad the VADR model files.
-  # @ToDo: Edit wget command to work for future updated model files at that index
   wget -nc "https://ftp.ncbi.nlm.nih.gov/pub/nawrocki/vadr-models/coronaviridae/CURRENT/vadr-models-corona-1.1.3-1.tar.gz"
   tar xvf vadr-models-corona-1.1.3-1.tar.gz
   mkdir -p vadr
