@@ -1036,7 +1036,7 @@ process nextclade {
 
 
 seqyclean_aocd
-  .join(consensus_aocd, remainder: false, by:0)
+  .join(consensus_aocd, remainder: true, by:0)
   .set { pre_aocd_bwa }
 
 process aocd_bwa {
@@ -1055,10 +1055,13 @@ process aocd_bwa {
 
   shell:
   '''
-  #mkdir -p consensus/consensus-aligned
-
-  bwa index !{fa}
-  bwa mem -t 10  !{fa} !{fastq} > !{sample}.sam
+  last=$( tail -n1 !{fa} )
+  if [ ! -z "$last" ]; then
+    bwa index !{fa}
+    bwa mem -t 10  !{fa} !{fastq} > !{sample}.sam
+  else
+    touch !{sample}.sam
+  fi
 
   '''
 }
@@ -1080,17 +1083,15 @@ process aocd_samtools {
 
   shell:
   '''
-
-  #samtools sort consensus/consensus-aligned/!{sample}.sam | samtools view -F 4 -o \
-  #              consensus/consensus-aligned/!{sample}.sorted.bam
-  #result=`samtools mpileup -a -d 8000 -f !{fa} consensus/consensus-aligned/!{sample}.sorted.bam | \
-  #       awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {print SUM/COUNT} else {print -1} }'`
-
-  samtools sort !{sam} | samtools view -F 4 -o !{sample}.sorted.bam
-  aocd_result=`samtools mpileup -a -d 8000 -f !{fa} !{sample}.sorted.bam | \
+  last=$( tail -n1 !{fa} )
+  if [ ! -z "$last" ]; then
+    samtools sort !{sam} | samtools view -F 4 -o !{sample}.sorted.bam
+    aocd_result=`samtools mpileup -a -d 8000 -f !{fa} !{sample}.sorted.bam | \
          awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {print SUM/COUNT} else {print -1} }'`
+  else
+    aocd_result=-1
+  fi
 
-  #echo !{sample} $aocd_result >> depth.txt
   '''
 
 }
@@ -1163,8 +1164,11 @@ process summary {
 
     # for QA/QC metrics: total_reads_analyzed percent_N
     total_reads_analyzed=$(( !{raw_1} < !{raw_2} ? !{raw_1} : !{raw_2} ))
-    div=$(( !{num_N} * 100 / !{num_total} ))
-    percent_N=$(( !{num_total} == 0 ? 0 : $div ))
+    if (( !{num_total} == 0 )); then
+      percent_N=-1
+    else
+      percent_N=$(( !{num_N} * 100 / !{num_total} ))
+    fi
 
     echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth" > summary/!{sample}.summary.txt
     echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}" >> summary/!{sample}.summary.txt
