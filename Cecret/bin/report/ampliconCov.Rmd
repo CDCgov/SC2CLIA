@@ -1,0 +1,183 @@
+---
+title: "Amplicon Coverage"
+params:
+  runPath: ".."
+  runID: "M347-21-010"
+  pacbamDir: "pacbam"
+  ampBED: "ref_docs/nCoV-2019.insert.bed"
+  ampMinCov: 30
+  ampMeanCov: 100
+  ampMaxNFail: 5
+  ampMinNPass: 93
+---
+
+```{r comments, include=FALSE}
+# Unlike most other params set in this report template, covFileDir and covFileSuffix are not controlled by options in the config.R script. It is assumed that the Cecret run directory structure is maintained and the report script will look for the directories and files named in params in one directory up from the run directory. To change these settings, modify params.
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(formattable)
+library(DT)
+```
+
+#### Per Amplicon Coverage Summary
+The table below lists the number of amplicons per sample or control with coverage statistics passing or failing coverage thresholds. To pass, amplicons must have an average depth of coverage of >= `r params$ampMeanCov`x across their length and a minimum coverage of >= `r params$ampMinCov`x at all nucleotide positions. Samples are listed in the first table and controls in the second. Desirable values are highlighted in green (>= `r params$ampMinNPass`/98 amplicons passing for samples, <= `r params$ampMaxNFail`/98 amplicons passing for controls) and undesirable values in bold red (> `r params$ampMaxNFail`/98 amplicons failing for samples, < `r params$ampMinNPass`/95 amplicons failing for controls). The report column links to detailed plots of the coverage for each amplicon for a given sample or control.
+
+```{r read_bed, include=FALSE}
+# read in the amplicon bed file to get the amplicon coordinates
+ampInfo <- read_tsv(params$ampBED, col_names = FALSE)
+colnames(ampInfo) <- c("REF", "START", "END", "AMP_ID", "POOL", "TRASH")
+ampInfo <- select(ampInfo, -TRASH, -REF)
+```
+```{r amp_cov, include=FALSE, cache=TRUE}
+# Read in the names of all of the files; note cache=TRUE for this block because it takes a long time to read everything in.
+pbFiles <- list.files(path = paste(params$runPath, params$runID, params$pacbamDir, sep = "/"),
+                      full.names = TRUE,
+                      recursive = TRUE)
+
+# Now filter it down to just the pileups and sort by even or odd pools
+pbFilesPU_even <- vector()
+pbFilesPU_odd <- vector()
+for (f in 1:length(pbFiles)) {
+  if (str_detect(pbFiles[f], "pileup") == TRUE && str_detect(pbFiles[f], "even") == TRUE) {
+    pbFilesPU_even <- append(pbFilesPU_even, pbFiles[f])
+  } else {
+    if (str_detect(pbFiles[f], "pileup") == TRUE && str_detect(pbFiles[f], "odd") == TRUE) {
+      pbFilesPU_odd <- append(pbFilesPU_odd, pbFiles[f])
+    }
+  }
+}
+
+# Read it all in and format
+keepers <- tibble()
+colnames(keepers) <- c("pos", "cov", "SampleID", "SampleGroup", "Amplicon", "UnifiedScale")
+for (r in 1:nrow(ampInfo)) { # this gives row index for ampInfo, i.e. a single amplicon
+  # Store some info from ampInfo in convenience variables
+  start <- ampInfo[r,]$START
+  end <- ampInfo[r,]$END
+  pool <- ampInfo[r,]$POOL
+  ampID <- ampInfo[r,]$AMP_ID
+  # Loop over even and odd pools separately. At some point make a proper function instead of repeating code blocks.
+  if (pool == 1) {
+    for (f in 1:length(pbFilesPU_odd)) { # this gives the index of a file in the odd list
+      tempPU <- read_tsv(pbFilesPU_odd[f]) %>%
+                dplyr::filter(pos %in% seq(start, end)) %>%
+                dplyr::select(pos, cov) %>%
+                dplyr::mutate(SampleID = str_replace(pbFilesPU_odd[f], "^.*/odd/", "")) %>%
+                dplyr::mutate(SampleID = str_replace(SampleID, paste0("-", params$runID, ".primertrim.sorted.pileup"), "")) %>%
+                dplyr::mutate(SampleGroup = stringr::str_replace(SampleID, "-A(1|2|3|4|5|6|7|8)$", "")) %>%
+                dplyr::mutate(Amplicon = ampID) %>%
+                dplyr::arrange(pos)
+        tempPU <- dplyr::bind_cols(tempPU, seq(1, nrow(tempPU)))
+        colnames(tempPU) <- c("pos", "cov", "SampleID", "SampleGroup", "Amplicon", "UnifiedScale")
+        keepers <- bind_rows(keepers, tempPU)
+    }
+  } else {
+    if (pool == 2) {
+      for (f in 1:length(pbFilesPU_even)) { # this gives the index of a file in the even list
+        tempPU <- read_tsv(pbFilesPU_even[f]) %>%
+                  dplyr::filter(pos %in% seq(start, end)) %>%
+                  dplyr::select(pos, cov) %>%
+                  dplyr::mutate(SampleID = str_replace(pbFilesPU_even[f], "^.*/even/", "")) %>%
+                  dplyr::mutate(SampleID = str_replace(SampleID, paste0("-", params$runID, ".primertrim.sorted.pileup"), "")) %>%
+                  dplyr::mutate(SampleGroup = stringr::str_replace(SampleID, "-A(1|2|3|4|5|6|7|8)$", "")) %>%
+                  dplyr::mutate(Amplicon = ampID) %>%
+                  dplyr::arrange(pos)
+          tempPU <- dplyr::bind_cols(tempPU, seq(1, nrow(tempPU)))
+          colnames(tempPU) <- c("pos", "cov", "SampleID", "SampleGroup", "Amplicon", "UnifiedScale")
+          keepers <- bind_rows(keepers, tempPU)
+      }
+    }
+  }
+}
+```
+
+```{r cov_summary, echo=FALSE, warning=FALSE, message=FALSE}
+# Summarize first by SampleID and Amplicon
+keepers_sum <- group_by(keepers, SampleID, Amplicon) %>%
+               summarise(Coverage.Mean = mean(cov),
+                         Coverage.Min = min(cov),
+                         Coverage.Max = max(cov)) %>%
+               mutate(Mean.Pass = if_else(Coverage.Mean >= params$ampMeanCov, "PASS", "FAIL"),
+                      Min.Pass = if_else(Coverage.Min >= params$ampMinCov, "PASS", "FAIL"))
+
+# Now summarize above summary by SampleID
+cov_sum <- group_by(keepers_sum, SampleID) %>%
+           summarise('Count Amplicons Passing' = sum(Mean.Pass == "PASS" & Min.Pass == "PASS"),
+                     'Count Amplicons Failing' = sum(Mean.Pass == "FAIL" | Min.Pass == "FAIL"))
+
+# Add a column with hyperlinks to the detailed report pages.
+cov_sum <- mutate(cov_sum, 
+                  Report = paste0('<a href="ref_docs/', 
+                                  SampleID, 
+                                  '-amplicon-detail.html">report</a>'))
+
+# Divide up the samples and controls
+cov_sum_samples <- filter(cov_sum, !str_detect(SampleID, "NC-"))
+cov_sum_controls <- filter(cov_sum, str_detect(SampleID, "NC-"))
+
+
+# Make the summary table pretty
+highgood_formatter <- formatter("span", 
+                                style = x ~ style("color" = ifelse(x >= params$ampMinNPass, 
+                                                                   "green",
+                                                                ifelse(x < params$ampMinNPass, 
+                                                                       "red", 
+                                                                       "gray")),
+                                                  "font-weight" = ifelse(x >= params$ampMinNPass, 
+                                                                         "plain",
+                                                                ifelse(x < params$ampMinNPass, 
+                                                                       "bold", 
+                                                                       "italic"))
+                                ))
+
+lowgood_formatter <- formatter("span", 
+                                style = x ~ style("color" = ifelse(x <= params$ampMaxNFail, 
+                                                                   "green",
+                                                                ifelse(x > params$ampMaxNFail, 
+                                                                       "red", 
+                                                                       "gray")),
+                                                  "font-weight" = ifelse(x <= params$ampMaxNFail, 
+                                                                         "plain",
+                                                                ifelse(x > params$ampMaxNFail, 
+                                                                       "bold", 
+                                                                       "italic"))
+                                ))
+formattable(cov_sum_samples, list(
+  'Count Amplicons Passing' = highgood_formatter,
+  'Count Amplicons Failing' = lowgood_formatter
+))
+
+formattable(cov_sum_controls, list(
+  'Count Amplicons Passing' = lowgood_formatter,
+  'Count Amplicons Failing' = highgood_formatter
+))
+```
+
+```{r spawn, include=FALSE}
+#echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+for (s in 1:nrow(cov_sum)) {
+  rmarkdown::render(input = "ref_docs/ampliconDetailTemplate.Rmd", 
+                    output_file = paste0(cov_sum[s,]$SampleID, "-amplicon-detail.html"), 
+                    params = list(covTable = filter(keepers, 
+                                                    SampleID == cov_sum[s,]$SampleID),
+                                  sampleID = cov_sum[s,]$SampleID,
+                                  passfailTab = filter(keepers_sum, 
+                                                       SampleID == cov_sum[s,]$SampleID)),
+                    envir = new.env())
+}
+
+# for testing
+# rmarkdown::render(input = "ref_docs/ampliconDetailTemplate.Rmd", 
+#                     output_file = paste0("3002228466-ZZYGJK71-A6", "-amplicon-detail.html"), 
+#                     params = list(covTable = filter(keepers, 
+#                                                     SampleID == "3002228466-ZZYGJK71-A6"),
+#                                   sampleID = "3002228466-ZZYGJK71-A6",
+#                                   passfailTab = filter(keepers_sum, 
+#                                                        SampleID == "3002228466-ZZYGJK71-A6")),
+#                     envir = new.env())
+
+```

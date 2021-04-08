@@ -1,0 +1,54 @@
+---
+title: "Run Info"
+params:
+  runPath: ".."
+  runID: "M347-21-010"
+  sSheet: "SampleSheet.csv"
+---
+
+***
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DT)
+```
+
+```{r ss_parsing, include=FALSE}
+lineStorage <- readLines(paste(params$runPath, params$runID, params$sSheet, sep = "/"), n = 30)
+for (l in 1:length(lineStorage)) {
+  if (str_detect(lineStorage[l], "\\[Header\\]")) {
+    ssHeader <- list(expName = str_split(lineStorage[l + 2], ",")[[1]][2],
+                     date = str_split(lineStorage[l + 3], ",")[[1]][2])
+  } else {
+    if (str_detect(lineStorage[l], "\\[Reads\\]")) {
+      readLength <- as.numeric(str_split(lineStorage[l + 1], ",")[[1]][1]) - 1
+    } else {
+      if (str_detect(lineStorage[l], "\\[Data\\]")) {
+        dataStartsLine <- l
+        break
+      }
+    }
+  }
+}
+```
+
+```{r run_info, include=FALSE}
+sampleInfo <- read_csv(paste(params$runPath, 
+                             params$runID, 
+                             params$sSheet, 
+                             sep = "/"), 
+                       skip = dataStartsLine, 
+                       skip_empty_rows = TRUE) # skip_empty_rows not working as expected
+sampleInfo <- filter(sampleInfo, Sample_ID != "")
+sampleInfo <- select(sampleInfo, -"Sample_Project", -"Description")
+```
+
+__Run Name:__ `r ssHeader$expName`  
+__Run Date:__ `r ssHeader$date`  
+__Read Length:__ 2 x `r readLength`  
+<br>
+
+```{r display_sSheet, echo=FALSE}
+datatable(sampleInfo)
+```

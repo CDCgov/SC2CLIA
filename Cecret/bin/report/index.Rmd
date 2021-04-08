@@ -1,0 +1,78 @@
+---
+title: "Summary"
+params:
+  runPath: ".."
+  runID: "M347-21-010"
+  sumSheet: "summary.txt"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(formattable)
+library(kableExtra)
+```
+```{r thresholds, include=FALSE}
+fastqcRawThreshold <- 50000        # min number of raw reads accepted in fastqc_raw column
+seqycleanKeptThreshold <- 80       # min percent of reads remaining after seqyclean
+depthAfterTrimThreshold <- 100     # min depth after trimming
+covAfterTrimThreshold <- 98        # min coverage after trimming
+perHumanThreshold <- 10            # max percentage human reads allowed per sample
+perSC2Threshold <- 90              # min percentage human reads allowed per sample
+```
+
+```{r format-fnc, include=FALSE}
+highGood <- function(v, t) {
+  # accepts value and threshhold and returns green if value >= threshhold and gray if not
+  return(ifelse(v >= t, "lightgreen", "lightgray"))
+}
+```
+
+
+```{r read-sum, include=FALSE}
+# Read summary.txt in
+sumTab <- read_tsv(paste0(params$runPath,
+                          "/",
+                          params$runID,
+                          "/",
+                          params$sumSheet))
+
+# This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
+sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
+          # remember to mod column names to match if columns included change
+          select(-aligner_version, -ivar_version, -fastp_reads_passed) %>%
+          mutate(
+            pangolin_lineage = cell_spec(pangolin_lineage, 
+                                         color = ifelse(pangolin_lineage == "None", "red", "black"), 
+                                         bold = ifelse(pangolin_lineage == "None", T, F)),
+            pangolin_status = cell_spec(pangolin_status, 
+                                        color = ifelse(pangolin_status == "passed_qc", "black", "red"), 
+                                        bold = ifelse(pangolin_status == "passed_qc", F, T)),
+            fastqc_raw_reads_1 = color_bar(color = highGood(fastqc_raw_reads_1, fastqcRawThreshold))(fastqc_raw_reads_1), 
+            fastqc_raw_reads_2 = color_bar(color = highGood(fastqc_raw_reads_2, fastqcRawThreshold))(fastqc_raw_reads_2),
+            seqyclean_percent_kept_after_cleaning = cell_spec(seqyclean_percent_kept_after_cleaning, 
+                                        color = ifelse(seqyclean_percent_kept_after_cleaning >= seqycleanKeptThreshold, "black", "red"), 
+                                        bold = ifelse(seqyclean_percent_kept_after_cleaning >= seqycleanKeptThreshold, F, T)),
+            depth_after_trimming = cell_spec(depth_after_trimming, 
+                                             color = ifelse(depth_after_trimming >= depthAfterTrimThreshold, "black", "red"), 
+                                             bold = ifelse(depth_after_trimming >= depthAfterTrimThreshold, F, T)),
+            coverage_after_trimming = cell_spec(coverage_after_trimming, 
+                                                color = ifelse(coverage_after_trimming >= covAfterTrimThreshold, "black", "red"), 
+                                                bold = ifelse(coverage_after_trimming >= covAfterTrimThreshold, F, T)),
+            `%_human_reads` = cell_spec(`%_human_reads`, 
+                                                color = ifelse(`%_human_reads` < perHumanThreshold, "black", "red"), 
+                                                bold = ifelse(`%_human_reads` < perHumanThreshold, F, T)),
+            `%_SARS-COV-2_reads` = cell_spec(`%_SARS-COV-2_reads`, 
+                                                color = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, "black", "red"), 
+                                                bold = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, F, T)))
+
+# Make column names nicer
+colnames(sumTab) <- c("GroupID", "SampleID", "Pangolin", "Pangolin.QC", "NextClade", "#FastQC.R1", "#FastQC.R2", "#Seqyclean.Pairs", "%Seqyclean.Pairs", "Depth.Post.Trim", "Coverage.Post.Trim", "%Human.Reads", "%SC2.Reads", "#iVar.Variants", "#BCFTools.Variants", "#BEDTools.Failed.Amps", "#SAMTools.Failed.Amps", "#N", "#Degenerage", "#ACTG", "#Total.Bases", "Length.Longest.Insert", "Length.Longest.Del")
+          
+```
+
+```{r display-sum, echo=FALSE}
+kbl(sumTab, escape = F, align = "l") %>% 
+  kable_material(c("striped", "hover")) 
+```
+
