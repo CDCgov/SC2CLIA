@@ -122,10 +122,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description = 'Parse vcf files for indels.')
     parser.add_argument('-d', '--vcf', metavar = '', required = True, help = 'Specify directory for vcf files')
-    parser.add_argument('-s', '--sc2', metavar = '', required = True, help = 'Specify data file for Reads Matching SC2 Ref')
+    #parser.add_argument('-s', '--sc2', metavar = '', required = True, help = 'Specify data file for Reads Matching SC2 Ref')
     parser.add_argument('-o', '--result', metavar='', required=True, help='Specify file to attach the result')
     args = parser.parse_args()
 
     find_largest_indel(args.vcf, args.result)
-    find_reads_match_SC2ref(args.sc2,args.result)
+    #find_reads_match_SC2ref(args.sc2,args.result)
     # example usage: python3 vcf_parser.py -d vcf -o vcf/run_results.txt

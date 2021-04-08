@@ -65,6 +65,7 @@ params.pacbam = false // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
+params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
 
 
 // for optional contamination determination with kraken
@@ -163,7 +164,7 @@ process seqyclean {
   set val(sample), file(reads), val(paired_single) from fastq_reads_seqyclean
 
   output:
-  tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq") optional true into seqyclean_paired_files, seqyclean_aocd
+  tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq") optional true into seqyclean_paired_files, seqyclean_aocd, seqyclean_sc2ref
   tuple sample, file("seqyclean/${sample}_cln_SE.fastq") optional true into seqyclean_single_file
   tuple sample, file("seqyclean/${sample}_clean_PE{1,2}.fastq"), val(paired_single) optional true into seqyclean_paired_files_classification
   tuple sample, file("seqyclean/${sample}_cln_SE.fastq"), val(paired_single) optional true into seqyclean_single_file_classification
@@ -394,7 +395,7 @@ process sort {
   set val(sample), file(sam) from sams
 
   output:
-  tuple sample, file("aligned/${sample}.sorted.bam") into pre_trim_bams, pre_trim_bams2
+  tuple sample, file("aligned/${sample}.sorted.bam") into pre_trim_bams, pre_trim_bams2, pre_trim_sc2ref
   tuple sample, file("aligned/${sample}.sorted.bam"), file("aligned/${sample}.sorted.bam.bai") into pre_trim_bams_bamsnap
   file("logs/sort/${sample}.${workflow.sessionId}.{log,err}")
 
@@ -1093,9 +1094,41 @@ process aocd_samtools {
   if [ ! -z "$last" ]; then
     samtools sort !{sam} | samtools view -F 4 -o !{sample}.sorted.bam
     aocd_result=`samtools mpileup -a -d 8000 -f !{fa} !{sample}.sorted.bam | \
-         awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {print SUM/COUNT} else {print -1} }'`
+         awk '$3 != "N" { SUM += $4; COUNT += 1 } END { if (COUNT > 0) {printf "%.2f", SUM/COUNT} else {print -1} }'`
   else
     aocd_result=-1
+  fi
+
+  '''
+
+}
+
+seqyclean_sc2ref
+  .join(pre_trim_sc2ref, remainder: true, by:0)
+  .set { pre_SC2Ref_matched_reads }
+
+process SC2Ref_matched_reads {
+  tag "${sample}"
+  echo false
+
+  when:
+  params.sc2ref
+
+  input:
+  tuple sample, file(fastq), file (bam) from pre_SC2Ref_matched_reads
+  
+  output:
+  tuple sample, env(sc2ref_result) into SC2Ref_matched_reads_results
+
+  shell:
+  '''
+  num=`samtools stats !{bam} | grep 'reads mapped and paired' | cut -f 3`
+  denom=`awk 'NR%4 == 1 {print $0}' <(cat !{fastq}) | wc -l`
+  if (( $denom == 0 )); then
+    sc2ref_result=-1
+  else
+    #sc2ref_result=$(bc <<< "scale=2; $num * 100 / $denom")
+    sc2ref_result=`echo "$num $denom" | awk '{printf "%.2f", $1*100/$2}'`
   fi
 
   '''
@@ -1124,6 +1157,7 @@ consensus_results
   .join(aligner_version, remainder: true, by:0)
   .join(ivar_version, remainder: true, by: 0)
   .join(aocd_samtools_results, remainder: true, by: 0)
+  .join(SC2Ref_matched_reads_results, remainder: true, by: 0)
   .set { results }
 
 process summary {
@@ -1152,7 +1186,8 @@ process summary {
     val(samtools_num_failed_amplicons),
     val(bwa_version),
     val(ivar_version),
-    val(aocd_result) from results
+    val(aocd_result),
+    val(sc2ref_result) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1173,11 +1208,13 @@ process summary {
     if (( !{num_total} == 0 )); then
       percent_N=-1
     else
-      percent_N=$(( !{num_N} * 100 / !{num_total} ))
+      #percent_N=$(bc <<< "scale=2; !{num_N} * 100 / !{num_total}")
+      percent_N=`echo "!{num_N} !{num_total}" | awk '{printf "%.2f", $1*100/$2}'`
+
     fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1551,15 +1588,9 @@ process post_process {
     rm $workflow.launchDir/$run_results
   fi
 
-  # @ToDo: this can be converted into a separate nf process, like the aocd_* process
-  run_SC2ref_read.sh -r $params.outdir
-
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
-  # also include Reads_Matching_SC2_Ref to the result file
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
-          -s $params.outdir/sc2.txt -o $params.outdir/summary.txt
-
-  rm $params.outdir/sc2.txt
+          -o $params.outdir/summary.txt
 
   # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
   python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
