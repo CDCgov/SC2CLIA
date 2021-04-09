@@ -11,9 +11,9 @@
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
-module load singularity/latest
-module load python3/3.7
-module load nextflow/20.04.1
+module --ignore-cache load singularity/latest
+module --ignore-cache load python3/3.7
+module --ignore-cache load nextflow/20.04.1
 
 PB=false
 VADR=false
