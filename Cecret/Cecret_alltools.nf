@@ -123,8 +123,8 @@ Channel
   .into { primer_bed ; primer_bed_bedtools ; primer_bed_ampliconstats }
 
 Channel
-  .fromFilePairs(["${params.reads}/**/*_R{1,2}*.fastq.gz",
-                  "${params.reads}/**/*_{1,2}.fastq*"], size: 2 )
+  .fromFilePairs(["${params.reads}/**_R{1,2}*.fastq.gz",
+                  "${params.reads}/**_{1,2}.fastq*"], size: 2 )
   .map{ reads -> tuple(reads[0].replaceAll(~/_S[0-9]+_L[0-9]+/,""), reads[1], "paired" ) }
   .set { paired_reads }
 
