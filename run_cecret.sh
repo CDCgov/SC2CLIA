@@ -11,6 +11,10 @@
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
+module load singularity/latest
+module load python3/3.7
+module load nextflow/20.04.1
+
 PB=false
 VADR=false
 while getopts "d:p:v:" o; do
@@ -56,3 +60,7 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 
 # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
 #python3 amplicon_stat.py -d $OUTDIR/samtools_ampliconstats -o $OUTDIR/amplicon_dropout_summary
+
+module unload singularity/latest
+module unload python3/3.7
+module unload nextflow/20.04.1
