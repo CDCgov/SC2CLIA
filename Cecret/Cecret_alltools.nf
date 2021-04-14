@@ -1656,19 +1656,17 @@ process vadr {
 
   shell:
   '''
-  # Downoad the VADR model files.
-  wget -nc "https://ftp.ncbi.nlm.nih.gov/pub/nawrocki/vadr-models/coronaviridae/CURRENT/vadr-models-corona-1.1.3-1.tar.gz"
-  tar xvf vadr-models-corona-1.1.3-1.tar.gz
+  # Create a vadr output directory
   mkdir -p vadr
-  
+
   # Check if file is big enough
   myfilesize=$(wc -c !{fasta} | awk '{print $1}')
   
   if (( myfilesize > 500 )); then
-    v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
-                  --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
-                  --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
-                  --mdir vadr-models-corona-1.1.3-1 !{fasta} vadr/!{sample}
+    v-annotate.pl --noseqnamemax \
+                  --split --cpu 8 --glsearch -s -r --nomisc --mkey sarscov2 --lowsim5term 2 --lowsim3term 2 \
+                  --alt_fail lowscore,fstukcnf,insertnn,deletinn \
+                  --mdir /opt/vadr/vadr-models !{fasta} vadr/!{sample}
   else
     mkdir vadr/!{sample}
     touch vadr/!{sample}/!{sample}.vadr.pass.list
