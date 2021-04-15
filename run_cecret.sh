@@ -11,8 +11,8 @@
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
-PB=false
-VADR=false
+PB=true
+VADR=true
 while getopts "d:p:v:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
