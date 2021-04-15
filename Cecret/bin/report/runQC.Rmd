@@ -1,8 +1,8 @@
 ---
 title: "Run QC"
 params:
-  runPath: ".."
-  runID: "M347-21-010"
+  analysisDirFP: null
+  runID: null
   multiQC: "multiqc_report.html"
   insertDir: "samtools_insert_sizes"
   insertFileSuffix: "-insert_sizes.txt"
@@ -30,8 +30,7 @@ insertSizes <- tibble()
 colnames(insertSizes) <- c("SampleID", "Insert_Size")
 
 # Find input files
-insertDataFiles <- list.files(path = paste(params$runPath, 
-                                           params$runID, 
+insertDataFiles <- list.files(path = paste(params$analysisDirFP, 
                                            params$insertDir, 
                                            sep = "/"),
                               full.names = TRUE,
@@ -49,10 +48,8 @@ for (i in 1:length(insertDataFiles)) {
                                                       params$insertFileSuffix), 
                                                "")) %>%
                  mutate(SampleID = str_replace(SampleID, 
-                                               paste0(params$runPath, 
+                                               paste0(params$analysisDirFP, 
                                                       "/", 
-                                                      params$runID,
-                                                      "/",
                                                       params$insertDir, 
                                                       "/"), 
                                                "")) %>%
