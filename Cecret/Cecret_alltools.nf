@@ -1135,6 +1135,61 @@ process SC2Ref_matched_reads {
 
 }
 
+process vadr {
+  tag "${sample}"
+  echo false
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.vadr  
+
+  input:
+  set val(sample), file(fasta) from consensus_vadr
+  
+  output:
+  file("vadr/${sample}/${sample}.vadr.{pass,fail}.list")
+  tuple sample, env(vadr_version) into vadr_version
+  file("logs/vadr/${sample}.${workflow.sessionId}.{log,err}")
+  tuple sample, env(vadr_result) into vadr_result
+
+  shell:
+  '''
+
+  mkdir -p vadr logs/vadr
+  log_file=logs/vadr/!{sample}.!{workflow.sessionId}.log
+  err_file=logs/vadr/!{sample}.!{workflow.sessionId}.err
+
+  # time stamp + capturing tool versions
+  date | tee -a $log_file $err_file > /dev/null
+  vadr_version=$(echo "vadr : ${VADR_VERSION}")
+  vadr_sarscov2_models_version=$(echo "vadr_sarscov2_models : ${VADR_SARSCOV2_MODELS_VERSION}")
+  echo "${vadr_version} >> $log_file
+  echo "${vadr_sarscov2_models_version} >> $log_file
+
+  # Check if file is big enough
+  myfilesize=$(wc -c !{fasta} | awk '{print $1}')
+  
+  if (( myfilesize > 500 )); then
+    v-annotate.pl --noseqnamemax \
+                  --split --cpu 8 --glsearch -s -r --nomisc --mkey sarscov2 --lowsim5term 2 --lowsim3term 2 \
+                  --alt_fail lowscore,fstukcnf,insertnn,deletinn \
+                  --mdir /opt/vadr/vadr-models !{fasta} vadr/!{sample} 2>> $err_file >> $log_file
+  else
+    mkdir vadr/!{sample}
+    touch vadr/!{sample}/!{sample}.vadr.pass.list
+    touch vadr/!{sample}/!{sample}.vadr.fail.list
+    echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
+  fi
+
+  # Add "pass" or "fail" status
+  if [ -s vadr/!{sample}/!{sample}.vadr.pass.list ]
+  then
+    vadr_result="PASS"
+  else
+    vadr_result="FAIL"
+  fi
+  '''
+}
 
 consensus_results
 //tuple sample, env(num_N), env(num_ACTG), env(num_degenerate), env(num_total) into consensus_results
@@ -1158,6 +1213,7 @@ consensus_results
   .join(ivar_version, remainder: true, by: 0)
   .join(aocd_samtools_results, remainder: true, by: 0)
   .join(SC2Ref_matched_reads_results, remainder: true, by: 0)
+  .join(vadr_result, remainder: true, by: 0)
   .set { results }
 
 process summary {
@@ -1187,7 +1243,8 @@ process summary {
     val(bwa_version),
     val(ivar_version),
     val(aocd_result),
-    val(sc2ref_result) from results
+    val(sc2ref_result),
+    val(vadr_result) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1213,8 +1270,8 @@ process summary {
 
     fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1636,46 +1693,6 @@ process pacbam {
   fi
 
   '''
-}
-
-process vadr {
-  tag "${sample}"
-  echo false
-  publishDir "${params.outdir}", mode: 'copy'
-
-  when:
-  params.vadr  
-
-  input:
-  set val(sample), file(fasta) from consensus_vadr
-  
-  output:
-  file("vadr/${sample}/${sample}.vadr.pass.list") into vadr_passlist
-  file("vadr/${sample}/${sample}.vadr.fail.list") into vadr_faillist
-
-
-  shell:
-  '''
-  # Create a vadr output directory
-  mkdir -p vadr
-
-  # Check if file is big enough
-  myfilesize=$(wc -c !{fasta} | awk '{print $1}')
-  
-  if (( myfilesize > 500 )); then
-    v-annotate.pl --noseqnamemax \
-                  --split --cpu 8 --glsearch -s -r --nomisc --mkey sarscov2 --lowsim5term 2 --lowsim3term 2 \
-                  --alt_fail lowscore,fstukcnf,insertnn,deletinn \
-                  --mdir /opt/vadr/vadr-models !{fasta} vadr/!{sample}
-  else
-    mkdir vadr/!{sample}
-    touch vadr/!{sample}/!{sample}.vadr.pass.list
-    touch vadr/!{sample}/!{sample}.vadr.fail.list
-    echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
-  fi
-
-  '''
-
 }
 
 process mqc {

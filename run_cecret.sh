@@ -46,6 +46,9 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
 							--pacbam $PB --vadr $VADR
 
+# Stops the ^H character from being printed after running Nextflow
+stty erase ^H
+
 # -- the following scripts are moved to nextflow workflow instead --
 
 # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
