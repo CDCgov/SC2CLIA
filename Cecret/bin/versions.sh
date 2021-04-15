@@ -24,7 +24,7 @@ done
 # multiqc
 D=$(dirname "${1}")
 MQC=$("${D}"/SINGULARITY_CACHE/ewels-multiqc-latest.img --version)
-echo "multiqc: ${MQC}" >> "${1}"/versions.txt
+echo "fastqc: ${MQC}" >> "${1}"/versions.txt
 # pacbam
 PB=$("${D}"/SINGULARITY_CACHE/cibiobcg-pacbam-latest.img 2>&1)
 PBO=$(echo $PB | sed 's/\sUsage.*//')
