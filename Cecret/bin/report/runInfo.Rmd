@@ -1,9 +1,9 @@
 ---
 title: "Run Info"
 params:
-  runPath: ".."
-  runID: "M347-21-010"
-  sSheet: "SampleSheet.csv"
+  analysisDirFP: null
+  runID: null
+  seqDirFP: null
 ---
 
 ***
@@ -15,7 +15,8 @@ library(DT)
 ```
 
 ```{r ss_parsing, include=FALSE}
-lineStorage <- readLines(paste(params$runPath, params$runID, params$sSheet, sep = "/"), n = 30)
+# SampleSheet.csv parsing; dealing with the different formats is a bit dicey. May need to revisit.
+lineStorage <- readLines(paste(params$seqDirFP, "SampleSheet.csv", sep = "/"), n = 30)
 for (l in 1:length(lineStorage)) {
   if (str_detect(lineStorage[l], "\\[Header\\]")) {
     ssHeader <- list(expName = str_split(lineStorage[l + 2], ",")[[1]][2],
@@ -34,14 +35,12 @@ for (l in 1:length(lineStorage)) {
 ```
 
 ```{r run_info, include=FALSE}
-sampleInfo <- read_csv(paste(params$runPath, 
-                             params$runID, 
-                             params$sSheet, 
+sampleInfo <- read_csv(paste(params$seqDirFP, 
+                             "SampleSheet.csv", 
                              sep = "/"), 
                        skip = dataStartsLine, 
                        skip_empty_rows = TRUE) # skip_empty_rows not working as expected
 sampleInfo <- filter(sampleInfo, Sample_ID != "")
-sampleInfo <- select(sampleInfo, -"Sample_Project", -"Description")
 ```
 
 __Run Name:__ `r ssHeader$expName`  
