@@ -1,12 +1,32 @@
 ---
 title: "About Report"
 params: 
-  bwaV: "0.7.17-r1188"
-  ivarV: "1.3.1"
+  runPath: NULL
+  runID: NULL
 ---
+
+# For fast standalone testing:
+# rmarkdown::render(input = "about.Rmd", output_format = "html_document", params = list(runPath = "/Path/to/dir/containing/versions.txt", runID = "Dir/containing/versions.txt"))
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+```
+
+```{r version-import, include=FALSE}
+vTab <- readr::read_delim(file = paste(params$runPath, params$runID, "versions.txt", sep = "/"),
+                          col_names = c("Cecret Output Directory", "Tool Version"),
+                          delim = ":",
+                          trim_ws = TRUE)
+```
 
 ***
 
-#### Cecret Pipeline Component Versions
-* BWA aligner: `r params$bwaV`
-* iVar: `r params$ivarV`
+### Cecret Pipeline Component Versions  
+<br>
+```{r version-display, echo=FALSE}
+kbl(vTab, escape = F, align = "l") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE, position = "l")
+```
+
