@@ -1,8 +1,7 @@
 ---
 title: "About Report"
 params: 
-  runPath: NULL
-  runID: NULL
+  analysisDirFP: null
 ---
 
 # For fast standalone testing:
@@ -15,7 +14,7 @@ library(kableExtra)
 ```
 
 ```{r version-import, include=FALSE}
-vTab <- readr::read_delim(file = paste(params$runPath, params$runID, "versions.txt", sep = "/"),
+vTab <- readr::read_delim(file = paste(params$analysisDirFP, "versions.txt", sep = "/"),
                           col_names = c("Cecret Output Directory", "Tool Version"),
                           delim = ":",
                           trim_ws = TRUE)

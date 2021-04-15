@@ -6,7 +6,6 @@ ver <- "version 0.1\n"
 # Load libraries
 suppressMessages(library(docopt))
 suppressMessages(library(testthat))
-suppressMessages(library(stringr))
 
 # Parse the args with docopt (will always be character strings)
 doc <- "Description: run this script to generate a report from Cecret pipeline outputs in HTML.
@@ -16,39 +15,47 @@ Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat
 
-Usage: config.R -r <runID> [-p <runPath> -s <samplesheet>]
+Usage: config.R -r <runID> -a <analysisDirFP -s <seqDirFP>
 config.R (-v | --version)
 config.R (-h | --help)
 
 Options:
--r <runID> --runID=<runID>                         Sequencing run ID; string
--p <runPath> --runPath=<runPath>                   Path to run directory given in runID; string [default: '../../../../runs']
--a <analysisPath> --analysisPath=<analysisPath>    Cecret output directory path; string [default: '../../../']
--s <sampleSheet> --ss=<ss>                         Sample sheet file name (CSV only); string [default: 'SampleSheet.csv']
--h --help                                          Show this help and exit
--v --version                                       Show version and exit"
+-r <runID> --runID=<runID>                            Sequencing run ID; string
+-a <analysisDirFP> --analysisDirFP=<analysisDirFP>    Cecret output directory full path; string
+-s <seqDirFP> --seqDirFP=<seqDirFP>                   Full path to sequencing run directory; string
+-h --help                                             Show this help and exit
+-v --version                                          Show version and exit"
 
 args <- docopt(doc = doc, version = ver)
 
 # Run bash script to generate list of component versions
-# First find the Cecret output directory
-outDirs <- list.dirs(path = args$analysisPath,
-                     full.names = TRUE,
-                     recursive = FALSE)
-analysisDir <- str_subset(outDirs, args$runID)
-system2('../versions.sh', args = c(analysisDir), wait = TRUE)
+system2(command = "../versions.sh",
+        args = c(args$analysisDirFP),
+        wait = TRUE)
+test_that(desc = "versions.sh ran successfully",
+          code = {
+            expect_true(file.exists(paste0(args$analysisDirFP, "/versions.txt")))
+            expect_that(file.size(paste0(args$analysisDirFP, "/versions.txt")) > 0)
+          })
 
-# library(tidyverse)
+# Parameters to pass to Rmd files
+params <- list(runID = args$runID,
+               analysisDirFP = args$analysisDirFP,
+               seqDirFP = args$seqDirFP)
 
-# sumFile <- read_tsv(paste0(args$runPath,
-#                            "/",
-#                            args$runID,
-#                            "/",
-#                            args$sumSheet))
-# bwaV <- sumFile$aligner_version[1]
-# ivarV <- sumFile$ivar_version[1]
+# Rmd files to render
+rmdFiles <- c("about.Rmd", "ampliconCov.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd")
+lapply(rmdFiles, FUN = funtion(x) {
+  render(input = x, output_format = "html_document", params = params)
+})
 
-# rmarkdown::render_site(params = list(ssheet = args$samplesheet,
-#                                       ))
+# Move rendered files into single output directory
+system2(command = "mv",
+        args = c("*.html", paste(args$analysisDirFP, "report", sep = "/")),
+        wait = TRUE)
 
-# will need to cp multiQC report file from fastqc into _site directory when complete unless can find a workaround.
+# Cp multiqc output to report directory
+system2(command = "cp",
+        args = c(paste(args$analysisDirFP, "MultiQC/multiqc_report.html", sep = "/"),
+                 paste(args$analysisDirFP, "report", sep = "/")),
+        wait = TRUE)
