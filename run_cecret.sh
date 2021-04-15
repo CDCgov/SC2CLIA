@@ -11,8 +11,8 @@
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
-PB=false
-VADR=false
+PB=true
+VADR=true
 while getopts "d:p:v:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
@@ -45,6 +45,9 @@ OUTDIR=$PWD/Run\_$current_time\_$(basename $DATA)
 $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
 							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
 							--pacbam $PB --vadr $VADR
+
+# Stops the ^H character from being printed after running Nextflow
+stty erase ^H
 
 # -- the following scripts are moved to nextflow workflow instead --
 
