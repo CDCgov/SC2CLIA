@@ -1,9 +1,8 @@
 ---
 title: "Summary"
 params:
-  runPath: ".."
-  runID: "M347-21-010"
-  sumSheet: "summary.txt"
+  analysisDirFP: null
+  runID: null
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +30,7 @@ highGood <- function(v, t) {
 
 ```{r read-sum, include=FALSE}
 # Read summary.txt in
-sumTab <- read_tsv(paste0(params$runPath,
-                          "/",
-                          params$runID,
-                          "/",
-                          params$sumSheet))
+sumTab <- read_tsv(paste0(params$analysisDirFP, "/summary.txt"))
 
 # This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
