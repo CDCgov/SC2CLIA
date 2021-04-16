@@ -66,6 +66,8 @@ rmdFiles <- c("about.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov
 lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params))
 
 # Move rendered files into single output directory
+suppressWarnings(dir.create(file.path(args$analysisDirFP, "report")))
+suppressWarnings(dir.create(file.path(args$analysisDirFP, "report", "ref_docs")))
 system2(command = "mv",
         args = c("*.html", paste(args$analysisDirFP, "report", sep = "/")),
         wait = TRUE)
