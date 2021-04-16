@@ -4,8 +4,10 @@ params:
   analysisDirFP: null
 ---
 
+```{r about-comments, include=FALSE}
 # For fast standalone testing:
 # rmarkdown::render(input = "about.Rmd", output_format = "html_document", params = list(runPath = "/Path/to/dir/containing/versions.txt", runID = "Dir/containing/versions.txt"))
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
