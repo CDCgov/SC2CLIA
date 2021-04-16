@@ -69,7 +69,9 @@ lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_docum
 system2(command = "mv",
         args = c("*.html", paste(args$analysisDirFP, "report", sep = "/")),
         wait = TRUE)
-
+system2(command = "mv",
+        args = c("ref_docs/*.html", paste(args$analysisDirFP, "report/ref_docs/", sep = "/")),
+        wait = TRUE)
 # Cp multiqc output to report directory
 system2(command = "cp",
         args = c(paste(args$analysisDirFP, "MultiQC/multiqc_report.html", sep = "/"),
