@@ -15,7 +15,7 @@ Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat
 
-Usage: config.R -r <runID> -a <analysisDirFP -s <seqDirFP>
+Usage: config.R -r <runID> -a <analysisDirFP> -s <seqDirFP>
 config.R (-v | --version)
 config.R (-h | --help)
 
