@@ -32,21 +32,21 @@ args <- docopt(doc = doc, version = ver)
 system2(command = "../versions.sh",
         args = c(args$analysisDirFP),
         wait = TRUE)
-tryCatch(
-  expr = { 
-    test_that(desc = "versions.sh ran successfully",
-              code = {
-              expect_true(file.exists(paste0(args$analysisDirFP, "/versions.txt")))
-              expect_that(file.size(paste0(args$analysisDirFP, "/versions.txt")) > 0)
-          })
-  },
-  error = function(e){
-    print(e)
-    print("versions.sh did not execute successfully.")
-    print(paste0("Could not find: ", paste0(args$analysisDirFP, "/versions.txt"), " or file size was 0"))
-    stop()
-  }
-)
+# tryCatch(
+#   expr = { 
+#     test_that(desc = "versions.sh ran successfully",
+#               code = {
+#               expect_true(file.exists(paste0(args$analysisDirFP, "/versions.txt")))
+#               expect_that(file.size(paste0(args$analysisDirFP, "/versions.txt")) > 0)
+#           })
+#   },
+#   error = function(e){
+#     print(e)
+#     print("versions.sh did not execute successfully.")
+#     print(paste0("Could not find: ", paste0(args$analysisDirFP, "/versions.txt"), " or file size was 0"))
+#     stop()
+#   }
+# )
 
 # Parameters to pass to Rmd files
 params <- list(runID = args$runID,
