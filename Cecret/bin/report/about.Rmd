@@ -2,6 +2,8 @@
 title: "About Report"
 params: 
   analysisDirFP: null
+  runID: null
+  seqDirFP: null
   v.vadr: "1.1.3"
   v.pacbam: "1.6.0"
   v.multiqc: "1.10.1"

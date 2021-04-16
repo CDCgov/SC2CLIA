@@ -3,6 +3,7 @@ title: "Run QC"
 params:
   analysisDirFP: null
   runID: null
+  seqDirFP: null
   multiQC: "multiqc_report.html"
   insertDir: "samtools_insert_sizes"
   insertFileSuffix: "-insert_sizes.txt"

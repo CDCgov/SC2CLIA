@@ -3,6 +3,7 @@ title: "Amplicon Coverage"
 params:
   analysisDirFP: null
   runID: null
+  seqDirFP: null
   pacbamDir: "pacbam"
   pacbamFileSuffix: ".primertrim.sorted.pileup"
   ampBED: "ref_docs/nCoV-2019.insert.bed"

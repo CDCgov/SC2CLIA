@@ -3,6 +3,7 @@ title: "Summary"
 params:
   analysisDirFP: null
   runID: null
+  seqDirFP: null
 ---
 
 ```{r setup, include=FALSE}
