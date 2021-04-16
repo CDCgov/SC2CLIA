@@ -1,9 +1,9 @@
 ---
 title: "Amplicon Coverage Detailed Report"
 params:
-    covTable: "notarealdefault"
-    sampleID: "notarealdefault"
-    passfailTab: "notarealdefault"
+    covTable: null
+    sampleID: null
+    passfailTab: null
 ---
 
 ```{r setup2, include=FALSE}

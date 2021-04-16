@@ -30,12 +30,12 @@ Options:
 args <- docopt(doc = doc, version = ver)
 
 # Run bash script to generate list of component versions
-print(args$analysisDirFP)
-if (isTRUE(file.exists("../versions.sh"))) {
-  print("found versions")
-} else {
-  print("cannot find versions")
-}
+# print(args$analysisDirFP)
+# if (isTRUE(file.exists("../versions.sh"))) {
+#   print("found versions")
+# } else {
+#   print("cannot find versions")
+# }
 
 system2(command = "../versions.sh",
         args = c(args$analysisDirFP),
@@ -62,7 +62,7 @@ params <- list(runID = args$runID,
                seqDirFP = args$seqDirFP)
 
 # Rmd files to render
-rmdFiles <- c("about.Rmd", "ampliconCov.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd")
+rmdFiles <- c("about.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
 lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params))
 
 # Move rendered files into single output directory
