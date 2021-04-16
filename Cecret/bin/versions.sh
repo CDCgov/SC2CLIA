@@ -21,15 +21,16 @@ for dir in "${1}"/logs/*; do
 done
 
 # For components that don't produce log files
+# Commenting out because they couldn't be called when executing this script from within the R container.
 # multiqc
-D=$(dirname "${1}")
-MQC=$(singularity exec $D/SINGULARITY_CACHE/ewels-multiqc-latest.img multiqc --version)
-echo "multiqc: $MQC" >> "${1}"/versions.txt
-# pacbam
-PB=$(singularity exec $D/SINGULARITY_CACHE/cibiobcg-pacbam-latest.img pacbam 2>&1)
-PBO=$(echo $PB | sed 's/\sUsage.*//')
-echo "pacbam: $PBO" >> "${1}"/versions.txt
-# vadr
-V=$(ls $D/SINGULARITY_CACHE | grep -o 'vadr.*[^.img]')
-echo "vadr: $V" >> "${1}"/versions.txt
+# D=$(dirname "${1}")
+# MQC=$(singularity exec $D/SINGULARITY_CACHE/ewels-multiqc-latest.img multiqc --version)
+# echo "multiqc: $MQC" >> "${1}"/versions.txt
+# # pacbam
+# PB=$(singularity exec $D/SINGULARITY_CACHE/cibiobcg-pacbam-latest.img pacbam 2>&1)
+# PBO=$(echo $PB | sed 's/\sUsage.*//')
+# echo "pacbam: $PBO" >> "${1}"/versions.txt
+# # vadr
+# V=$(ls $D/SINGULARITY_CACHE | grep -o 'vadr.*[^.img]')
+# echo "vadr: $V" >> "${1}"/versions.txt
 
