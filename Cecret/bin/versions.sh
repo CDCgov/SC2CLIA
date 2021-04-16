@@ -23,13 +23,13 @@ done
 # For components that don't produce log files
 # multiqc
 D=$(dirname "${1}")
-MQC=$("${D}"/SINGULARITY_CACHE/ewels-multiqc-latest.img --version)
-echo "multiqc: ${MQC}" >> "${1}"/versions.txt
+MQC=$(singularity exec $D/SINGULARITY_CACHE/ewels-multiqc-latest.img multiqc --version)
+echo "multiqc: $MQC" >> "${1}"/versions.txt
 # pacbam
-PB=$("${D}"/SINGULARITY_CACHE/cibiobcg-pacbam-latest.img 2>&1)
+PB=$(singularity exec $D/SINGULARITY_CACHE/cibiobcg-pacbam-latest.img pacbam 2>&1)
 PBO=$(echo $PB | sed 's/\sUsage.*//')
-echo "pacbam: ${PBO}" >> "${1}"/versions.txt
+echo "pacbam: $PBO" >> "${1}"/versions.txt
 # vadr
-V=$(ls "${D}"/SINGULARITY_CACHE | grep -o 'vadr.*[^.img]')
-echo "vadr: ${V}" >> "${1}"/versions.txt
+V=$(ls $D/SINGULARITY_CACHE | grep -o 'vadr.*[^.img]')
+echo "vadr: $V" >> "${1}"/versions.txt
 
