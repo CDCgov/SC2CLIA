@@ -62,9 +62,7 @@ params <- list(runID = args$runID,
 
 # Rmd files to render
 rmdFiles <- c("about.Rmd", "ampliconCov.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd")
-lapply(rmdFiles, FUN = funtion(x) {
-  render(input = x, output_format = "html_document", params = params)
-})
+lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params))
 
 # Move rendered files into single output directory
 system2(command = "mv",
