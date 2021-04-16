@@ -6,6 +6,7 @@ ver <- "version 0.1\n"
 # Load libraries
 suppressMessages(library(docopt))
 suppressMessages(library(testthat))
+suppressMessages(library(rmarkdown))
 
 # Parse the args with docopt (will always be character strings)
 doc <- "Description: run this script to generate a report from Cecret pipeline outputs in HTML.
