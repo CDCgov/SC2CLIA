@@ -29,6 +29,13 @@ Options:
 args <- docopt(doc = doc, version = ver)
 
 # Run bash script to generate list of component versions
+print(args$analysisDirFP)
+if (isTRUE(file.exists("../versions.sh"))) {
+  print("found versions")
+} else {
+  print("cannot find versions")
+}
+
 system2(command = "../versions.sh",
         args = c(args$analysisDirFP),
         wait = TRUE)
