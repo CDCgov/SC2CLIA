@@ -66,6 +66,7 @@ params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
 params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
+params.ncbi_upload = true // for ncbi submission
 
 
 // for optional contamination determination with kraken
@@ -1714,6 +1715,38 @@ process mqc {
   """
 
 
+}
+
+process ncbi_upload {
+  tag "ncbi_upload"
+  echo false
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.ncbi_upload  
+
+  input:
+  file(run_results) from post_process
+  
+  output:
+  file("ncbi_upload/samples.txt")
+  file("ncbi_upload/template1.csv") // these 2 need to be changed to the actual template names later
+  file("ncbi_upload/template2.csv")
+  file("ncbi_upload/run_NCBI_UPLOAD.sh")
+
+  shell:
+  '''
+  mkdir ncbi_upload
+
+  for file in !{params.outdir}/consensus/*.fa; do 
+    echo $(basename ${file}) | grep -o '.*[^consensus.fa]' >> ncbi_upload/samples.txt
+  done
+
+  cp !{workflow.launchDir}/Cecret/configs/template1.csv  ncbi_upload/template1.csv
+  cp !{workflow.launchDir}/Cecret/configs/template2.csv  ncbi_upload/template2.csv
+  cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh
+
+  '''
 }
 
 workflow.onComplete {
