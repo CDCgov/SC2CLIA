@@ -37,7 +37,7 @@ args <- docopt(doc = doc, version = ver)
 #   print("cannot find versions")
 # }
 
-system2(command = "../versions.sh",
+system2(command = "./versions.sh",
         args = c(args$analysisDirFP),
         wait = TRUE)
 # tryCatch(
