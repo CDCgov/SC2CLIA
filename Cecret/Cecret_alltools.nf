@@ -56,6 +56,7 @@ params.samtools_stats = true
 params.samtools_coverage = true
 params.samtools_flagstat = true
 params.samtools_ampliconstats = true
+params.samtools_insertsizes = true
 params.bedtools = true 
 params.nextclade = true // Rong turn it on
 params.pangolin = true
@@ -66,7 +67,6 @@ params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
 params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
-
 
 // for optional contamination determination with kraken
 params.kraken2 = false
@@ -730,7 +730,7 @@ process bamsnap {
 
 pre_trim_bams2
    .combine(trimmed_bams4, by: 0)
-   .into { pre_post_bams ; pre_post_bams2 ; pre_post_bams3 }
+   .into { pre_post_bams ; pre_post_bams2 ; pre_post_bams3 ; pre_post_bams4}
 
 process samtools_stats {
   publishDir "${params.outdir}", mode: 'copy'
@@ -830,6 +830,37 @@ process samtools_flagstat {
 
     samtools flagstat !{aligned} 2>> $err_file > samtools_flagstat/aligned/!{sample}.flagstat.txt
     samtools flagstat !{trimmed} 2>> $err_file > samtools_flagstat/trimmed/!{sample}.flagstat.txt
+  '''
+}
+
+process samtools_insertsizes {
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus 2
+
+  input:
+  set val(sample), file(aligned), file(trimmed) from pre_post_bams4
+
+  when:
+  params.samtools_insertsizes
+
+  output:
+  file("samtools_insertsizes/{aligned,trimmed}/${sample}.insertsizes.txt")
+  file("logs/samtools_insertsizes/${sample}.${workflow.sessionId}.{log,err}")
+
+  shell:
+  '''
+    mkdir -p samtools_insertsizes/aligned samtools_insertsizes/trimmed logs/samtools_insertsizes
+    log_file=logs/samtools_insertsizes/!{sample}.!{workflow.sessionId}.log
+    err_file=logs/samtools_insertsizes/!{sample}.!{workflow.sessionId}.err
+
+    date | tee -a $log_file $err_file > /dev/null
+    samtools --version >> $log_file
+
+    # Extract insert sizes from bam files pre- and post-trimming
+    samtools view -f66 !{aligned} | cut -f9 | awk '{print sqrt($0^2)}' 2>> $err_file > samtools_insertsizes/aligned/!{sample}.insertsizes.txt
+    samtools view -f66 !{trimmed} | cut -f9 | awk '{print sqrt($0^2)}' 2>> $err_file > samtools_insertsizes/trimmed/!{sample}.insertsizes.txt
   '''
 }
 
