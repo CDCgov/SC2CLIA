@@ -13,12 +13,14 @@ library(formattable)
 library(kableExtra)
 ```
 ```{r thresholds, include=FALSE}
-fastqcRawThreshold <- 50000        # min number of raw reads accepted in fastqc_raw column
-seqycleanKeptThreshold <- 80       # min percent of reads remaining after seqyclean
-depthAfterTrimThreshold <- 100     # min depth after trimming
-covAfterTrimThreshold <- 98        # min coverage after trimming
-perHumanThreshold <- 10            # max percentage human reads allowed per sample
-perSC2Threshold <- 90              # min percentage human reads allowed per sample
+fastqcRawThreshold <- 100000          # min number of raw reads accepted in fastqc_raw column
+seqycleanKeptReviewThreshold <- 90    # min percent of reads remaining after seqyclean (pass/review)
+seqycleanKeptFailThreshold <- 70      # min percent of reads remaining after seqyclean (review/fail)
+depthAfterTrimThreshold <- 100        # min depth after trimming
+covAfterTrimThreshold <- 95           # min coverage after trimming
+perHumanThreshold <- NULL             # max percentage human reads allowed per sample (not in use)
+perSC2Threshold <- 65                 # min percentage SC2 reads allowed per sample
+perNThreshold <- 10                   # max percentage N allowed in genome
 ```
 
 ```{r format-fnc, include=FALSE}
@@ -47,23 +49,29 @@ sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID),
             fastqc_raw_reads_1 = color_bar(color = highGood(fastqc_raw_reads_1, fastqcRawThreshold))(fastqc_raw_reads_1), 
             fastqc_raw_reads_2 = color_bar(color = highGood(fastqc_raw_reads_2, fastqcRawThreshold))(fastqc_raw_reads_2),
             seqyclean_percent_kept_after_cleaning = cell_spec(seqyclean_percent_kept_after_cleaning, 
-                                        color = ifelse(seqyclean_percent_kept_after_cleaning >= seqycleanKeptThreshold, "black", "red"), 
-                                        bold = ifelse(seqyclean_percent_kept_after_cleaning >= seqycleanKeptThreshold, F, T)),
+                                        color = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, "red", elseif(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, "yellow", "black")), 
+                                        bold = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, T, elseif(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, T, F))),
             depth_after_trimming = cell_spec(depth_after_trimming, 
                                              color = ifelse(depth_after_trimming >= depthAfterTrimThreshold, "black", "red"), 
                                              bold = ifelse(depth_after_trimming >= depthAfterTrimThreshold, F, T)),
             coverage_after_trimming = cell_spec(coverage_after_trimming, 
                                                 color = ifelse(coverage_after_trimming >= covAfterTrimThreshold, "black", "red"), 
                                                 bold = ifelse(coverage_after_trimming >= covAfterTrimThreshold, F, T)),
-            `%_human_reads` = cell_spec(`%_human_reads`, 
-                                                color = ifelse(`%_human_reads` < perHumanThreshold, "black", "red"), 
-                                                bold = ifelse(`%_human_reads` < perHumanThreshold, F, T)),
+            # `%_human_reads` = cell_spec(`%_human_reads`, 
+            #                                     color = ifelse(`%_human_reads` < perHumanThreshold, "black", "red"), 
+            #                                     bold = ifelse(`%_human_reads` < perHumanThreshold, F, T)),
             `%_SARS-COV-2_reads` = cell_spec(`%_SARS-COV-2_reads`, 
                                                 color = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, "black", "red"), 
-                                                bold = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, F, T)))
+                                                bold = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, F, T)),
+            `%_N` = cell_spec(`%_N`, 
+                              color = ifelse(`%_N` >= perNThreshold, "red", "black"), 
+                              bold = ifelse(`%_N` >= perNThreshold, T, F)),
+            vadr_status = cell_spec(vadr_status, 
+                                     color = ifelse(vadr_status == "PASS", "black", "red"), 
+                                     bold = ifelse(vadr_status == "PASS", F, T)))
 
 # Make column names nicer
-colnames(sumTab) <- c("GroupID", "SampleID", "Pangolin", "Pangolin.QC", "NextClade", "#FastQC.R1", "#FastQC.R2", "#Seqyclean.Pairs", "%Seqyclean.Pairs", "Depth.Post.Trim", "Coverage.Post.Trim", "%Human.Reads", "%SC2.Reads", "#iVar.Variants", "#BCFTools.Variants", "#BEDTools.Failed.Amps", "#SAMTools.Failed.Amps", "#N", "#Degenerage", "#ACTG", "#Total.Bases", "Length.Longest.Insert", "Length.Longest.Del")
+colnames(sumTab) <- c("GroupID", "SampleID", "Pangolin", "Pangolin.QC", "NextClade", "#FastQC.R1", "#FastQC.R2", "#Seqyclean.Pairs", "%Seqyclean.Pairs", "Depth.Post.Trim", "Coverage.Post.Trim", "%Human.Reads", "%SC2.Reads", "#iVar.Variants", "#BCFTools.Variants", "#BEDTools.Failed.Amps", "#SAMTools.Failed.Amps", "#N", "#Degenerage", "#ACTG", "#Total.Bases", "Total.Reads.Analyzed", "%N", "Mean.Cov.Depth", "%Reads.Mapping.SC2", "Vadr", "Length.Longest.Insert", "Length.Longest.Del")
           
 ```
 
