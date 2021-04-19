@@ -14,7 +14,8 @@ params:
 ---
 
 ```{r ampliconCov-comments, include=FALSE}
-# There's still a lot of clean up and optimization to be done on this file. Big loops need to be broken up, repeated blocks put into functions, etc. Note cache is turned on in block amp_cov; I don't think this will cause a problem when running multiple times in the same directory on different runs, but I don't know.
+# There's still a lot of clean up and optimization to be done on this file. Big loops need to be broken up, repeated blocks put into functions, etc. 
+# Note that turning on cache in block amp_cov is useful when testing on single run, but you have to turn it off when running operationally and delete any _cache directories.
 ```
 
 
@@ -69,7 +70,7 @@ for (r in 1:nrow(ampInfo)) { # this gives row index for ampInfo, i.e. a single a
                 dplyr::filter(pos %in% seq(start, end)) %>%
                 dplyr::select(pos, cov) %>%
                 dplyr::mutate(SampleID = str_replace(pbFilesPU_odd[f], "^.*/odd/", "")) %>%
-                dplyr::mutate(SampleID = str_replace(SampleID, paste0("-", params$runID, params$pacbamFileSuffix), "")) %>%
+                dplyr::mutate(SampleID = str_replace(SampleID, params$pacbamFileSuffix, "")) %>%
                 dplyr::mutate(SampleGroup = stringr::str_replace(SampleID, "-A(1|2|3|4|5|6|7|8)$", "")) %>%
                 dplyr::mutate(Amplicon = ampID) %>%
                 dplyr::arrange(pos)
@@ -84,7 +85,7 @@ for (r in 1:nrow(ampInfo)) { # this gives row index for ampInfo, i.e. a single a
                   dplyr::filter(pos %in% seq(start, end)) %>%
                   dplyr::select(pos, cov) %>%
                   dplyr::mutate(SampleID = str_replace(pbFilesPU_even[f], "^.*/even/", "")) %>%
-                  dplyr::mutate(SampleID = str_replace(SampleID, paste0("-", params$runID, params$pacbamFileSuffix), "")) %>%
+                  dplyr::mutate(SampleID = str_replace(SampleID, params$pacbamFileSuffix, "")) %>%
                   dplyr::mutate(SampleGroup = stringr::str_replace(SampleID, "-A(1|2|3|4|5|6|7|8)$", "")) %>%
                   dplyr::mutate(Amplicon = ampID) %>%
                   dplyr::arrange(pos)
