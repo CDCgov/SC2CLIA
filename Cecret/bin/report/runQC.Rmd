@@ -6,7 +6,7 @@ params:
   seqDirFP: null
   multiQC: "multiqc_report.html"
   insertDir: "samtools_insertsizes/aligned"
-  insertFileSuffix: ".insert_sizes.txt"
+  insertFileSuffix: ".insertsizes.txt"
   expectedInsertSize: 200
   extremeInsertSize: 500
 ---
