@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<Submission>
+  <Description>
+    <Comment>SARS-CoV-2 submission</Comment>
+    <Organization type="center" role="owner">
+      <Name>"Centers for Disease Control and Prevention, SARS-CoV-2 CLIA Sequencing"</Name>
+    </Organization>
+  </Description>
+  <Action>
+    <AddFiles target_db="GenBank">
+      <File file_path="sarscov2.zip">
+        <DataType>genbank-submission-package</DataType>
+      </File>
+      <Attribute name="wizard">BankIt_SARSCoV2_api</Attribute>
+      <Identifier>
+        <SPUID spuid_namespace="CDC-SC2CLIA">2021-04-16.sarscov2</SPUID>
+      </Identifier>
+    </AddFiles>
+  </Action>
+</Submission>
