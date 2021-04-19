@@ -75,6 +75,7 @@ system2(command = "mv",
         args = c("ref_docs/*.html", paste(args$analysisDirFP, "report/ref_docs/", sep = "/")),
         wait = TRUE)
 # Cp multiqc output to report directory
+# Note weirdness: on 4/18 I had a typo with a double / in the middle of the -a path when launching the script and it only failed on this step. WHY???
 system2(command = "cp",
         args = c(paste(args$analysisDirFP, "MultiQC/multiqc_report.html", sep = "/"),
                  paste(args$analysisDirFP, "report", sep = "/")),
