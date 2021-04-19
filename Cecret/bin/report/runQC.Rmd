@@ -5,8 +5,8 @@ params:
   runID: null
   seqDirFP: null
   multiQC: "multiqc_report.html"
-  insertDir: "samtools_insertsizes"
-  insertFileSuffix: "-insert_sizes.txt"
+  insertDir: "samtools_insertsizes/aligned"
+  insertFileSuffix: ".insert_sizes.txt"
   expectedInsertSize: 200
   extremeInsertSize: 500
 ---
@@ -44,9 +44,7 @@ for (i in 1:length(insertDataFiles)) {
   colnames(rawInsert) <- c("Insert_Size")
   rawInsert <- rawInsert %>%
                  mutate(SampleID = str_replace(insertDataFiles[i], 
-                                               paste0("-",
-                                                      params$runID, 
-                                                      params$insertFileSuffix), 
+                                               params$insertFileSuffix, 
                                                "")) %>%
                  mutate(SampleID = str_replace(SampleID, 
                                                paste0(params$analysisDirFP, 
