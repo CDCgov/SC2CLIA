@@ -1,4 +1,7 @@
 import csv
+
+
+
 ## Rules
 # Email contains @; email contains .com, .gov, .edu; email
 # Country name must be approved. i.e. USA / United States of America but not US or U.S.A.
@@ -9,8 +12,7 @@ import csv
 def print_contact(first_contact, last_contact, middle_contact, initials_contact,
                   suffix_contact, title_contact, email, org, dept, phone, fax,
                   street, city, state, zip, country):
-    print(
-        """
+    print("""
 Submit-block ::= {{
   contact {{
     contact {{
@@ -37,25 +39,24 @@ Submit-block ::= {{
     cit {{
     authors {{
       names std {{
-""".format(last_contact, first_contact, middle_contact, initials_contact, suffix_contact, title_contact,
-           org, dept, city, state, country, street, email, zip)
-)
+        {{
+        name """.format(last_contact, first_contact, middle_contact, initials_contact, suffix_contact, title_contact, org, dept, city, state, country, street, email, zip))
+
 def print_name(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a):
-    print(
-        """
-        name name {{
+    print("""
+          name {{
             last "{0}",
             first "{1}",
             middle "{2}",
             initials "{3}",
             suffix "{4}",
             title "{5}"
-        }}
-        """.format(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a)
+          }},""".format(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a)
     )
+
 def print_rest():
-    print(
-        """
+    print("""
+      },
       affil std {
         affil "CDC",
         div "RVB",
@@ -86,7 +87,7 @@ Seqdesc ::= pub {
             }
           },
           {
-            name name {
+            name {
               last "LastAuthorTwo",
               first "FirstAuthorTwo",
               middle "",
@@ -118,10 +119,9 @@ Seqdesc ::= user {
       data str "Submission Title:None"
     }
   }
-}
-        """
-    )
-with open('configs/submission_template.csv', newline='') as csvfile:
+}""")
+
+with open('submission_template.csv', newline='') as csvfile:
     reader = csv.DictReader(csvfile, delimiter=",")
     for row in reader:
         first_contact = row['first_contact']
@@ -144,7 +144,7 @@ with open('configs/submission_template.csv', newline='') as csvfile:
                       suffix_contact, title_contact, email, org, dept, phone, fax,
                       street, city, state, zip,country)
         
-with open('configs/author_template.csv', newline='') as csvfile:
+with open('author_template.csv', newline='') as csvfile:
     reader = csv.DictReader(csvfile, delimiter=",")
     for row in reader:
         first_contact_a = row['first_author']

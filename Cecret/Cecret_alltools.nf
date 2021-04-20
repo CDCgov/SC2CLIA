@@ -1730,8 +1730,8 @@ process ncbi_upload {
   
   output:
   file("ncbi_upload/samples.txt")
-  file("ncbi_upload/template1.csv") // these 2 need to be changed to the actual template names later
-  file("ncbi_upload/template2.csv")
+  file("ncbi_upload/author_template.csv") // these 2 need to be changed to the actual template names later
+  file("ncbi_upload/submission_template.csv")
   file("ncbi_upload/run_NCBI_UPLOAD.sh")
 
   shell:
@@ -1742,10 +1742,9 @@ process ncbi_upload {
     echo $(basename ${file}) | grep -o '.*[^consensus.fa]' >> ncbi_upload/samples.txt
   done
 
-  cp !{workflow.launchDir}/Cecret/configs/template1.csv  ncbi_upload/template1.csv
-  cp !{workflow.launchDir}/Cecret/configs/template2.csv  ncbi_upload/template2.csv
-  cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh
-
+  cp !{workflow.launchDir}/Cecret/configs/author_template.csv  ncbi_upload/author_template.csv
+  cp !{workflow.launchDir}/Cecret/configs/submission_template.csv  ncbi_upload/submission_template.csv
+  cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh && chmod 755 ncbi_upload/run_NCBI_UPLOAD.sh
   '''
 }
 

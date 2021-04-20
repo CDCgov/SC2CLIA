@@ -30,13 +30,14 @@ done
 
 # 2. src
 # python script ?  takes in a txt file with list of sequence_id (and get the csid from sequence_id ?)
-#python3 $BIN/src.py sample.txt > $SRC_FILE
-touch $SRC_FILE
+python3 $BIN/make_src.py > $SRC_FILE
+# touch $SRC_FILE
 
 # 3. sbt
 # pythong script ?  takes in CSV file for user input 
-#python3 $BIN/sbt.py template1.csv template2.csv > $SBT_TABLE
-touch $SBT_TABLE
+# python3 $BIN/make_sbt.py template1.csv template2.csv > $SBT_TABLE
+python3 $BIN/make_sbt.py > $SBT_TABLE
+# touch $SBT_TABLE
 
 # 4. generate: submission.zip, 
 rm -rf submission_file
