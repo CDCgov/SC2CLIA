@@ -1,7 +1,5 @@
 import csv
 
-
-
 ## Rules
 # Email contains @; email contains .com, .gov, .edu; email
 # Country name must be approved. i.e. USA / United States of America but not US or U.S.A.
@@ -38,20 +36,20 @@ Submit-block ::= {{
   }},
     cit {{
     authors {{
-      names std {{
-        {{
-        name """.format(last_contact, first_contact, middle_contact, initials_contact, suffix_contact, title_contact, org, dept, city, state, country, street, email, zip))
+      names std {{""".format(last_contact, first_contact, middle_contact, initials_contact, suffix_contact, title_contact, org, dept, city, state, country, street, email, zip))
 
 def print_name(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a):
     print("""
-          name {{
+        {{
+          name name{{
             last "{0}",
             first "{1}",
             middle "{2}",
             initials "{3}",
             suffix "{4}",
             title "{5}"
-          }},""".format(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a)
+            }}
+        }}""".format(first_contact_a, last_contact_a, middle_contact_a, initial_contact_a, suffix_contact_a, title_contact_a)
     )
 
 def print_rest():
@@ -80,16 +78,6 @@ Seqdesc ::= pub {
             name name {
               last "LastAuthorOne",
               first "FirstAuthorOne",
-              middle "",
-              initials "",
-              suffix "",
-              title ""
-            }
-          },
-          {
-            name {
-              last "LastAuthorTwo",
-              first "FirstAuthorTwo",
               middle "",
               initials "",
               suffix "",
@@ -144,9 +132,20 @@ with open('submission_template.csv', newline='') as csvfile:
                       suffix_contact, title_contact, email, org, dept, phone, fax,
                       street, city, state, zip,country)
         
+# def isLast(itr):
+#   old = itr.next()
+#   for new in itr:
+#     yield False, old
+#     old = new
+#   yield True, old
+
+with open('author_template.csv', newline='') as csvfile:
+  count = len(csvfile.readlines())
+
 with open('author_template.csv', newline='') as csvfile:
     reader = csv.DictReader(csvfile, delimiter=",")
     for row in reader:
+        count -= 1
         first_contact_a = row['first_author']
         last_contact_a = row['last_author']
         middle_contact_a = row['middle_author']
@@ -155,4 +154,7 @@ with open('author_template.csv', newline='') as csvfile:
         title_contact_a = row['title_author']
         print_name(first_contact_a, last_contact_a, middle_contact_a,
                    initial_contact_a, suffix_contact_a, title_contact_a)
+        # print(count)
+        if count > 1:
+          print(",")
 print_rest()

@@ -12,8 +12,7 @@ USER='CDC-SC2CLIA'
 PASSWD=$1
 FTPDIR="${USER}_$(date "+%Y.%m.%d-%H.%M.%S")"
 
-echo $FTPDIR
-echo $PASSWD
+echo "Adding submission file to Genbank folder..."
 
 ftp -n $HOST <<END_SCRIPT
 quote USER $USER
@@ -28,4 +27,7 @@ put submit.ready
 ls
 quit
 END_SCRIPT
+
+echo "...Done! Files are in Test/${FTPDIR}"
+
 exit 0
