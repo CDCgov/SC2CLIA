@@ -6,8 +6,11 @@ params:
   seqDirFP: null
   sampleIDInsertFreq: 5
 ---
-```{r index-comments, include=FALSE}
+```{r index-comments, include=FALSE, eval=FALSE}
 # CSS styling helps to manage the layout of the page to compensate for the table. From: https://itqna.net/questions/48098/how-adjust-margins-r-markdown.
+
+# For rapid testing:
+rmarkdown::render(input = "index.Rmd", output_file = "index.html", params = list(analysisDirFP = "../../../../runs/M347-21-013", runID = "M347-21-013", seqDirFP = "../../../../runs/M347-21-013"))
 ```
 <style type="text/css">
 .main-container {
@@ -51,7 +54,7 @@ sumTab <- read_tsv(paste0(params$analysisDirFP, "/summary.txt"))
 # This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
           # remember to mod column names to match if columns included change
-          select(-sample_id, -aligner_version, -ivar_version, -fastp_reads_passed) %>%
+          select(-aligner_version, -ivar_version, -fastp_reads_passed) %>%
           mutate(
             pangolin_lineage = cell_spec(pangolin_lineage, 
                                          color = ifelse(pangolin_lineage == "None", "red", "black"), 
@@ -84,21 +87,18 @@ sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID),
                                      bold = ifelse(vadr_status == "PASS", F, T)))
 
 # Make column names nicer
-colnames(sumTab) <- c("SampleID", "Pangolin", "Pangolin.QC", "NextClade", "#FastQC.R1", "#FastQC.R2", "#Seqyclean.Pairs", "%Seqyclean.Pairs", "Depth.Post.Trim", "Coverage.Post.Trim", "%Human.Reads", "%SC2.Reads", "#iVar.Variants", "#BCFTools.Variants", "#BEDTools.Failed.Amps", "#SAMTools.Failed.Amps", "#N", "#Degenerage", "#ACTG", "#Total.Bases", "Total.Reads.Analyzed", "%N", "Mean.Cov.Depth", "%Reads.Mapping.SC2", "Vadr", "Length.Longest.Insert", "Length.Longest.Del")
+colnames(sumTab) <- c("Sample.ID", "Sample.Name", "Pangolin", "Pangolin.QC", "NextClade", "#FastQC.R1", "#FastQC.R2", "#Seqyclean.Pairs", "%Seqyclean.Pairs", "Depth.Post.Trim", "Coverage.Post.Trim", "%Human.Reads", "%SC2.Reads", "#iVar.Variants", "#BCFTools.Variants", "#BEDTools.Failed.Amps", "#SAMTools.Failed.Amps", "#N", "#Degenerage", "#ACTG", "#Total.Bases", "Total.Reads.Analyzed", "%N", "Mean.Cov.Depth", "%Reads.Mapping.SC2", "Vadr", "Length.Longest.Insert", "Length.Longest.Del")
 
 # Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column
 colReps <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
 # create and bind columns to insert
-sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps,sumTab$SampleID))) 
+sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.ID))) 
 sumTabColNames <- colnames(sumTab)
 # function to rename columns slightly more nicely. Note R won't allow redundant column names.
 colNamer <- function(c) {
-  return(paste0("SampleID", str_replace(c, "V", "")))
+  return(paste0("Sample.ID", str_replace(c, "V", "")))
 }
-# colGrayBG <- function(c) {
-#   return(cell_spec(c, background = "lightgray"))
-# }
 # move new sampleID columns to right place
 for (i in 1:colReps) {
   sumTab <- relocate(sumTab, 
@@ -106,19 +106,14 @@ for (i in 1:colReps) {
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
-# format SampleID columns with gray background
-#sumTab <- mutate_at(sumTab, vars(contains("SampleID")), colGrayBG)
-          
 ```
 
 ```{r display-sum, echo=FALSE}
 # Note at time of dev, adding scroll boxes was the only way AJW could get fixed_thead = TRUE to work as expected.
-sampleIDIndices <- which(str_starts(colnames(sumTab), "SampleID"))
+sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.ID"))
 
 knitr::kable(sumTab, escape = F, align = "l") %>% 
   column_spec(sampleIDIndices, background = "lightgray") %>%
   kable_styling(fixed_thead = TRUE, bootstrap_options = c("striped", "hover")) %>%
   scroll_box(width = "150%", height = "600px")
-  
 ```
-
