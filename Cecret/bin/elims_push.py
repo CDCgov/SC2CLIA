@@ -52,6 +52,10 @@ def get_samples(filename):
     except Exception:
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
+    # Get only the real samples (exclude controls) - right now excluding if they start with non-decimal digit
+    non_sample_pattern = "^\D+"
+    filter = summary_table['sample'].str.contains(non_sample_pattern)
+    summary_table = summary_table[~filter]
     return(summary_table['sample']) 
 
 # Get the info available in summary.txt and output as a df
@@ -61,6 +65,8 @@ def get_summary_data(filename, samples):
     except Exception:
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
+    # Modify to take in samples and only keeps where rows that are real samples
+    summary_table = summary_table[summary_table["sample"].isin(samples)]
     summary_subset = summary_table.loc[:,('sample','depth_after_trimming','coverage_after_trimming','fastqc_raw_reads_1','Total_Reads_Analyzed','pangolin_lineage')]
     summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
     summary_subset['min_cov_threshold'] = 30
@@ -117,7 +123,7 @@ def main():
             except Exception:
                 print(f"Could not import {pangolin_file} using Pandas")
                 pass
-            lineage_subs = pangolin_data.iloc[0]['note']
+            lineage_subs = pangolin_data.iloc[0]['note'].split(' ')[0]
             pangoLEARN_version = pangolin_data.iloc[0]['pangoLEARN_version']
             if lineage_subs == '':
                 data_trio = (sample, "No data", pangoLEARN_version)
