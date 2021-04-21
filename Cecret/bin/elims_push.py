@@ -102,6 +102,12 @@ def main():
 
     summary_file = args.summary_file
 
+    outfile = args.directory + "/push_to_elims.txt"
+    with open(outfile, 'w') as o:
+        o.write(f"Created {outfile}")
+        o.write(f"Directory: {args.directory}")
+        o.write(f"Summary file: {summary_file}")
+
     if os.path.exists(args.directory) == False:
         print(f"Directory does not exist: {args.directory}")
         sys.exit(1)
@@ -148,8 +154,10 @@ def main():
     
     if os.path.exists(args.directory + '/report'):
         outfile = args.directory + "/report/push_to_elims.txt"
+        print(f"Generated {outfile}")
     else:
         outfile = args.directory + "/push_to_elims.txt"
+        print(f"Generated {outfile}")
 
     final_data.to_csv(outfile, sep='\t', index=False)
 
