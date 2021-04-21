@@ -36,5 +36,18 @@ bedRegions <- read_tsv(args$bedFile1FP,
                        col_names = c("REF", "START", "END", "ORF", "POOL", "TRASH")) %>%
               select(-TRASH, -REF, -POOL) %>%
               bind_rows(bedTemp) %>%
-              arrange(START)
+              arrange(START) %>%
+              relocate(ORF)
 print(bedRegions)
+
+# Get a list of samples from directory names
+
+# Function to read in data for a single sample
+
+# Function to format data for a single sample
+
+# Function to subset data by regions in bedRegions
+
+# Function(s) to calculate mean depth, %pos meeting min cov, #n, %n per region. 
+
+# Loop to call functions and append data to output table.
