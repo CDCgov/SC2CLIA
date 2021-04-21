@@ -121,6 +121,10 @@ if __name__ == "__main__":
                 cuid_list.append(str(cuid))
                 # artifactid.append(str(artifactid))
 
+    # This is currently going to fail if there is an invalid CSID
+    # We want to generate as many valid entries in test_dict instead
+    # So that the .src file is created and the run_NCBI_UPLOAD.sh script
+    # is able to work for the valid CSIDs
     test_dict=gwmo.get_dict_NCBI_UPLOAD(csid_list)
     # print(test_dict)
 

@@ -1,13 +1,14 @@
 #!/bin/bash
 
 
-# run_NCBI_UPLOAD.sh script  under each run folder
+# run_NCBI_UPLOAD.sh script under each run folder
 ID=samples.txt
 TEMPLATE=template.csv
 BIN=../../Cecret/bin
 FSA_FILE=submission.fsa
 SRC_FILE=submission.src
 SBT_TABLE=submission.sbt
+SUB_DIR=submission_dir
 
 
 if [ ! -s "${ID}" ]; then
@@ -15,7 +16,7 @@ if [ ! -s "${ID}" ]; then
     exit 1;
 fi
 
-# 1. fsa
+# 1. Fasta File
 # erase previous $FSA_FILE
 rm -f $FSA_FILE
 # assume sequence_id is the ARTIFACT_ID (CSID-CUID-ARTIFACT_ID)
@@ -28,31 +29,35 @@ cat $ID | while read LINE; do
 done
 
 
-# 2. src
-# python script ?  takes in a txt file with list of sequence_id (and get the csid from sequence_id ?)
-python3 $BIN/make_src.py > $SRC_FILE
-# touch $SRC_FILE
+# 2. Source Modifier File
+# Takes in a `samples.txt` file with list of sequence_ids. Uses CSID to extract metadata
+# Prints a source modifier file that is redirected into $SRC_FILE
+python3 $BIN/make_src.py > $SRC_FILE 2> make_src.err
 
-# 3. sbt
-# pythong script ?  takes in CSV file for user input 
-# python3 $BIN/make_sbt.py template1.csv template2.csv > $SBT_TABLE
-python3 $BIN/make_sbt.py > $SBT_TABLE
-# touch $SBT_TABLE
+# 3. Submission Template File
+# Takes in two CSV file for user input: author_template.csv and submission_template.csv 
+# Prints a submission template file that is redirected into $SBT_FILE
+python3 $BIN/make_sbt.py > $SBT_TABLE 2> make_sbt.err
 
-# 4. generate: submission.zip, 
-rm -rf submission_file
-mkdir submission_file
-zip submission_file/submission.zip $FSA_FILE $SRC_FILE $SBT_TABLE
-rm -f $FSA_FILE $SRC_FILE $SBT_TABLE
+# 4. Submission.zip
+# Zips the .fsa, .sbt., and .src file into `submission.zip`
+# Deletes the original files
+if [ -d $SUB_DIR ]; then
+	rm -rf $SUB_DIR
+	echo "Deleting previous $SUB_DIR"
+fi
+mkdir $SUB_DIR
+zip -rm $SUB_DIR/submission.zip $FSA_FILE $SRC_FILE $SBT_TABLE
 
-# 5. submission.xml
+# 5. Submission XML FILE
 python3 $BIN/csv_to_submissionXML.py
-mv submission.xml submission_file/
+mv submission.xml $SUB_DIR
 
 # 6. submit.ready
-touch submission_file/submit.ready && chmod 664 submission_file/submit.ready
+touch $SUB_DIR/submit.ready && chmod 664 $SUB_DIR/submit.ready
 
-
+# 7. Cubmit_to_genbank.sh script copied into submission folder
+cp $BIN/submit_to_genbank.sh $SUB_DIR
 
 ### TO DO  check sequence_id
 # a)	sequence IDs must be unique for each sequence
