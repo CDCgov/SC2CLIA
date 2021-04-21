@@ -1321,7 +1321,8 @@ process combined_summary {
   file("summary.txt")
   //file("run_results.txt")
   file("run_results.txt") into combined_summary
-  file("logs/summary/summary.${workflow.sessionId}.{log,err}")
+  file("logs/summary/summary.${workflow.sessionId}.{log,err}") 
+  file("summary.txt") into summary_ELIMS
 
   shell:
   '''
@@ -1662,13 +1663,16 @@ process ivar_vcf {
 
 process post_process {
   tag "EDLB QA/QC metrics"
+  publishDir "${params.outdir}", mode: 'copy'
 
   input:
   file run_results from combined_summary
+  file summary from summary_ELIMS
 
   output:
   file("run_results.txt") into post_process
-  
+  file("push_to_elims.txt")  
+
   script:
   """
   # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
@@ -1684,6 +1688,8 @@ process post_process {
   python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
   -o $params.outdir/amplicon_dropout_summary
 
+  # generate datasheet to push samples to ELIMS
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary}
   """
 }
 

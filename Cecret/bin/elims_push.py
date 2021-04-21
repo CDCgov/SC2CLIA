@@ -97,9 +97,10 @@ def main():
     #import pdb; pdb.set_trace()
     parser = argparse.ArgumentParser(description = 'Generate data for uploading to ELIMS.')
     parser.add_argument('-d', '--directory', metavar = '', required = True, help = 'Specify run directory to pull data from')
+    parser.add_argument('-s', '--summary_file', metavar = '', required = True, help = 'Specify summary.txt file to pull data from')
     args = parser.parse_args()
 
-    summary_file = args.directory + '/summary.txt'
+    summary_file = args.summary_file
 
     if os.path.exists(args.directory) == False:
         print(f"Directory does not exist: {args.directory}")
