@@ -67,6 +67,7 @@ params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
 params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
+params.ncbi_upload = true // for ncbi submission
 
 // for optional contamination determination with kraken
 params.kraken2 = false
@@ -1745,6 +1746,43 @@ process mqc {
   """
 
 
+}
+
+process ncbi_upload {
+  tag "ncbi_upload"
+  echo true
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.ncbi_upload  
+
+  input:
+  file(run_results) from post_process
+  
+  output:
+  file("ncbi_upload/samples.txt")
+  file("ncbi_upload/author_template.csv") // these 2 need to be changed to the actual template names later
+  file("ncbi_upload/submission_template.csv")
+  file("ncbi_upload/run_NCBI_UPLOAD.sh")
+
+  shell:
+  '''
+  mkdir ncbi_upload
+
+  for file in !{params.outdir}/consensus/*.fa; do 
+    sample_id=`echo $(basename ${file}) | grep -o '.*[^consensus.fa]'`
+    # initial checking 
+    if echo $sample_id | grep -qE '[0-9]{10}-[0-9A-Za-z]{8}'; then
+      echo $sample_id >> ncbi_upload/samples.txt
+    else
+      echo WARNING: $sample_id is not in proper CSID-CUID format
+    fi
+  done
+
+  cp !{workflow.launchDir}/Cecret/configs/author_template.csv  ncbi_upload/author_template.csv
+  cp !{workflow.launchDir}/Cecret/configs/submission_template.csv  ncbi_upload/submission_template.csv
+  cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh && chmod 755 ncbi_upload/run_NCBI_UPLOAD.sh
+  '''
 }
 
 workflow.onComplete {
