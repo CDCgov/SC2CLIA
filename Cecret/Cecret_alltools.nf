@@ -1324,7 +1324,8 @@ process combined_summary {
   file("summary.txt")
   //file("run_results.txt")
   file("run_results.txt") into combined_summary
-  file("logs/summary/summary.${workflow.sessionId}.{log,err}")
+  file("logs/summary/summary.${workflow.sessionId}.{log,err}") 
+  file("summary.txt") into summary_ELIMS
 
   shell:
   '''
@@ -1668,10 +1669,11 @@ process post_process {
 
   input:
   file run_results from combined_summary
+  file summary from summary_ELIMS
 
   output:
   file("run_results.txt") into post_process
-  
+
   script:
   """
   # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
@@ -1680,6 +1682,7 @@ process post_process {
   fi
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
+  singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -o $params.outdir/summary.txt
 
@@ -1687,6 +1690,8 @@ process post_process {
   python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
   -o $params.outdir/amplicon_dropout_summary
 
+  # generate datasheet to push samples to ELIMS
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
   """
 }
 
