@@ -13,14 +13,14 @@ doc <- "Description: run this script to generate a table of ORF coverage statist
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat
-Usage: config.R -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDirFP> -m <minCov>]
+Usage: config.R -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov>]
 config.R (-v | --version)
 config.R (-h | --help)
 Options:
 -a <analysisDirFP> --analysisDirFP=<analysisDirFP>    Cecret output directory full path; string
 -b <bedFile1FP> --bedFile1FP=<bedFile1FP>             Bed file 1 with full path; string [default: ../configs/MN908947.3-ORFs.bed]
 -t <bedFile2FP> --bedFile2FP=<bedFile2FP>             Bed file 2 with full path; string [default: ../configs/MN908947.3-ORF7b.bed]
--p <pacbamDirFP> --pacbamDirFP=<pacbamDirFP>          PacBam output directory full path; string [default: pacbam_orfs]
+-p <pacbamDir> --pacbamDir=<pacbamDir>                PacBam output directory name; string [default: pacbam_orfs]
 -s <pacbamFileSuf> --pacbamFileSuf=<pacbamFileSuf>    PacBam output file suffic; string [default: .primertrim.sorted.pileup]
 -m <minCov> --minCov=<minCov>                         Minimum coverage threshold to call a position; integer [default: 30]
 -h --help                                             Show this help and exit
@@ -40,8 +40,6 @@ bedRegions <- read_tsv(args$bedFile1FP,
               relocate(ORF)
 print(bedRegions)
 
-# Get a list of samples from directory names
-
 # Function to read in data for a single sample
 
 # Function to format data for a single sample
@@ -49,5 +47,23 @@ print(bedRegions)
 # Function to subset data by regions in bedRegions
 
 # Function(s) to calculate mean depth, %pos meeting min cov, #n, %n per region. 
+
+# Create output table
+outTable <- tibble()
+
+# Get a list of samples from directory names
+# Start with a list of files 
+pbFiles <- list.files(path = file.path(args$analysisDirFP, args$pacbamDir),
+                      pattern = paste0("*", args$pacbamFileSuf),
+                      full.names = TRUE,
+                      recursive = TRUE)
+# Create list of sample IDs from file names
+sampleIDs <- c()
+for (f in 1:length(pbFiles)) {
+  sampleIDs <- c(sampleIDs, basename(dirname(pbFiles[f])))
+}
+# Add sample IDs to outTable
+outTable <- bind_cols(outTable, Sample.IDs = unique(sampleIDs))
+print(outTable)
 
 # Loop to call functions and append data to output table.
