@@ -1719,7 +1719,7 @@ process mqc {
 
 process ncbi_upload {
   tag "ncbi_upload"
-  echo false
+  echo true
   publishDir "${params.outdir}", mode: 'copy'
 
   when:
@@ -1739,7 +1739,13 @@ process ncbi_upload {
   mkdir ncbi_upload
 
   for file in !{params.outdir}/consensus/*.fa; do 
-    echo $(basename ${file}) | grep -o '.*[^consensus.fa]' >> ncbi_upload/samples.txt
+    sample_id=`echo $(basename ${file}) | grep -o '.*[^consensus.fa]'`
+    # initial checking 
+    if echo $sample_id | grep -qE '[0-9]{10}-[0-9A-Za-z]{8}'; then
+      echo $sample_id >> ncbi_upload/samples.txt
+    else
+      echo WARNING: $sample_id is not in proper CSID-CUID format
+    fi
   done
 
   cp !{workflow.launchDir}/Cecret/configs/author_template.csv  ncbi_upload/author_template.csv
