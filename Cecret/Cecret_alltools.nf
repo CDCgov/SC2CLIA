@@ -1663,7 +1663,6 @@ process ivar_vcf {
 
 process post_process {
   tag "EDLB QA/QC metrics"
-  publishDir "${params.outdir}", mode: 'copy'
 
   input:
   file run_results from combined_summary
@@ -1671,7 +1670,6 @@ process post_process {
 
   output:
   file("run_results.txt") into post_process
-  file("push_to_elims.txt")  
 
   script:
   """
@@ -1681,6 +1679,7 @@ process post_process {
   fi
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
+  singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -o $params.outdir/summary.txt
 
@@ -1689,7 +1688,7 @@ process post_process {
   -o $params.outdir/amplicon_dropout_summary
 
   # generate datasheet to push samples to ELIMS
-  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary}
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
   """
 }
 
