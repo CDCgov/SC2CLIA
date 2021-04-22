@@ -34,7 +34,7 @@ From: ubuntu:20.04
   R --slave -e 'remotes::install_version(package = "docopt", version = "0.7.1", dependencies = TRUE, upgrade = FALSE, quiet = TRUE, build_manual = FALSE, build_vignettes = FALSE, lib = "/usr/lib/R/library")'
   R --slave -e 'remotes::install_version(package = "kableExtra", version = "1.3.4", dependencies = TRUE, upgrade = FALSE, quiet = TRUE, build_manual = FALSE, build_vignettes = FALSE, lib = "/usr/lib/R/library")'
   R --slave -e 'remotes::install_version(package = "dygraphs", version = "1.1.1.6", dependencies = TRUE, upgrade = FALSE, quiet = TRUE, build_manual = FALSE, build_vignettes = FALSE, lib = "/usr/lib/R/library")'
-  # Note assuming testthat, knitr, and rmarkdown are installed with dependencies = TRUE on tidyverse.
+  R --slave -e 'remotes::install_version(package = "rlist", version = "0.4.6.1", dependencies = TRUE, upgrade = FALSE, quiet = TRUE, build_manual = FALSE, build_vignettes = FALSE, lib = "/usr/lib/R/library")'
   rm -rf /tmp/Rtmp*
 
 %environment
