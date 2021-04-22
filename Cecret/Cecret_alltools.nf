@@ -1180,6 +1180,7 @@ process vadr {
   
   output:
   file("vadr/${sample}/${sample}.vadr.{pass,fail}.list")
+  file("vadr/${sample}/${sample}.vadr.ftr")
   tuple sample, env(vadr_version) into vadr_version
   file("logs/vadr/${sample}.${workflow.sessionId}.{log,err}")
   tuple sample, env(vadr_result) into vadr_result
@@ -1210,6 +1211,7 @@ process vadr {
     mkdir vadr/!{sample}
     touch vadr/!{sample}/!{sample}.vadr.pass.list
     touch vadr/!{sample}/!{sample}.vadr.fail.list
+    touch vadr/!{sample}/!{sample}.vadr.ftr
     echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
   fi
 
