@@ -30,6 +30,49 @@ Options:
 
 args <- docopt(doc = doc, version = ver)
 
+### Classes ###
+# To do: write proper setter and getter functions for classes.
+setClass(Class = "CecretORF",
+         slots = c(ORF.ID = "character",
+                   Mean.Depth = "numeric",
+                   Length = "numeric",
+                   Num.Ns = "numeric",
+                   Num.Min.Cov = "numeric",
+                   Percent.Ns = "numeric",
+                   Percent.Min.Cov = "numeric"),
+         prototype = list(ORF.ID = NA_character_,
+                          Mean.Depth = NA_real_,
+                          Length = NA_real_,
+                          Num.Ns = NA_real_,
+                          Num.Min.Cov = NA_real_,
+                          Percent.Ns = NA_real_,
+                          Percent.Min.Cov = NA_real_))
+setClass(Class = "CecretSample",
+         slots = c(Sample.ID = "character",
+                   ORF1ab = "CecretORF",
+                   S = "CecretORF",
+                   ORF3a = "CecretORF",
+                   E = "CecretORF",
+                   M = "CecretORF",
+                   ORF6 = "CecretORF",
+                   ORF7a = "CecretORF",
+                   ORF7b = "CecretORF",
+                   ORF8 = "CecretORF",
+                   N = "CecretORF",
+                   ORF10 = "CecretORF"),
+         prototype = list(Sample.ID = NA_character_,
+                          ORF1ab = new("CecretORF", ORF.ID = "ORF1ab"),
+                          S = new("CecretORF", ORF.ID = "S"),
+                          ORF3a = new("CecretORF", ORF.ID = "ORF3a"),
+                          E = new("CecretORF", ORF.ID = "E"),
+                          M = new("CecretORF", ORF.ID = "M"),
+                          ORF6 = new("CecretORF", ORF.ID = "ORF6"),
+                          ORF7a = new("CecretORF", ORF.ID = "ORF7a"),
+                          ORF7b = new("CecretORF", ORF.ID = "ORF7b"),
+                          ORF8 = new("CecretORF", ORF.ID = "ORF8"),
+                          N = new("CecretORF", ORF.ID = "N"),
+                          ORF10 = new("CecretORF", ORF.ID = "ORF10")))
+
 ### Functions ###
 
 # Functions to read in data for a single sample
@@ -123,12 +166,12 @@ for (f in 1:length(pbFiles)) {
                                         ""))
 }
 # Add sample IDs to outList. Creates outList.
-# outList is a list of lists, where key = sample ID and value = named list of output values.
-# Output values correspond to columns in the output table.
+# outList is a list of CecretSamples. Access Sample ID using outList[[n]]@Sample.ID.
+# CecretSample values correspond to ORFs. Data needed in the output table for each ORF are contained within the CecretORF objects in each CecretSample class slot.
 uniqSampleIDs <- unique(sampleIDs)
 outList <- list()
 for (i in 1:length(uniqSampleIDs)) {
-  outList[uniqSampleIDs[i]] <- list()
+  outList <- list.append(outList, new("CecretSample", Sample.ID = uniqSampleIDs[i]))
 }
 print(outList)
 
