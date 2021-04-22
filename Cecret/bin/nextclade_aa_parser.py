@@ -74,6 +74,8 @@ def nextcladeParser(nextclade_csv):
 
     seq_name = nextclade_values[nextclade_headers.index('seqName')].split('.')[0]
 
+    seq_name = seq_name.split('_')[0]
+
     seq_subs = nextclade_values[nextclade_headers.index('aaSubstitutions')]
 
     seq_sub_number = nextclade_values[nextclade_headers.index('totalAminoacidSubstitutions')]
