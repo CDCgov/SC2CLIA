@@ -48,8 +48,6 @@ print(bedRegions)
 
 # Function(s) to calculate mean depth, %pos meeting min cov, #n, %n per region. 
 
-# Create output table
-outTable <- tibble()
 
 # Get a list of samples from directory names
 # Start with a list of files 
@@ -62,8 +60,8 @@ sampleIDs <- c()
 for (f in 1:length(pbFiles)) {
   sampleIDs <- c(sampleIDs, basename(dirname(pbFiles[f])))
 }
-# Add sample IDs to outTable
-outTable <- bind_cols(outTable, Sample.IDs = unique(sampleIDs))
+# Add sample IDs to outTable. Creates outTable.
+outTable <- tibble(Sample.IDs = unique(sampleIDs))
 print(outTable)
 
 # Loop to call functions and append data to output table.
