@@ -13,10 +13,11 @@ doc <- "Description: run this script to generate a table of ORF coverage statist
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat
-Usage: config.R -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov>]
+Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov>]
 config.R (-v | --version)
 config.R (-h | --help)
 Options:
+-r <runID> --runID=<runID>                            Run ID; string
 -a <analysisDirFP> --analysisDirFP=<analysisDirFP>    Cecret output directory full path; string
 -b <bedFile1FP> --bedFile1FP=<bedFile1FP>             Bed file 1 with full path; string [default: ../configs/MN908947.3-ORFs.bed]
 -t <bedFile2FP> --bedFile2FP=<bedFile2FP>             Bed file 2 with full path; string [default: ../configs/MN908947.3-ORF7b.bed]
@@ -58,7 +59,9 @@ pbFiles <- list.files(path = file.path(args$analysisDirFP, args$pacbamDir),
 # Create list of sample IDs from file names
 sampleIDs <- c()
 for (f in 1:length(pbFiles)) {
-  sampleIDs <- c(sampleIDs, basename(dirname(pbFiles[f])))
+  sampleIDs <- c(sampleIDs, str_replace(basename(dirname(pbFiles[f])), 
+                                        paste0("-", args$runID), 
+                                        ""))
 }
 # Add sample IDs to outTable. Creates outTable.
 outTable <- tibble(Sample.IDs = unique(sampleIDs))
