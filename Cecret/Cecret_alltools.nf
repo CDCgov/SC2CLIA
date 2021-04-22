@@ -1683,9 +1683,8 @@ process post_process {
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
   # make sure we have vcf module to use
-  vcf=$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
-  if [ -f $vcf ]; then
-    singularity run $vcf
+  if [ -f "$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img" ]; then
+    singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
   fi
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -o $params.outdir/summary.txt
