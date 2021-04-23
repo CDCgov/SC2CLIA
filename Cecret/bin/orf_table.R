@@ -154,7 +154,22 @@ nPercent <- function(n, l) {
   # where n = number Ns in ORF calculated by nCounter()
   # where 1 = length of ORF
   # returns percentage
-  return((n / l)*100)
+  if (is.na(n) == TRUE || is.na(l) == TRUE) {
+    return(NA_real_)
+  } else {
+    return((n / l)*100)
+  }
+}
+
+# Calculate length of ORF; handles NAs
+orfLength <- function(v) {
+  # where v is a vector of ORF sequence
+  # returns length or NA as appropriate
+  if (is.na(v) == FALSE) {
+    return(length(v))
+  } else {
+    return(NA_real_)
+  }
 }
 
 # Add value to list of lists (intended for use on outList only)
@@ -233,29 +248,29 @@ for (s in 1:length(uniqSampleIDs)) {
   slot(outList[[s]]@N, "Num.Ns") <- nCounter(orfList$N)
   slot(outList[[s]]@ORF10, "Num.Ns") <- nCounter(orfList$ORF10)
   # Length
-  slot(outList[[s]]@ORF1ab, "Length") <- length(orfList$ORF1ab)
-  slot(outList[[s]]@S, "Length") <- length(orfList$S)
-  slot(outList[[s]]@ORF3a, "Length") <- length(orfList$ORF3a)
-  slot(outList[[s]]@E, "Length") <- length(orfList$E)
-  slot(outList[[s]]@M, "Length") <- length(orfList$M)
-  slot(outList[[s]]@ORF6, "Length") <- length(orfList$ORF6)
-  slot(outList[[s]]@ORF7a, "Length") <- length(orfList$ORF7a)
-  slot(outList[[s]]@ORF7b, "Length") <- length(orfList$ORF7b)
-  slot(outList[[s]]@ORF8, "Length") <- length(orfList$ORF8)
-  slot(outList[[s]]@N, "Length") <- length(orfList$N)
-  slot(outList[[s]]@ORF10, "Length") <- length(orfList$ORF10)
+  slot(outList[[s]]@ORF1ab, "Length") <- orfLength(orfList$ORF1ab)
+  slot(outList[[s]]@S, "Length") <- orfLength(orfList$S)
+  slot(outList[[s]]@ORF3a, "Length") <- orfLength(orfList$ORF3a)
+  slot(outList[[s]]@E, "Length") <- orfLength(orfList$E)
+  slot(outList[[s]]@M, "Length") <- orfLength(orfList$M)
+  slot(outList[[s]]@ORF6, "Length") <- orfLength(orfList$ORF6)
+  slot(outList[[s]]@ORF7a, "Length") <- orfLength(orfList$ORF7a)
+  slot(outList[[s]]@ORF7b, "Length") <- orfLength(orfList$ORF7b)
+  slot(outList[[s]]@ORF8, "Length") <- orfLength(orfList$ORF8)
+  slot(outList[[s]]@N, "Length") <- orfLength(orfList$N)
+  slot(outList[[s]]@ORF10, "Length") <- orfLength(orfList$ORF10)
   # Percent.Ns
-  slot(outList[[s]]@ORF1ab, "Percent.Ns") <- nPercent(outList[[s]]@ORF1ab@Num.Ns, length(orfList$ORF1ab))
-  slot(outList[[s]]@S, "Percent.Ns") <- nPercent(outList[[s]]@S@Num.Ns, length(orfList$S))
-  slot(outList[[s]]@ORF3a, "Percent.Ns") <- nPercent(outList[[s]]@ORF3a@Num.Ns, length(orfList$ORF3a))
-  slot(outList[[s]]@E, "Percent.Ns") <- nPercent(outList[[s]]@E@Num.Ns, length(orfList$E))
-  slot(outList[[s]]@M, "Percent.Ns") <- nPercent(outList[[s]]@M@Num.Ns, length(orfList$M))
-  slot(outList[[s]]@ORF6, "Percent.Ns") <- nPercent(outList[[s]]@ORF6@Num.Ns, length(orfList$ORF6))
-  slot(outList[[s]]@ORF7a, "Percent.Ns") <- nPercent(outList[[s]]@ORF7a@Num.Ns, length(orfList$ORF7a))
-  slot(outList[[s]]@ORF7b, "Percent.Ns") <- nPercent(outList[[s]]@ORF7b@Num.Ns, length(orfList$ORF7b))
-  slot(outList[[s]]@ORF8, "Percent.Ns") <- nPercent(outList[[s]]@ORF8@Num.Ns, length(orfList$ORF8))
-  slot(outList[[s]]@N, "Percent.Ns") <- nPercent(outList[[s]]@N@Num.Ns, length(orfList$N))
-  slot(outList[[s]]@ORF10, "Percent.Ns") <- nPercent(outList[[s]]@ORF10@Num.Ns, length(orfList$ORF10))
+  slot(outList[[s]]@ORF1ab, "Percent.Ns") <- nPercent(outList[[s]]@ORF1ab@Num.Ns, outList[[s]]@ORF1ab@Length)
+  slot(outList[[s]]@S, "Percent.Ns") <- nPercent(outList[[s]]@S@Num.Ns, outList[[s]]@S@Length)
+  slot(outList[[s]]@ORF3a, "Percent.Ns") <- nPercent(outList[[s]]@ORF3a@Num.Ns, outList[[s]]@ORF3a@Length)
+  slot(outList[[s]]@E, "Percent.Ns") <- nPercent(outList[[s]]@E@Num.Ns, outList[[s]]@E@Length)
+  slot(outList[[s]]@M, "Percent.Ns") <- nPercent(outList[[s]]@M@Num.Ns, outList[[s]]@M@Length)
+  slot(outList[[s]]@ORF6, "Percent.Ns") <- nPercent(outList[[s]]@ORF6@Num.Ns, outList[[s]]@ORF6@Length)
+  slot(outList[[s]]@ORF7a, "Percent.Ns") <- nPercent(outList[[s]]@ORF7a@Num.Ns, outList[[s]]@ORF7a@Length)
+  slot(outList[[s]]@ORF7b, "Percent.Ns") <- nPercent(outList[[s]]@ORF7b@Num.Ns, outList[[s]]@ORF7b@Length)
+  slot(outList[[s]]@ORF8, "Percent.Ns") <- nPercent(outList[[s]]@ORF8@Num.Ns, outList[[s]]@ORF8@Length)
+  slot(outList[[s]]@N, "Percent.Ns") <- nPercent(outList[[s]]@N@Num.Ns, outList[[s]]@N@Length)
+  slot(outList[[s]]@ORF10, "Percent.Ns") <- nPercent(outList[[s]]@ORF10@Num.Ns, outList[[s]]@ORF10@Length)
 }
 
 # Here we create the output table and write it to file.
