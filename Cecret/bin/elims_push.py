@@ -53,7 +53,7 @@ def get_samples(filename):
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
     # Get only the real samples (exclude controls) - right now excluding if they start with non-decimal digit
-    non_sample_pattern = "^\D+"
+    non_sample_pattern = "(^PC-|-PC-|^NC-|-NC-|^Undetermined)"
     filter = summary_table['sample'].str.contains(non_sample_pattern)
     summary_table = summary_table[~filter]
     return(summary_table['sample']) 
