@@ -31,6 +31,19 @@ out_formats = {
     "genbank":"GenBank Accession #"
 }
 
+# Make the second row (required for the ELIMS database)
+db_row = ["SAMPLECONTAINERS.SAMPLECONTAINERS.EXTERNAL_ID.", \
+          "SAMPLECONTAINERS.SAMPLECONTAINERS.CONTAINERID.", \
+          "SAMPLECONTAINERS_DEPTID.SAMPLECONTAINERS_DEPTID.CONTAINER_DEPTID.", \
+          "ORDTASK.ORDTASK.QCTYPE.", \
+          "RESULTS.RESULTS.TESTNO.", \
+          "RESULTS.RESULTS.SINONYM.", \
+          "RESULTS.RESULTS.REP.", \
+          "RESULTS.RESULTS.NUMRES.", \
+          "RESULTS.RESULTS.RN1.", \
+          "RESULTS.RESULTS.RN2."
+]
+
 
 # Get sample names to traverse through folders for pangolin info
 def get_samples(filename):
@@ -39,21 +52,20 @@ def get_samples(filename):
     Params
     ------
     filename: String
-        Name of the summary.txtfile
+        The summary.txt file
 
     Returns
     ------
-    Path to file
+    Pandas Series object that is a filtered list of sample IDs
 
     """
-
     try:
         summary_table = pd.read_csv(filename, sep='\t')
     except Exception:
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
     # Get only the real samples (exclude controls) - right now excluding if they start with non-decimal digit
-    non_sample_pattern = "(^PC-|-PC-|^NC-|-NC-|^Undetermined)"
+    non_sample_pattern = "^PC-|-PC-|^NC-|-NC-|^Undetermined"
     filter = summary_table['sample'].str.contains(non_sample_pattern)
     summary_table = summary_table[~filter]
     return(summary_table['sample']) 
@@ -77,7 +89,7 @@ def get_summary_data(filename, samples):
     return(summary_subset)
 
 
-#Change from wide to long format, add in the extra columns, rearrange, format the Analyte columns?
+#Change from wide to long format, add in the extra columns, rearrange, format the Analyte columns
 def out_elims_data(summary_df):
     long_data = pd.melt(summary_df, id_vars=['CSID','CUID'], var_name='Analyte (required)', value_name='Raw Result (required)')
     long_data['CDC Local Aliquot ID'] = ''
@@ -89,6 +101,9 @@ def out_elims_data(summary_df):
     cols = ['CSID','CUID','CDC Local Aliquot ID','QC Type','Test Name','Analyte (required)', \
             'Replicate','Raw Result (required)','Interpretation','QA Analysis']
     long_data = long_data[cols]
+    long_data.loc[-1] = db_row
+    long_data.index = long_data.index + 1
+    long_data = long_data.sort_index() # I've done it this way because I'm inserting a list, not a dict/Series with colnames
     long_data = long_data.replace({"Analyte (required)": out_formats})
     long_data.sort_values(by=['CSID','CUID'], inplace=True)
     return(long_data)
@@ -100,13 +115,11 @@ def main():
     parser.add_argument('-s', '--summary_file', metavar = '', required = True, help = 'Specify summary.txt file to pull data from')
     args = parser.parse_args()
 
+    #summary_file = args.directory + '/' + args.summary_file #I need this to test the data outside Nextflow
     summary_file = args.summary_file
 
-    outfile = args.directory + "/push_to_elims.txt"
-    with open(outfile, 'w') as o:
-        o.write(f"Created {outfile}")
-        o.write(f"Directory: {args.directory}")
-        o.write(f"Summary file: {summary_file}")
+    t = os.path.abspath(args.directory) # print statement
+    t2 = os.path.abspath(args.summary_file) # print statement
 
     if os.path.exists(args.directory) == False:
         print(f"Directory does not exist: {args.directory}")
