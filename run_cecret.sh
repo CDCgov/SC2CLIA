@@ -11,12 +11,8 @@
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
 
-module --ignore-cache load singularity/latest
-module --ignore-cache load Python3/3.7
-module --ignore-cache load nextflow/20.04.1
-
-PB=false
-VADR=false
+PB=true
+VADR=true
 while getopts "d:p:v:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
@@ -50,6 +46,9 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
 							--pacbam $PB --vadr $VADR
 
+# Stops the ^H character from being printed after running Nextflow
+stty erase ^H
+
 # -- the following scripts are moved to nextflow workflow instead --
 
 # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
@@ -61,6 +60,25 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
 #python3 amplicon_stat.py -d $OUTDIR/samtools_ampliconstats -o $OUTDIR/amplicon_dropout_summary
 
-module unload singularity/latest
-module unload python3/3.7
-module unload nextflow/20.04.1
+echo running R scripts to generate reports ...
+
+SC2-Seq-CLIA_mnt= ***replace with your own path here***
+R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
+R_script=$CECRET_BASE/Cecret/bin/report/config.R
+
+
+cd Cecret/bin/report
+
+# singularity exec -B  ***replace with your own path here***
+# 				-a /mnt/Run\_$current_time\_$(basename $DATA) \
+# 				-r $(basename $DATA) \
+# 				-s /mnt/runs > /dev/null 
+
+singularity exec -B $SC2-Seq-CLIA_mnt:/mnt $R_IMG Rscript $R_script \
+				 -a /mnt/cecret_test_prod/Run\_$current_time\_$(basename $DATA) \
+				 -r $(basename $DATA) \
+				 -s $SC2-Seq-CLIA_mnt/runs/$(basename $DATA) > /dev/null
+				 # note it will fail for run folder like this: 
+				 #  ***replace with your own path here***
+
+echo Done !
