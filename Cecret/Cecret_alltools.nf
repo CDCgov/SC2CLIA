@@ -64,6 +64,7 @@ params.samtools_ampliconstats = true
 params.samtools_insertsizes = true
 params.bedtools = true 
 params.nextclade = true // Rong turn it on
+params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
@@ -1059,7 +1060,7 @@ process nextclade {
   set val(sample), file(fasta) from consensus_nextclade
 
   output:
-  file("nextclade/${sample}_nextclade_report.csv")
+  tuple sample, file("nextclade/${sample}_nextclade_report.csv") into nextclade_csv_out
   tuple sample, env(nextclade_clade) into nextclade_clade_results
   file("logs/nextclade/${sample}.${workflow.sessionId}.{log,err}")
 
@@ -1077,6 +1078,33 @@ process nextclade {
     if [ -z "$nextclade_clade" ] ; then nextclade_clade="clade" ; fi
   '''
 }
+
+
+
+process nextcladeParse {
+
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus params.medcpus
+
+  when:
+  params.nextcladeParse
+
+  input:
+  set val(sample), file(csv) from nextclade_csv_out
+
+  output:
+  file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
+
+
+ shell:
+ '''
+    mkdir -p nextclade_parse
+    python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
+
+ '''
+ }
 
 
 seqyclean_aocd
