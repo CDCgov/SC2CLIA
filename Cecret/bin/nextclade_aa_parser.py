@@ -74,7 +74,7 @@ def nextcladeParser(nextclade_csv):
 
     seq_name = nextclade_values[nextclade_headers.index('seqName')].split('.')[0]
 
-    seq_name = seq_name.split('_')[0]
+    seq_name = seq_name.split('_')[1]
 
     seq_subs = nextclade_values[nextclade_headers.index('aaSubstitutions')]
 
@@ -107,8 +107,7 @@ if __name__ == '__main__':
     spikeProteinInfo = nextclade_obj.spikeProteinInfo()
 
 #Opens an appendable file to print the spikeProteinInfo list to
-
-    nextcladeOutFileHandle = open(args.nextclade_aa_file,'a')
+    nextcladeOutFileHandle = open(args.nextclade_aa_file,'w')
 
 #Joins the list into csv format and prints to file
 
