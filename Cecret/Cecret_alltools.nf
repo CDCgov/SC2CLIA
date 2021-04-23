@@ -27,6 +27,11 @@ params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
 params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
 params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
+params.pacbamorf_orf_bed = workflow.projectDir + "/configs/MN908947.3-ORFs.bed"
+params.pacbamorf_orf7b_bed = workflow.projectDir + "/configs/MN908947.3-ORF7b.bed"
+
+// pacbamorfs
+params.pacbam_orfs = true
 
 // model files for SARS-CoV-2 (currently unusued param; not in config/)
 // params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
@@ -59,6 +64,7 @@ params.samtools_ampliconstats = true
 params.samtools_insertsizes = true
 params.bedtools = true 
 params.nextclade = true // Rong turn it on
+params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
@@ -518,7 +524,7 @@ ivar_bams
 
 ivar_bam_bai
   .concat(samtools_bam_bai)
-  .into { trimmed_bam_bai ; trimmed_bam_bai2 }
+  .into { trimmed_bam_bai ; trimmed_bam_bai2 ; trimmed_bam_bai_orf}
 
 trimmed_bam_bai2
   .combine(primer_bed_bedtools)
@@ -1054,7 +1060,7 @@ process nextclade {
   set val(sample), file(fasta) from consensus_nextclade
 
   output:
-  file("nextclade/${sample}_nextclade_report.csv")
+  tuple sample, file("nextclade/${sample}_nextclade_report.csv") into nextclade_csv_out
   tuple sample, env(nextclade_clade) into nextclade_clade_results
   file("logs/nextclade/${sample}.${workflow.sessionId}.{log,err}")
 
@@ -1072,6 +1078,33 @@ process nextclade {
     if [ -z "$nextclade_clade" ] ; then nextclade_clade="clade" ; fi
   '''
 }
+
+
+
+process nextcladeParse {
+
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus params.medcpus
+
+  when:
+  params.nextcladeParse
+
+  input:
+  set val(sample), file(csv) from nextclade_csv_out
+
+  output:
+  file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
+
+
+ shell:
+ '''
+    mkdir -p nextclade_parse
+    python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
+
+ '''
+ }
 
 
 seqyclean_aocd
@@ -1645,7 +1678,7 @@ process ivar_vcf {
   set val(sample), file(tsv) from ivar_variant_vcf
 
   output:
-  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam
+  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam, ivar_vcf_pacbam_orf
 
   when:
   params.ivar_vcf
@@ -1699,8 +1732,12 @@ process post_process {
 }
 
 trimmed_bam_bai
-.join(ivar_vcf_pacbam, remainder:true, by:0)
-.set { pre_pacbam }
+  .join(ivar_vcf_pacbam, remainder:true, by:0)
+  .set { pre_pacbam }
+
+trimmed_bam_bai_orf
+  .join(ivar_vcf_pacbam_orf, remainder:true, by:0)
+  .set { pre_pacbam_orf }
 
 process pacbam {
   tag "${sample}"
@@ -1732,6 +1769,40 @@ process pacbam {
   else
     pacbam bam=!{bam} bed=!{params.pacbam_odd_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/odd" threads=20 #;
     pacbam bam=!{bam} bed=!{params.pacbam_even_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam/!{sample}/even" threads=20 #;
+  fi
+
+  '''
+}
+
+process pacbam_orfs {
+  tag "${sample}"
+  echo false
+  publishDir "${params.outdir}", mode: 'copy'
+
+  input:
+  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
+  //set val(sample), file(vcf) from ivar_vcf_pacbam
+  tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam_orf
+
+  output:
+  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
+  file("pacbam_orf/${sample}/{orfs,ORF7b}/*") into pacbam_orfs_out
+
+  when:
+  params.pacbam_orfs
+
+  shell:
+  '''
+  mkdir -p pacbam_orf/!{sample}/orfs
+  mkdir -p pacbam_orf/!{sample}/ORF7b
+
+  last=$( tail -n1 !{vcf} )
+  if [[ $last =~ ^#CHROM* ]]; then
+    touch pacbam_orf/!{sample}/orfs/NO_VCF
+    touch pacbam_orf/!{sample}/ORF7b/NO_VCF
+  else
+    pacbam bam=!{bam} bed=!{params.pacbamorf_orf_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam_orf/!{sample}/orfs" threads=20 #;
+    pacbam bam=!{bam} bed=!{params.pacbamorf_orf7b_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam_orf/!{sample}/ORF7b" threads=20 #;
   fi
 
   '''
