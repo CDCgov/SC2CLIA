@@ -258,10 +258,32 @@ for (s in 1:length(uniqSampleIDs)) {
   slot(outList[[s]]@ORF10, "Percent.Ns") <- nPercent(outList[[s]]@ORF10@Num.Ns, length(orfList$ORF10))
 }
 
-# for (o in 1:length(outList)) {
-#   print(outList[[o]]@Sample.ID)
-#   print(outList[[o]]@ORF1ab)
-#   print(outList[[o]]@ORF1ab)
-# }
-print(outList)
-warnings()
+# Here we create the output table and write it to file.
+outTable <- tibble()
+for (sampleIndex in 1:length(outList)) {
+  for (sampleSlotName in slotNames(outList[[sampleIndex]])) {
+    if (sampleSlotName != "Sample.ID") {
+      tempRow <- c(outList[[sampleIndex]]@Sample.ID, 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "ORF.ID"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Mean.Depth"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Length"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Ns"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Min.Cov"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Ns"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Min.Cov"))
+      outTable <- rbind(outTable, tempRow)
+    }
+  }
+}
+colnames(outTable) <- c("Sample.ID",
+                        "ORF.ID",
+                        "Mean.Depth",
+                        "Length",
+                        "Num.Ns",
+                        "Num.Min.Cov",
+                        "Percent.Ns",
+                        "Percent.Min.Cov")
+write_tsv(outTable, 
+          file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
+          col_names = TRUE)
+write_file(toString(warnings(nwarnings = 10000)), file = file.path(args$analysisDirFP, "logs", "R_warnings_orf_stats.txt"))
