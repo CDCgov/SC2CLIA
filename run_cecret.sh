@@ -15,7 +15,7 @@ usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run 
 
 PB=true
 VADR=true
-R_script=true
+R_script=false
 while getopts "d:p:v:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
