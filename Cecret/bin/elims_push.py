@@ -118,9 +118,6 @@ def main():
 
     summary_file = args.summary_file
 
-    print(args.directory)
-    print(summary_file)
-
     if os.path.exists(args.directory) == False:
         print(f"Directory does not exist: {args.directory}")
         sys.exit(1)
@@ -131,9 +128,6 @@ def main():
     
     samples = get_samples(summary_file)
     summary_output = get_summary_data(summary_file, samples)  
-
-    print(samples)
-    print(summary_output.info())
 
     # Use samples to traverse args.directory and get info about lineage substitutions and pangoLEARN vs
     pangolin_list = []
@@ -188,16 +182,10 @@ def main():
 
     final_data = out_elims_data(full_data)
 
-    print(full_data.head())
-    print(final_data.head())
-    
     if os.path.exists(args.directory + '/report'):
         outfile = args.directory + "/report/push_to_elims.txt"
     else:
         outfile = args.directory + "/push_to_elims.txt"
-
-    print(outfile)
-
 
     final_data.to_csv(outfile, sep='\t', index=False)
     print(f'Generated {outfile}.')
