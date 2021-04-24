@@ -1,0 +1,65 @@
+---
+title: "Amplicon Coverage Detailed Report"
+params:
+    covTable: "notarealdefault"
+    sampleID: "notarealdefault"
+    passfailTab: "notarealdefault"
+---
+
+```{r setup2, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(formattable)
+library(DT)
+library(dygraphs)
+```
+#### Sample ID: `r params$sampleID`
+
+```{r ampPF, echo=FALSE, results='asis', eval=TRUE}
+# Parse data passed from sampleCov.Rmd on amplicon pass/fails
+# Number amplicons passing QC
+nPass <- nrow(filter(params$passfailTab, Mean.Pass == "PASS" & Min.Pass == "PASS"))
+# Amplicon ID numbers for those that failed QC (mean cov <100, min cov <30)
+fails <- filter(params$passfailTab, Mean.Pass == "FAIL" | Min.Pass == "FAIL")$Amplicon
+```
+`r nPass` amplicons passed QC filters for sample `r params$sampleID`.  
+`r length(fails)` amplicons failed QC, including:
+<br>
+
+```{r ampFails, echo=FALSE, results='asis', eval=TRUE}
+# Generates the bulleted list of failed amplicons with hyperlinks to appropriate plots
+if (length(fails) > 0) {
+  outlist <- lapply(fails, function(x) paste0('* <a href="#amp', x, '">', x, '</a>\n'))
+  for(x in outlist) {cat(x)}
+} else {
+  cat("NA")
+}
+```
+
+***
+_Using interactive graphs:_  
+* Mousing over the plot lines causes the plot to display precise reference genome position and coverage in the upper right of the plot.
+* Click and drag to zoom in on a section of a plot.
+* Double click to zoom back out.  
+***
+
+```{r cov_tab, echo=FALSE, message=FALSE}
+# Remove unneeded columns from coverage table passed by sampleCov.Rmd
+covTab <- select(params$covTable, pos, cov, Amplicon)
+```
+
+```{r all_plots, echo=FALSE, message=FALSE}
+# Generates all of the interactive amplicon plots
+manyPlots <- lapply(seq(1, 98), function(x) dygraph(dplyr::filter(covTab, Amplicon == x) %>% 
+                                                    select(-Amplicon), 
+                                                    main = paste0('<h2 id="amp', 
+                                                                    x, 
+                                                                    '">Amplicon ', 
+                                                                    x,
+                                                                    '</h2>'),
+                                                    ylab = "Coverage Depth (bases)",
+                                                    xlab = "Position within the Reference Genome"))
+htmltools::tagList(manyPlots)
+#dygraph(dplyr::filter(inTable, Amplicon == 1))
+```
+
