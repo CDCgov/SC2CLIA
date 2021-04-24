@@ -9,15 +9,19 @@
 # this script can be called upon as: ./run_cecret.sh -d sample_folder -p true  
 # -p is optioal to turn on pacbam process
 
-usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-v  true:false flag to run vadr>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> \
+               <-v  true:false flag to run vadr> <-r  true:false flag to run R script to generate report>" \
+               1>&2; exit 1; }
 
 PB=true
 VADR=true
-while getopts "d:p:v:" o; do
+R_script=true
+while getopts "d:p:v:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
         p) PB=${OPTARG} ;;
 		v) VADR=${OPTARG} ;;
+        r) R_script=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
@@ -49,36 +53,24 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
 
-# -- the following scripts are moved to nextflow workflow instead --
 
-# this file might be confusing, it is the same as the 'summary.txt' under each Run folder
-#rm run_results.txt
+if [[ R_script =~ true ]]; then
 
-# parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
-#python3 vcf_parser.py -d $OUTDIR/bcftools_variants -o $OUTDIR/summary.txt
+	R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
 
-# parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
-#python3 amplicon_stat.py -d $OUTDIR/samtools_ampliconstats -o $OUTDIR/amplicon_dropout_summary
+	runR_script=/mnt/cecret_test_prod/Cecret/bin/report/runR.sh
+	# we need to cd to the report dir first
+	report_dir=/mnt/cecret_test_prod/Cecret/bin/report
+	# this is Jo's main R script
+	mainR_script=/mnt/cecret_test_prod/Cecret/bin/report/config.R
 
-echo running R scripts to generate reports ...
+	# these 3 are the arguments fed into mainR script
+	run_result_dir=/mnt/cecret_test_prod/Run\_$current_time\_$(basename $DATA)
+	run_name=$(basename $DATA)
+	run_dir=`echo $DATA | sed 's/\***set the binding path (top level recommended) for R container***\/groups\/OID\/NCEZID\/DFWED\/EDLB\/projects\/SC2-Seq-CLIA/\/mnt/'`
 
-SC2-Seq-CLIA_mnt= ***replace with your own path here***
-R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
-R_script=$CECRET_BASE/Cecret/bin/report/config.R
-
-
-cd Cecret/bin/report
-
-# singularity exec -B  ***replace with your own path here***
-# 				-a /mnt/Run\_$current_time\_$(basename $DATA) \
-# 				-r $(basename $DATA) \
-# 				-s /mnt/runs > /dev/null 
-
-singularity exec -B $SC2-Seq-CLIA_mnt:/mnt $R_IMG Rscript $R_script \
-				 -a /mnt/cecret_test_prod/Run\_$current_time\_$(basename $DATA) \
-				 -r $(basename $DATA) \
-				 -s $SC2-Seq-CLIA_mnt/runs/$(basename $DATA) > /dev/null
-				 # note it will fail for run folder like this: 
-				 #  ***replace with your own path here***
-
-echo Done !
+	# if to run it in your local folder, you might want to change the mnt path and/or other file/dir path accordingly
+	singularity exec --no-home -B  ***replace with your own path here***
+	                $runR_script $report_dir $mainR_script $run_result_dir $run_name $run_dir
+	                
+fi
