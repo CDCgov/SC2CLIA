@@ -59,3 +59,26 @@ stty erase ^H
 
 # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
 #python3 amplicon_stat.py -d $OUTDIR/samtools_ampliconstats -o $OUTDIR/amplicon_dropout_summary
+
+echo running R scripts to generate reports ...
+
+SC2-Seq-CLIA_mnt= ***replace with your own path here***
+R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
+R_script=$CECRET_BASE/Cecret/bin/report/config.R
+
+
+cd Cecret/bin/report
+
+# singularity exec -B  ***replace with your own path here***
+# 				-a /mnt/Run\_$current_time\_$(basename $DATA) \
+# 				-r $(basename $DATA) \
+# 				-s /mnt/runs > /dev/null 
+
+singularity exec -B $SC2-Seq-CLIA_mnt:/mnt $R_IMG Rscript $R_script \
+				 -a /mnt/cecret_test_prod/Run\_$current_time\_$(basename $DATA) \
+				 -r $(basename $DATA) \
+				 -s $SC2-Seq-CLIA_mnt/runs/$(basename $DATA) > /dev/null
+				 # note it will fail for run folder like this: 
+				 #  ***replace with your own path here***
+
+echo Done !
