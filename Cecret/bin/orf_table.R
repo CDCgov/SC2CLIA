@@ -39,16 +39,18 @@ setClass(Class = "CecretORF",
                    Mean.Depth = "numeric",
                    Length = "numeric",
                    Num.Ns = "numeric",
-                   Num.Min.Cov = "numeric",
+                   Num.Pos.Min.Cov = "numeric",
                    Percent.Ns = "numeric",
-                   Percent.Min.Cov = "numeric"),
+                   Percent.Pos.Min.Cov = "numeric",
+                   Coverage.ORF = "numeric"),
          prototype = list(ORF.ID = NA_character_,
                           Mean.Depth = NA_real_,
                           Length = NA_real_,
                           Num.Ns = NA_real_,
-                          Num.Min.Cov = NA_real_,
+                          Num.Pos.Min.Cov = NA_real_,
                           Percent.Ns = NA_real_,
-                          Percent.Min.Cov = NA_real_))
+                          Percent.Pos.Min.Cov = NA_real_),
+                          Coverage.ORF = NA_real_)
 setClass(Class = "CecretSample",
          slots = c(Sample.ID = "character",
                    ORF1ab = "CecretORF",
@@ -104,6 +106,40 @@ consensusReader <- function(f) {
   # returns 2 item vector.  1 = fasta line 1, 2 = fasta line 2
   consensusIn <- read_lines(f)
   return(consensusIn)
+}
+
+# Provides logic to determine which pb files to get for a given sample and initiates ingest
+pbFileGetter <- function(v, i) {
+  # where v is a vector of pacbam files
+  # where i is a vector of indices for files to process in v
+  # Note this function assumes the only possible numbers of pacbam files are 0, 1, or 2.
+  # Returns NA or the formatted tibble of file contents from pbReader
+  if (is.na(i[1]) == TRUE) {
+    return(NA)
+  } else {
+    if (length(v) == 1) {
+      return(pbReader(c(v[i[1]])))
+    } else {
+      return(pbReader(c(v[i[1]], v[i[2]]))) 
+    }
+  }
+}
+
+# Read in the pacbam files for 1 sample
+pbReader <- function(v) {
+  # where v is a vector of file names
+  # returns a tibble sorted by nucleotide position containing coverage at each position
+  # note that because of the way PacBam works, you will only have data for positions in your annotated in your bed file
+  pbData <- tibble()
+  for (f in v) {
+    pbData <- bind_rows(pbData, read_tsv(file = f,
+                                         col_names = TRUE))
+  }
+  pbData <- select(pbData, pos, cov) %>%
+            arrange(pos) %>%
+            distinct()
+  colnames(pbData) <- c("Position", "Coverage")
+  return(pbData)
 }
 
 # Functions to format data for a single sample
@@ -172,16 +208,16 @@ orfLength <- function(v) {
   }
 }
 
-# Add value to list of lists (intended for use on outList only)
-outputAppender <- function(l, s, n, v) {
-  # where l = main list name (should always be outList for now)
-  # where s = sample ID, which is the name of the internal list
-  # where n = name of the new value (column name) to be added to s's list
-  # where v = value to be assigned to n
-  # returns updated list
-  l[s] <- list.append(l[s], n = v)
-  return(l)
-}
+# # Add value to list of lists (intended for use on outList only)
+# outputAppender <- function(l, s, n, v) {
+#   # where l = main list name (should always be outList for now)
+#   # where s = sample ID, which is the name of the internal list
+#   # where n = name of the new value (column name) to be added to s's list
+#   # where v = value to be assigned to n
+#   # returns updated list
+#   l[s] <- list.append(l[s], n = v)
+#   return(l)
+# }
 
 ### Data ingest ###
 
@@ -209,8 +245,6 @@ pbFiles <- list.files(path = file.path(args$analysisDirFP, args$pacbamDir),
                       full.names = TRUE,
                       recursive = TRUE)
 
-# Read in PacBam output
-
 ### Process data ###
 
 # Create list of sample IDs from consensus file names
@@ -231,6 +265,7 @@ for (i in 1:length(uniqSampleIDs)) {
 
 # Loop to call functions and append data to outList.
 for (s in 1:length(uniqSampleIDs)) {
+  # This first large block handles everything derived from consensus files
   conFileIndex <- which(str_detect(consensusFiles, uniqSampleIDs[s]))
   conFileVec <- consensusReader(consensusFiles[conFileIndex])
   conVec <- consensusFormatter(uniqSampleIDs[s], conFileVec)
@@ -260,17 +295,33 @@ for (s in 1:length(uniqSampleIDs)) {
   slot(outList[[s]]@N, "Length") <- orfLength(orfList$N)
   slot(outList[[s]]@ORF10, "Length") <- orfLength(orfList$ORF10)
   # Percent.Ns
-  slot(outList[[s]]@ORF1ab, "Percent.Ns") <- nPercent(outList[[s]]@ORF1ab@Num.Ns, outList[[s]]@ORF1ab@Length)
-  slot(outList[[s]]@S, "Percent.Ns") <- nPercent(outList[[s]]@S@Num.Ns, outList[[s]]@S@Length)
-  slot(outList[[s]]@ORF3a, "Percent.Ns") <- nPercent(outList[[s]]@ORF3a@Num.Ns, outList[[s]]@ORF3a@Length)
-  slot(outList[[s]]@E, "Percent.Ns") <- nPercent(outList[[s]]@E@Num.Ns, outList[[s]]@E@Length)
-  slot(outList[[s]]@M, "Percent.Ns") <- nPercent(outList[[s]]@M@Num.Ns, outList[[s]]@M@Length)
-  slot(outList[[s]]@ORF6, "Percent.Ns") <- nPercent(outList[[s]]@ORF6@Num.Ns, outList[[s]]@ORF6@Length)
-  slot(outList[[s]]@ORF7a, "Percent.Ns") <- nPercent(outList[[s]]@ORF7a@Num.Ns, outList[[s]]@ORF7a@Length)
-  slot(outList[[s]]@ORF7b, "Percent.Ns") <- nPercent(outList[[s]]@ORF7b@Num.Ns, outList[[s]]@ORF7b@Length)
-  slot(outList[[s]]@ORF8, "Percent.Ns") <- nPercent(outList[[s]]@ORF8@Num.Ns, outList[[s]]@ORF8@Length)
-  slot(outList[[s]]@N, "Percent.Ns") <- nPercent(outList[[s]]@N@Num.Ns, outList[[s]]@N@Length)
-  slot(outList[[s]]@ORF10, "Percent.Ns") <- nPercent(outList[[s]]@ORF10@Num.Ns, outList[[s]]@ORF10@Length)
+  slot(outList[[s]]@ORF1ab, "Percent.Ns") <- nPercent(outList[[s]]@ORF1ab@Num.Ns, 
+                                                      outList[[s]]@ORF1ab@Length)
+  slot(outList[[s]]@S, "Percent.Ns") <- nPercent(outList[[s]]@S@Num.Ns, 
+                                                 outList[[s]]@S@Length)
+  slot(outList[[s]]@ORF3a, "Percent.Ns") <- nPercent(outList[[s]]@ORF3a@Num.Ns, 
+                                                     outList[[s]]@ORF3a@Length)
+  slot(outList[[s]]@E, "Percent.Ns") <- nPercent(outList[[s]]@E@Num.Ns, 
+                                                 outList[[s]]@E@Length)
+  slot(outList[[s]]@M, "Percent.Ns") <- nPercent(outList[[s]]@M@Num.Ns, 
+                                                 outList[[s]]@M@Length)
+  slot(outList[[s]]@ORF6, "Percent.Ns") <- nPercent(outList[[s]]@ORF6@Num.Ns, 
+                                                    outList[[s]]@ORF6@Length)
+  slot(outList[[s]]@ORF7a, "Percent.Ns") <- nPercent(outList[[s]]@ORF7a@Num.Ns, 
+                                                     outList[[s]]@ORF7a@Length)
+  slot(outList[[s]]@ORF7b, "Percent.Ns") <- nPercent(outList[[s]]@ORF7b@Num.Ns, 
+                                                     outList[[s]]@ORF7b@Length)
+  slot(outList[[s]]@ORF8, "Percent.Ns") <- nPercent(outList[[s]]@ORF8@Num.Ns, 
+                                                    outList[[s]]@ORF8@Length)
+  slot(outList[[s]]@N, "Percent.Ns") <- nPercent(outList[[s]]@N@Num.Ns, 
+                                                 outList[[s]]@N@Length)
+  slot(outList[[s]]@ORF10, "Percent.Ns") <- nPercent(outList[[s]]@ORF10@Num.Ns, 
+                                                     outList[[s]]@ORF10@Length)
+  # Second large block handles things derived from PacBam output.
+  pbFileIndex <- which(str_detect(pbFiles, uniqSampleIDs[s]))
+  pbTable <- pbFileGetter(pbFiles, pbFileIndex)
+
+  print(head(pbTable))
 }
 
 # Here we create the output table and write it to file.
@@ -285,19 +336,27 @@ for (sampleIndex in 1:length(outList)) {
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Ns"), 
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Min.Cov"), 
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Ns"), 
-                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Min.Cov"))
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Pos.Min.Cov"))
       outTable <- rbind(outTable, tempRow)
     }
   }
 }
+
+# Final table formatting
 colnames(outTable) <- c("Sample.ID",
                         "ORF.ID",
                         "Mean.Depth",
                         "Length",
                         "Num.Ns",
-                        "Num.Min.Cov",
+                        "Num.Pos.Min.Cov",
                         "Percent.Ns",
-                        "Percent.Min.Cov")
+                        "Percent.Pos.Min.Cov",
+                        "Coverage.ORF")
+outTable <- select(outTable, Sample.ID, ORF.ID, Length, Coverage.ORF, 
+                   Mean.Depth, Num.Pos.Min.Cov, Percent.Pos.Min.Cov, 
+                   Num.Ns, Percent.Ns)
+
+# Write out table
 write_tsv(outTable, 
           file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
           col_names = TRUE)
