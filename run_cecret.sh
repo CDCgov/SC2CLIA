@@ -53,7 +53,9 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
 
-if [[ R_script =~ true ]]; then
+
+echo running R script to generate reports ...
+if [[ $R_script =~ true ]]; then
 
 	R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
 
