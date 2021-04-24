@@ -4,6 +4,7 @@
 
 import os, sys, re, argparse
 import pandas as pd
+from functools import partial, reduce
 
 __author__ = 'Jessica Rowell'
 __version__ = '1.0'
@@ -24,7 +25,7 @@ out_formats = {
     "percent_mapped":"Percent Mapped Reads",
     "placeholder2":"Open Reading Frames",
     "placeholder3":"S-gene Coverage",
-    "placeholder4":"Spike Protein Substitutions",
+    "spike_subs":"Spike Protein Substitutions",
     "pangolin_lineage":"Lineage",
     "num_pangolin_subs":"Number of Lineage-Defined Substitutions",
     "pangoLEARN_version":"pangoLEARN Version",
@@ -85,7 +86,7 @@ def get_summary_data(filename, samples):
     summary_subset['CSID'] = summary_table['sample'].str.split('-').str[0]
     summary_subset['CUID'] = summary_table['sample'].str.split('-').str[1]
     summary_subset['genbank'] = ''    
-    # add orfs, s-cov, spike_subs
+    # add orfs, s-cov
     return(summary_subset)
 
 
@@ -101,11 +102,11 @@ def out_elims_data(summary_df):
     cols = ['CSID','CUID','CDC Local Aliquot ID','QC Type','Test Name','Analyte (required)', \
             'Replicate','Raw Result (required)','Interpretation','QA Analysis']
     long_data = long_data[cols]
+    long_data.sort_values(by=['CSID','CUID'], inplace=True)
     long_data.loc[-1] = db_row
     long_data.index = long_data.index + 1
     long_data = long_data.sort_index() # I've done it this way because I'm inserting a list, not a dict/Series with colnames
     long_data = long_data.replace({"Analyte (required)": out_formats})
-    long_data.sort_values(by=['CSID','CUID'], inplace=True)
     return(long_data)
 
 def main():
@@ -115,11 +116,10 @@ def main():
     parser.add_argument('-s', '--summary_file', metavar = '', required = True, help = 'Specify summary.txt file to pull data from')
     args = parser.parse_args()
 
-    #summary_file = args.directory + '/' + args.summary_file #I need this to test the data outside Nextflow
     summary_file = args.summary_file
 
-    t = os.path.abspath(args.directory) # print statement
-    t2 = os.path.abspath(args.summary_file) # print statement
+    print(args.directory)
+    print(summary_file)
 
     if os.path.exists(args.directory) == False:
         print(f"Directory does not exist: {args.directory}")
@@ -131,6 +131,9 @@ def main():
     
     samples = get_samples(summary_file)
     summary_output = get_summary_data(summary_file, samples)  
+
+    print(samples)
+    print(summary_output.info())
 
     # Use samples to traverse args.directory and get info about lineage substitutions and pangoLEARN vs
     pangolin_list = []
@@ -154,25 +157,50 @@ def main():
             pangolin_list.append(data_trio)
     pangolin_substitutions = pd.DataFrame(pangolin_list, columns = ['sample', 'num_pangolin_subs', 'pangoLEARN_version'])
 
-    # Merge in pangolin substition info
-    full_data = pd.merge(summary_output, pangolin_substitutions, on = 'sample', how = 'left')
+    # Get the Spike protein substitutions info  (Note: This file nomenclature is ridiculous.)
+    s_list = []
+    for sample in samples:
+        s_file = args.directory + '/nextclade_parse/' + sample + '_nextclade_parsed.csv'
+        if os.path.isfile(s_file) == True:
+            try:
+                s_data = pd.read_csv(s_file, header = None) # will always have >=2 columns
+            except Exception:
+                print(f"Could not import {s_file} using Pandas")
+                pass
+        s = ",".join(s_data.loc[0,2:].values.tolist()) # skip 1st two cells, sample & 'S'
+        s_pair = (sample, s)
+        s_list.append(s_pair)
+    s_substitutions = pd.DataFrame(s_list, columns = ['sample','spike_subs'])
+
+
+
+    # Merge all the info
+    dfs = [summary_output, pangolin_substitutions, s_substitutions] # add additional dfs as needed: orfs, s-cov 
+    merge = partial(pd.merge, on='sample', how='left') # merge object, partial function
+    full_data = reduce(merge, dfs) # apply the merge object to all the dfs
+
 
     # Rearrange columns 
     cols = ['CSID','CUID','min_cov_threshold','depth_after_trimming','coverage_after_trimming', \
             'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', \
-            'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version'] # add orfs, s-cov, spike_subs, genbank
+            'spike_subs', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version'] # add orfs, s-cov, genbank
     full_data = full_data[cols]
 
     final_data = out_elims_data(full_data)
+
+    print(full_data.head())
+    print(final_data.head())
     
     if os.path.exists(args.directory + '/report'):
         outfile = args.directory + "/report/push_to_elims.txt"
-        print(f"Generated {outfile}")
     else:
         outfile = args.directory + "/push_to_elims.txt"
-        print(f"Generated {outfile}")
+
+    print(outfile)
+
 
     final_data.to_csv(outfile, sep='\t', index=False)
+    print(f'Generated {outfile}.')
 
 if __name__ == '__main__':
     main()
