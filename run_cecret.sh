@@ -19,9 +19,9 @@ R_script=true
 while getopts "d:p:v:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
-        p) PB=${OPTARG} ;;
+    p) PB=${OPTARG} ;;
 		v) VADR=${OPTARG} ;;
-        r) R_script=${OPTARG} ;;
+    r) R_script=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
@@ -52,7 +52,6 @@ $CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OU
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
-
 
 if [[ R_script =~ true ]]; then
 

@@ -27,6 +27,11 @@ params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
 params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
 params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
+params.pacbamorf_orf_bed = workflow.projectDir + "/configs/MN908947.3-ORFs.bed"
+params.pacbamorf_orf7b_bed = workflow.projectDir + "/configs/MN908947.3-ORF7b.bed"
+
+// pacbamorfs
+params.pacbam_orfs = true
 
 // model files for SARS-CoV-2 (currently unusued param; not in config/)
 // params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
@@ -56,8 +61,10 @@ params.samtools_stats = true
 params.samtools_coverage = true
 params.samtools_flagstat = true
 params.samtools_ampliconstats = true
+params.samtools_insertsizes = true
 params.bedtools = true 
 params.nextclade = true // Rong turn it on
+params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
@@ -66,7 +73,7 @@ params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
 params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
-
+params.ncbi_upload = true // for ncbi submission
 
 // for optional contamination determination with kraken
 params.kraken2 = false
@@ -517,7 +524,7 @@ ivar_bams
 
 ivar_bam_bai
   .concat(samtools_bam_bai)
-  .into { trimmed_bam_bai ; trimmed_bam_bai2 }
+  .into { trimmed_bam_bai ; trimmed_bam_bai2 ; trimmed_bam_bai_orf}
 
 trimmed_bam_bai2
   .combine(primer_bed_bedtools)
@@ -730,7 +737,7 @@ process bamsnap {
 
 pre_trim_bams2
    .combine(trimmed_bams4, by: 0)
-   .into { pre_post_bams ; pre_post_bams2 ; pre_post_bams3 }
+   .into { pre_post_bams ; pre_post_bams2 ; pre_post_bams3 ; pre_post_bams4}
 
 process samtools_stats {
   publishDir "${params.outdir}", mode: 'copy'
@@ -830,6 +837,37 @@ process samtools_flagstat {
 
     samtools flagstat !{aligned} 2>> $err_file > samtools_flagstat/aligned/!{sample}.flagstat.txt
     samtools flagstat !{trimmed} 2>> $err_file > samtools_flagstat/trimmed/!{sample}.flagstat.txt
+  '''
+}
+
+process samtools_insertsizes {
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus 2
+
+  input:
+  set val(sample), file(aligned), file(trimmed) from pre_post_bams4
+
+  when:
+  params.samtools_insertsizes
+
+  output:
+  file("samtools_insertsizes/{aligned,trimmed}/${sample}.insertsizes.txt")
+  file("logs/samtools_insertsizes/${sample}.${workflow.sessionId}.{log,err}")
+
+  shell:
+  '''
+    mkdir -p samtools_insertsizes/aligned samtools_insertsizes/trimmed logs/samtools_insertsizes
+    log_file=logs/samtools_insertsizes/!{sample}.!{workflow.sessionId}.log
+    err_file=logs/samtools_insertsizes/!{sample}.!{workflow.sessionId}.err
+
+    date | tee -a $log_file $err_file > /dev/null
+    samtools --version >> $log_file
+
+    # Extract insert sizes from bam files pre- and post-trimming
+    samtools view -f66 !{aligned} | cut -f9 | awk '{print sqrt($0^2)}' 2>> $err_file > samtools_insertsizes/aligned/!{sample}.insertsizes.txt
+    samtools view -f66 !{trimmed} | cut -f9 | awk '{print sqrt($0^2)}' 2>> $err_file > samtools_insertsizes/trimmed/!{sample}.insertsizes.txt
   '''
 }
 
@@ -1022,7 +1060,7 @@ process nextclade {
   set val(sample), file(fasta) from consensus_nextclade
 
   output:
-  file("nextclade/${sample}_nextclade_report.csv")
+  tuple sample, file("nextclade/${sample}_nextclade_report.csv") into nextclade_csv_out
   tuple sample, env(nextclade_clade) into nextclade_clade_results
   file("logs/nextclade/${sample}.${workflow.sessionId}.{log,err}")
 
@@ -1040,6 +1078,33 @@ process nextclade {
     if [ -z "$nextclade_clade" ] ; then nextclade_clade="clade" ; fi
   '''
 }
+
+
+
+process nextcladeParse {
+
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus params.medcpus
+
+  when:
+  params.nextcladeParse
+
+  input:
+  set val(sample), file(csv) from nextclade_csv_out
+
+  output:
+  file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
+
+
+ shell:
+ '''
+    mkdir -p nextclade_parse
+    python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
+
+ '''
+ }
 
 
 seqyclean_aocd
@@ -1135,6 +1200,63 @@ process SC2Ref_matched_reads {
 
 }
 
+process vadr {
+  tag "${sample}"
+  echo false
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.vadr  
+
+  input:
+  set val(sample), file(fasta) from consensus_vadr
+  
+  output:
+  file("vadr/${sample}/${sample}.vadr.{pass,fail}.list")
+  file("vadr/${sample}/${sample}.vadr.ftr")
+  tuple sample, env(vadr_version) into vadr_version
+  file("logs/vadr/${sample}.${workflow.sessionId}.{log,err}")
+  tuple sample, env(vadr_result) into vadr_result
+
+  shell:
+  '''
+
+  mkdir -p vadr logs/vadr
+  log_file=logs/vadr/!{sample}.!{workflow.sessionId}.log
+  err_file=logs/vadr/!{sample}.!{workflow.sessionId}.err
+
+  # time stamp + capturing tool versions
+  date | tee -a $log_file $err_file > /dev/null
+  vadr_version=$(echo "vadr : ${VADR_VERSION}")
+  vadr_sarscov2_models_version=$(echo "vadr_sarscov2_models : ${VADR_SARSCOV2_MODELS_VERSION}")
+  echo "${vadr_version} >> $log_file
+  echo "${vadr_sarscov2_models_version} >> $log_file
+
+  # Check if file is big enough
+  myfilesize=$(wc -c !{fasta} | awk '{print $1}')
+  
+  if (( myfilesize > 500 )); then
+    v-annotate.pl --noseqnamemax \
+                  --split --cpu 8 --glsearch -s -r --nomisc --mkey sarscov2 --lowsim5term 2 --lowsim3term 2 \
+                  --alt_fail lowscore,fstukcnf,insertnn,deletinn \
+                  --mdir /opt/vadr/vadr-models !{fasta} vadr/!{sample} 2>> $err_file >> $log_file
+  else
+    mkdir vadr/!{sample}
+    touch vadr/!{sample}/!{sample}.vadr.pass.list
+    touch vadr/!{sample}/!{sample}.vadr.fail.list
+    touch vadr/!{sample}/!{sample}.vadr.ftr
+    echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
+  fi
+
+  # Add "pass" or "fail" status
+  if [ -s vadr/!{sample}/!{sample}.vadr.pass.list ]
+  then
+    vadr_result="PASS"
+  else
+    vadr_result="FAIL"
+  fi
+  '''
+}
 
 consensus_results
 //tuple sample, env(num_N), env(num_ACTG), env(num_degenerate), env(num_total) into consensus_results
@@ -1158,6 +1280,7 @@ consensus_results
   .join(ivar_version, remainder: true, by: 0)
   .join(aocd_samtools_results, remainder: true, by: 0)
   .join(SC2Ref_matched_reads_results, remainder: true, by: 0)
+  .join(vadr_result, remainder: true, by: 0)
   .set { results }
 
 process summary {
@@ -1187,7 +1310,8 @@ process summary {
     val(bwa_version),
     val(ivar_version),
     val(aocd_result),
-    val(sc2ref_result) from results
+    val(sc2ref_result),
+    val(vadr_result) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1213,8 +1337,8 @@ process summary {
 
     fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1233,7 +1357,8 @@ process combined_summary {
   file("summary.txt")
   //file("run_results.txt")
   file("run_results.txt") into combined_summary
-  file("logs/summary/summary.${workflow.sessionId}.{log,err}")
+  file("logs/summary/summary.${workflow.sessionId}.{log,err}") 
+  file("summary.txt") into summary_ELIMS
 
   shell:
   '''
@@ -1553,7 +1678,7 @@ process ivar_vcf {
   set val(sample), file(tsv) from ivar_variant_vcf
 
   output:
-  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam
+  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam, ivar_vcf_pacbam_orf
 
   when:
   params.ivar_vcf
@@ -1577,10 +1702,11 @@ process post_process {
 
   input:
   file run_results from combined_summary
+  file summary from summary_ELIMS
 
   output:
   file("run_results.txt") into post_process
-  
+
   script:
   """
   # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
@@ -1589,6 +1715,10 @@ process post_process {
   fi
 
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
+  # make sure we have vcf module to use
+  if [ -f "$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img" ]; then
+    singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
+  fi
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -o $params.outdir/summary.txt
 
@@ -1596,12 +1726,18 @@ process post_process {
   python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
   -o $params.outdir/amplicon_dropout_summary
 
+  # generate datasheet to push samples to ELIMS
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
   """
 }
 
 trimmed_bam_bai
-.join(ivar_vcf_pacbam, remainder:true, by:0)
-.set { pre_pacbam }
+  .join(ivar_vcf_pacbam, remainder:true, by:0)
+  .set { pre_pacbam }
+
+trimmed_bam_bai_orf
+  .join(ivar_vcf_pacbam_orf, remainder:true, by:0)
+  .set { pre_pacbam_orf }
 
 process pacbam {
   tag "${sample}"
@@ -1638,46 +1774,38 @@ process pacbam {
   '''
 }
 
-process vadr {
+process pacbam_orfs {
   tag "${sample}"
   echo false
   publishDir "${params.outdir}", mode: 'copy'
 
-  when:
-  params.vadr  
-
   input:
-  set val(sample), file(fasta) from consensus_vadr
-  
-  output:
-  file("vadr/${sample}/${sample}.vadr.pass.list") into vadr_passlist
-  file("vadr/${sample}/${sample}.vadr.fail.list") into vadr_faillist
+  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
+  //set val(sample), file(vcf) from ivar_vcf_pacbam
+  tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam_orf
 
+  output:
+  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
+  file("pacbam_orf/${sample}/{orfs,ORF7b}/*") into pacbam_orfs_out
+
+  when:
+  params.pacbam_orfs
 
   shell:
   '''
-  # Downoad the VADR model files.
-  wget -nc "https://ftp.ncbi.nlm.nih.gov/pub/nawrocki/vadr-models/coronaviridae/CURRENT/vadr-models-corona-1.1.3-1.tar.gz"
-  tar xvf vadr-models-corona-1.1.3-1.tar.gz
-  mkdir -p vadr
-  
-  # Check if file is big enough
-  myfilesize=$(wc -c !{fasta} | awk '{print $1}')
-  
-  if (( myfilesize > 500 )); then
-    v-annotate.pl --noseqnamemax --mxsize 64000 -s -r --nomisc --mkey NC_045512 \
-                  --lowsim5term 2 --lowsim3term 2 --fstlowthr 0.0 \
-                  --alt_fail lowscore,fsthicnf,fstlocnf,insertnn,deletinn \
-                  --mdir vadr-models-corona-1.1.3-1 !{fasta} vadr/!{sample}
+  mkdir -p pacbam_orf/!{sample}/orfs
+  mkdir -p pacbam_orf/!{sample}/ORF7b
+
+  last=$( tail -n1 !{vcf} )
+  if [[ $last =~ ^#CHROM* ]]; then
+    touch pacbam_orf/!{sample}/orfs/NO_VCF
+    touch pacbam_orf/!{sample}/ORF7b/NO_VCF
   else
-    mkdir vadr/!{sample}
-    touch vadr/!{sample}/!{sample}.vadr.pass.list
-    touch vadr/!{sample}/!{sample}.vadr.fail.list
-    echo !{sample} > vadr/!{sample}/!{sample}.vadr.fail.list
+    pacbam bam=!{bam} bed=!{params.pacbamorf_orf_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam_orf/!{sample}/orfs" threads=20 #;
+    pacbam bam=!{bam} bed=!{params.pacbamorf_orf7b_bed} vcf=!{vcf} fasta=!{params.reference_genome} mode=1 out="pacbam_orf/!{sample}/ORF7b" threads=20 #;
   fi
 
   '''
-
 }
 
 process mqc {
@@ -1699,6 +1827,44 @@ process mqc {
   """
 
 
+}
+
+process ncbi_upload {
+  tag "ncbi_upload"
+  echo true
+  publishDir "${params.outdir}", mode: 'copy'
+
+  when:
+  params.ncbi_upload  
+
+  input:
+  file(run_results) from post_process
+  
+  output:
+  file("ncbi_upload/samples.txt")
+  file("ncbi_upload/author_template.csv") // these 2 need to be changed to the actual template names later
+  file("ncbi_upload/submission_template.csv")
+  file("ncbi_upload/run_NCBI_UPLOAD.sh")
+
+  shell:
+  '''
+  mkdir ncbi_upload
+  touch ncbi_upload/samples.txt
+
+  for file in !{params.outdir}/consensus/*.fa; do 
+    sample_id=`echo $(basename ${file}) | grep -o '.*[^consensus.fa]'`
+    # initial checking 
+    if echo $sample_id | grep -qE '[0-9]{10}-[0-9A-Za-z]{8}'; then
+      echo $sample_id >> ncbi_upload/samples.txt
+    else
+      echo WARNING: $sample_id is not in proper CSID-CUID format
+    fi
+  done
+
+  cp !{workflow.launchDir}/Cecret/configs/author_template.csv  ncbi_upload/author_template.csv
+  cp !{workflow.launchDir}/Cecret/configs/submission_template.csv  ncbi_upload/submission_template.csv
+  cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh && chmod 755 ncbi_upload/run_NCBI_UPLOAD.sh
+  '''
 }
 
 workflow.onComplete {
