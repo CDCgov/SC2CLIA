@@ -71,11 +71,13 @@ if [ ! -f "$OUTDIR/summary.txt" ]; then
 	exit 1;
 fi
 
+echo "Completed Cecret pipeline"
 
 if [ ! ${RSCRIPT} ]; then
 	echo "Done.";
 	exit 0;
 fi
+
 # If Rscript option turned on, begin Report block
 echo "Running R scripts to generate reports ..."
 
@@ -92,6 +94,6 @@ singularity exec \
 				--no-home \
 				-B $seqDir:/data:ro,${R_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw \
 				-H /usr/local/bin \
-				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data > /dev/null
+				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data # > /dev/null
 
 echo "Done!"
