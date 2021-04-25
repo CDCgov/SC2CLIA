@@ -72,7 +72,7 @@ if [ ! -f "$OUTDIR/summary.txt" ]; then
 fi
 
 
-if [ ${RSCRIPT} ]; then
+if [ ! ${RSCRIPT} ]; then
 	echo "Done.";
 	exit 0;
 fi
