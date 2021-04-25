@@ -6,7 +6,7 @@
 
 # NOTE:
 # this script should only be ran in $CECRET_BASE or your local git repo folder
-# this script can be called upon as: ./run_cecret.sh -d sample_folder -p true  
+# this script can be called upon as: ./run_cecret.sh -d sample_folder -p true -r true
 # -p is optional to turn on pacbam process
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-r  true:false flag to generate report files>" 1>&2; exit 1; }
@@ -19,7 +19,7 @@ RSCRIPT=true
 while getopts "d:p:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
-        p) PB=${OPTARG} ;;
+    p) PB=${OPTARG} ;;
 		r) RSCRIPT=${OPTARG} ;;
 		*) usage ;;
 	esac
