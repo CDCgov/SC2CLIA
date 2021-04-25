@@ -19,7 +19,7 @@ RSCRIPT=true
 while getopts "d:p:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
-    p) PB=${OPTARG} ;;
+    	p) PB=${OPTARG} ;;
 		r) RSCRIPT=${OPTARG} ;;
 		*) usage ;;
 	esac
@@ -71,7 +71,12 @@ if [ ! -f "$OUTDIR/summary.txt" ]; then
 	exit 1;
 fi
 
-# Begin Report block
+
+if [ ${RSCRIPT} ]; then
+	echo "Done.";
+	exit 0;
+fi
+# If Rscript option turned on, begin Report block
 echo "Running R scripts to generate reports ..."
 
 R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
