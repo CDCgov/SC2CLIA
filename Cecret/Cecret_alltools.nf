@@ -1184,6 +1184,8 @@ process vadr {
   tuple sample, env(vadr_version) into vadr_version
   file("logs/vadr/${sample}.${workflow.sessionId}.{log,err}")
   tuple sample, env(vadr_result) into vadr_result
+  tuple sample, env(vadr_sample_orfshift) into vadr_sample_orfshift
+  tuple sample, env(vadr_sgene_orfshift) into vadr_sgene_orfshift
 
   shell:
   '''
@@ -1222,6 +1224,28 @@ process vadr {
   else
     vadr_result="FAIL"
   fi
+
+  # Set sequence-wide possible frameshift status
+  # "fstukcnf" is the VADR code for "POSSIBLE_FRAMESHIFT"
+  # If it appears anywhere in the feature file, we return TRUE
+  if awk '/fstukcnf/' vadr/!{sample}/!{sample}.vadr.ftr | grep .
+  then
+    vadr_sample_orfshift="TRUE"
+  else
+    vadr_sample_orfshift="FALSE"
+  fi
+
+  # Set S gene specific possible frameshift status
+  # "fstukcnf" is the VADR code for "POSSIBLE_FRAMESHIFT"
+  # If it appears in the line position for the S gene, we return TRUE
+  # God help us if they change the VADR output formats
+  if awk -F ' +' '$7 == "S" && $26 ~/fstukcnf/' vadr/!{sample}/!{sample}.vadr.ftr | grep .
+  then
+    vadr_sgene_orfshift="TRUE"
+  else
+    vadr_sgene_orfshift="FALSE"
+  fi
+
   '''
 }
 
@@ -1248,6 +1272,8 @@ consensus_results
   .join(aocd_samtools_results, remainder: true, by: 0)
   .join(SC2Ref_matched_reads_results, remainder: true, by: 0)
   .join(vadr_result, remainder: true, by: 0)
+  .join(vadr_sample_orfshift, remainder: true, by:0)
+  .join(vadr_sgene_orfshift, remainder: true, by:0)
   .set { results }
 
 process summary {
@@ -1278,7 +1304,9 @@ process summary {
     val(ivar_version),
     val(aocd_result),
     val(sc2ref_result),
-    val(vadr_result) from results
+    val(vadr_result),
+    val(vadr_sample_orfshift),
+    val(vadr_sgene_orfshift) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1304,8 +1332,8 @@ process summary {
 
     fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}" >> summary/!{sample}.summary.txt
   '''
 }
 
