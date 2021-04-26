@@ -49,8 +49,8 @@ setClass(Class = "CecretORF",
                           Num.Ns = NA_real_,
                           Num.Pos.Min.Cov = NA_real_,
                           Percent.Ns = NA_real_,
-                          Percent.Pos.Min.Cov = NA_real_),
-                          Coverage.ORF = NA_real_)
+                          Percent.Pos.Min.Cov = NA_real_,
+                          Coverage.ORF = NA_real_))
 setClass(Class = "CecretSample",
          slots = c(Sample.ID = "character",
                    ORF1ab = "CecretORF",
@@ -96,6 +96,22 @@ testAndSlice <- function(v, b, o) {
     return(v[orfStart:orfEnd])
   } else {
     return(NA_character_)
+  }
+}
+
+covTestAndSlice <- function(t, b, o) {
+  # where t = tibble to slice
+  # where b = bed file tibble
+  # where o = target ORF
+  # returns a vector of coverages for positions within the ORF
+  orfStart <- b[indexFinder(b$ORF, o),]$START
+  orfEnd <- b[indexFinder(b$ORF, o),]$END
+  outTable <- filter(t, between(Position, orfStart, orfEnd))
+  #print(head(outTable))
+  if (length(outTable$Coverage) != 0) {
+    return(outTable$Coverage)
+  } else {
+    return(NA_real_)
   }
 }
 
@@ -171,6 +187,31 @@ consensusToORFs <- function(v, b) {
                          N = testAndSlice(v, b, "N"),
                          ORF10 = testAndSlice(v, b, "ORF10"))
   return(orfList)
+}
+
+#Subset the coverage data
+covByORFs <- function(t, b) {
+  # where t = tibble of coverage data for the sample
+  # where b = bed tibble like bedRegions (should always be bedRegions in this script)
+  # returns a list of named vectors corresponding to ORFs in bedRegions (each item is ORFname = vector of coverage for positions)
+  covORFList <- list()
+  if (!is.na(t) == TRUE) {
+    covORFList <- list.append(covORFList, 
+                             ORF1ab = covTestAndSlice(t, b, "ORF1ab"),
+                             S = covTestAndSlice(t, b, "S"),
+                             ORF3a = covTestAndSlice(t, b, "ORF3a"),
+                             E = covTestAndSlice(t, b, "E"),
+                             M = covTestAndSlice(t, b, "M"),
+                             ORF6 = covTestAndSlice(t, b, "ORF6"),
+                             ORF7a = covTestAndSlice(t, b, "ORF7a"),
+                             ORF7b = covTestAndSlice(t, b, "ORF7b"),
+                             ORF8 = covTestAndSlice(t, b, "ORF8"),
+                             N = covTestAndSlice(t, b, "N"),
+                             ORF10 = covTestAndSlice(t, b, "ORF10"))
+  return(covORFList)
+  } else {
+    return(NA)
+  }
 }
 
 # Function(s) to calculate mean depth, %pos meeting min cov, #n, %n per region. 
@@ -320,8 +361,15 @@ for (s in 1:length(uniqSampleIDs)) {
   # Second large block handles things derived from PacBam output.
   pbFileIndex <- which(str_detect(pbFiles, uniqSampleIDs[s]))
   pbTable <- pbFileGetter(pbFiles, pbFileIndex)
-
-  print(head(pbTable))
+  #print(pbTable)
+  covORFList <- covByORFs(pbTable, bedRegions)
+  # if (is.na(covORFList) == TRUE) {
+  #   print(NA)
+  # } else {
+  #   print(covORFList$S)
+  # }
+  #print(ifelse(is.na(covORFList), NA, covORFList))
+  #print(head(pbTable))
 }
 
 # Here we create the output table and write it to file.
@@ -334,9 +382,10 @@ for (sampleIndex in 1:length(outList)) {
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Mean.Depth"), 
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Length"), 
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Ns"), 
-                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Min.Cov"), 
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Num.Pos.Min.Cov"), 
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Ns"), 
-                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Pos.Min.Cov"))
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Pos.Min.Cov"),
+                   slot(slot(outList[[sampleIndex]], sampleSlotName), "Coverage.ORF"))
       outTable <- rbind(outTable, tempRow)
     }
   }
