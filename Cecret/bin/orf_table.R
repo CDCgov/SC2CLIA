@@ -234,7 +234,7 @@ nPercent <- function(n, l) {
   if (is.na(n) == TRUE || is.na(l) == TRUE) {
     return(NA_real_)
   } else {
-    return((n / l)*100)
+    return(round((n / l)*100, digits = 1))
   }
 }
 
@@ -249,16 +249,40 @@ orfLength <- function(v) {
   }
 }
 
-# # Add value to list of lists (intended for use on outList only)
-# outputAppender <- function(l, s, n, v) {
-#   # where l = main list name (should always be outList for now)
-#   # where s = sample ID, which is the name of the internal list
-#   # where n = name of the new value (column name) to be added to s's list
-#   # where v = value to be assigned to n
-#   # returns updated list
-#   l[s] <- list.append(l[s], n = v)
-#   return(l)
-# }
+updateMeanDepth <- function(l, i, x) {
+  # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
+  # where i is the index of the sample to process in l
+  # where x is the list of CecretSamples to be updated
+  # returns x, the updated list of CecretSamples
+  # Note: uses length of ORF from pacbam data. Length reported out is derived from consensus data.
+  # To do: cross-validate expected, consensus, and pacbam lengths and report QC
+  if (is.na(l) == FALSE) {
+    slot(x[[i]]@ORF1ab, "Mean.Depth") <- round(mean(covORFList$ORF1ab), digits = 1)
+    slot(x[[i]]@S, "Mean.Depth") <- round(mean(covORFList$S), digits = 1)
+    slot(x[[i]]@ORF3a, "Mean.Depth") <- round(mean(covORFList$ORF3a), digits = 1)
+    slot(x[[i]]@E, "Mean.Depth") <- round(mean(covORFList$E), digits = 1)
+    slot(x[[i]]@M, "Mean.Depth") <- round(mean(covORFList$M), digits = 1)
+    slot(x[[i]]@ORF6, "Mean.Depth") <- round(mean(covORFList$ORF6), digits = 1)
+    slot(x[[i]]@ORF7a, "Mean.Depth") <- round(mean(covORFList$ORF7a), digits = 1)
+    slot(x[[i]]@ORF7b, "Mean.Depth") <- round(mean(covORFList$ORF7b), digits = 1)
+    slot(x[[i]]@ORF8, "Mean.Depth") <- round(mean(covORFList$ORF8), digits = 1)
+    slot(x[[i]]@N, "Mean.Depth") <- round(mean(covORFList$N), digits = 1)
+    slot(x[[i]]@ORF10, "Mean.Depth") <- round(mean(covORFList$ORF10), digits = 1)
+  } else {
+    slot(x[[i]]@ORF1ab, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@S, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF3a, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@E, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@M, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF6, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF7a, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF7b, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF8, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@N, "Mean.Depth") <- NA_real_
+    slot(x[[i]]@ORF10, "Mean.Depth") <- NA_real_
+  }
+  return(x)
+}
 
 ### Data ingest ###
 
@@ -361,15 +385,11 @@ for (s in 1:length(uniqSampleIDs)) {
   # Second large block handles things derived from PacBam output.
   pbFileIndex <- which(str_detect(pbFiles, uniqSampleIDs[s]))
   pbTable <- pbFileGetter(pbFiles, pbFileIndex)
-  #print(pbTable)
   covORFList <- covByORFs(pbTable, bedRegions)
-  # if (is.na(covORFList) == TRUE) {
-  #   print(NA)
-  # } else {
-  #   print(covORFList$S)
-  # }
-  #print(ifelse(is.na(covORFList), NA, covORFList))
-  #print(head(pbTable))
+  # Mean.Depth
+  # Note: uses length of ORF from pacbam data. Length reported out is derived from consensus data.
+  outList <- updateMeanDepth(covORFList, s, outList)
+
 }
 
 # Here we create the output table and write it to file.
@@ -409,4 +429,5 @@ outTable <- select(outTable, Sample.ID, ORF.ID, Length, Coverage.ORF,
 write_tsv(outTable, 
           file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
           col_names = TRUE)
-write_file(toString(warnings(nwarnings = 10000)), file = file.path(args$analysisDirFP, "logs", "R_warnings_orf_stats.txt"))
+write_file(paste0("###### new run ######\n", toString(warnings(nwarnings = 10000))), file = file.path(args$analysisDirFP, "logs", "R_warnings_orf_stats.txt"))
+print(warnings(nwarnings = 10000))
