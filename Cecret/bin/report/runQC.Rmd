@@ -1,0 +1,83 @@
+---
+title: "Run QC"
+params:
+  analysisDirFP: null
+  runID: null
+  seqDirFP: null
+  multiQC: "multiqc_report.html"
+  insertDir: "samtools_insertsizes/aligned"
+  insertFileSuffix: ".insertsizes.txt"
+  expectedInsertSize: 200
+  extremeInsertSize: 500
+---
+
+***
+
+__FastQC Report:__ [report link](`r params$multiQC`)
+
+***
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+#library(DT)
+```
+
+### Insert Sizes
+
+```{r insert-size, include=FALSE}
+# Empty df
+insertSizes <- tibble()
+colnames(insertSizes) <- c("SampleID", "Insert_Size")
+
+# Find input files
+insertDataFiles <- list.files(path = paste(params$analysisDirFP, 
+                                           params$insertDir, 
+                                           sep = "/"),
+                              full.names = TRUE,
+                              recursive = TRUE, 
+                              pattern = params$insertFileSuffix)
+
+# Loop over input files and add to empty df
+for (i in 1:length(insertDataFiles)) {
+  rawInsert <- read_tsv(insertDataFiles[i])
+  colnames(rawInsert) <- c("Insert_Size")
+  rawInsert <- rawInsert %>%
+                 mutate(SampleID = str_replace(insertDataFiles[i], 
+                                               params$insertFileSuffix, 
+                                               "")) %>%
+                 mutate(SampleID = str_replace(SampleID, 
+                                               paste0(params$analysisDirFP, 
+                                                      "/", 
+                                                      params$insertDir, 
+                                                      "/"), 
+                                               "")) %>%
+                 relocate(SampleID)
+  insertSizes <- bind_rows(insertSizes, rawInsert)
+}
+
+insertSizes$SampleID <- as.factor(insertSizes$SampleID)
+
+# Filter mismapped reads; max amplicon size ~= 400 bp
+# Capture number of "mismappings" in case it's out of control
+badMap <- nrow(filter(insertSizes, Insert_Size > params$extremeInsertSize))
+insertSizes <- filter(insertSizes, Insert_Size <= params$extremeInsertSize)
+
+# Make insert size histograms
+insertPlot <- function(d) {
+  outplot <- ggplot(d, aes(x = Insert_Size)) +
+            geom_histogram(binwidth = 50) +
+            ylab("Count") +
+            xlab("Insert size (bp)") +
+            facet_wrap(vars(SampleID), scales = "free_y", ncol = 2) +
+            geom_vline(xintercept = params$expectedInsertSize, colour = "blue", linetype = 2)
+  return(outplot)
+}
+
+insertPlots <- insertPlot(insertSizes)
+```
+Histograms of insert sizes by sample. Extreme values (>`r params$extremeInsertSize` bp) are likely to be mapping errors and have been removed (n = `r badMap`). Blue vertical lines indicate the target insert size (`r params$expectedInsertSize` bp).
+
+```{r insertFig, echo=FALSE, fig.dim=c(10, 100)}
+insertPlots
+```

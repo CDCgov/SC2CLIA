@@ -1,0 +1,47 @@
+---
+title: "About Report"
+params: 
+  analysisDirFP: null
+  runID: null
+  seqDirFP: null
+  v.vadr: "1.1.3"
+  v.pacbam: "1.6.0"
+  v.multiqc: "1.10.1"
+---
+
+```{r about-comments, include=FALSE, eval=FALSE}
+# For fast standalone testing:
+rmarkdown::render(input = "about.Rmd", 
+                  output_format = "html_document", 
+                  params = list(analysisDirFP = "Full/path/to/analysis/directory"))
+
+# Note that when Cecret component versions are obtained from versions.sh, there were difficulties calling other containers from within the R container. Therefore those version numbers are set with params at the top of this script.
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+```
+
+```{r version-import, include=FALSE}
+vTab <- readr::read_delim(file = paste(params$analysisDirFP, "versions.txt", sep = "/"),
+                          col_names = c("Cecret Output Directory", "Tool Version"),
+                          delim = ":",
+                          trim_ws = TRUE)
+vTab <- bind_rows(vTab, c("Cecret Output Directory" = "vadr", "Tool Version" = params$v.vadr), 
+                        c("Cecret Output Directory" = "pacbam", "Tool Version" = params$v.pacbam), 
+                        c("Cecret Output Directory" = "multiqc", "Tool Version" = params$v.multiqc)
+                  )
+```
+
+***
+
+### Cecret Pipeline Component Versions  
+<br>
+```{r version-display, echo=FALSE}
+kbl(vTab, escape = F, align = "l") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE, position = "l")
+```
+

@@ -1,0 +1,16 @@
+name: "cecret-report"
+navbar:
+  title: "Cecret Report"
+  left:
+    - text: "Summary"
+      href: index.html
+    - text: "Run Info"
+      href: runInfo.html
+    - text: "Run QC"
+      href: runQC.html
+    - text: "Amplicon Coverage"
+      href: ampliconCov.html
+    - text: "S gene"
+      href: sGene.html
+    - text: "About"
+      href: about.html
