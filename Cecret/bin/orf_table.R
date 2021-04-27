@@ -90,7 +90,8 @@ testAndSlice <- function(v, b, o) {
   # where v = vector to slice
   # where b = bed file tibble
   # where o = target ORF
-  orfStart <- b[indexFinder(b$ORF, o),]$START
+  # note: subtract 1 (by adding because coordinates) from start because bed file coordinates are written to start after this number and go through the end.
+  orfStart <- b[indexFinder(b$ORF, o),]$START + 1
   orfEnd <- b[indexFinder(b$ORF, o),]$END
   if (length(v) >= orfEnd) {
     return(v[orfStart:orfEnd])
@@ -104,10 +105,10 @@ covTestAndSlice <- function(t, b, o) {
   # where b = bed file tibble
   # where o = target ORF
   # returns a vector of coverages for positions within the ORF
-  orfStart <- b[indexFinder(b$ORF, o),]$START
+  # note: subtract 1 (by adding because coordinates) from start because bed file coordinates are written to start after this number and go through the end.
+  orfStart <- b[indexFinder(b$ORF, o),]$START + 1
   orfEnd <- b[indexFinder(b$ORF, o),]$END
   outTable <- filter(t, between(Position, orfStart, orfEnd))
-  #print(head(outTable))
   if (length(outTable$Coverage) != 0) {
     return(outTable$Coverage)
   } else {
@@ -257,17 +258,17 @@ updateMeanDepth <- function(l, i, x) {
   # Note: uses length of ORF from pacbam data. Length reported out is derived from consensus data.
   # To do: cross-validate expected, consensus, and pacbam lengths and report QC
   if (is.na(l) == FALSE) {
-    slot(x[[i]]@ORF1ab, "Mean.Depth") <- round(mean(covORFList$ORF1ab), digits = 1)
-    slot(x[[i]]@S, "Mean.Depth") <- round(mean(covORFList$S), digits = 1)
-    slot(x[[i]]@ORF3a, "Mean.Depth") <- round(mean(covORFList$ORF3a), digits = 1)
-    slot(x[[i]]@E, "Mean.Depth") <- round(mean(covORFList$E), digits = 1)
-    slot(x[[i]]@M, "Mean.Depth") <- round(mean(covORFList$M), digits = 1)
-    slot(x[[i]]@ORF6, "Mean.Depth") <- round(mean(covORFList$ORF6), digits = 1)
-    slot(x[[i]]@ORF7a, "Mean.Depth") <- round(mean(covORFList$ORF7a), digits = 1)
-    slot(x[[i]]@ORF7b, "Mean.Depth") <- round(mean(covORFList$ORF7b), digits = 1)
-    slot(x[[i]]@ORF8, "Mean.Depth") <- round(mean(covORFList$ORF8), digits = 1)
-    slot(x[[i]]@N, "Mean.Depth") <- round(mean(covORFList$N), digits = 1)
-    slot(x[[i]]@ORF10, "Mean.Depth") <- round(mean(covORFList$ORF10), digits = 1)
+    slot(x[[i]]@ORF1ab, "Mean.Depth") <- round(mean(l$ORF1ab), digits = 1)
+    slot(x[[i]]@S, "Mean.Depth") <- round(mean(l$S), digits = 1)
+    slot(x[[i]]@ORF3a, "Mean.Depth") <- round(mean(l$ORF3a), digits = 1)
+    slot(x[[i]]@E, "Mean.Depth") <- round(mean(l$E), digits = 1)
+    slot(x[[i]]@M, "Mean.Depth") <- round(mean(l$M), digits = 1)
+    slot(x[[i]]@ORF6, "Mean.Depth") <- round(mean(l$ORF6), digits = 1)
+    slot(x[[i]]@ORF7a, "Mean.Depth") <- round(mean(l$ORF7a), digits = 1)
+    slot(x[[i]]@ORF7b, "Mean.Depth") <- round(mean(l$ORF7b), digits = 1)
+    slot(x[[i]]@ORF8, "Mean.Depth") <- round(mean(l$ORF8), digits = 1)
+    slot(x[[i]]@N, "Mean.Depth") <- round(mean(l$N), digits = 1)
+    slot(x[[i]]@ORF10, "Mean.Depth") <- round(mean(l$ORF10), digits = 1)
   } else {
     slot(x[[i]]@ORF1ab, "Mean.Depth") <- NA_real_
     slot(x[[i]]@S, "Mean.Depth") <- NA_real_
@@ -280,6 +281,40 @@ updateMeanDepth <- function(l, i, x) {
     slot(x[[i]]@ORF8, "Mean.Depth") <- NA_real_
     slot(x[[i]]@N, "Mean.Depth") <- NA_real_
     slot(x[[i]]@ORF10, "Mean.Depth") <- NA_real_
+  }
+  return(x)
+}
+
+updateMinCov <- function(l, i, x, t) {
+  # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
+  # where i is the index of the sample to process in l
+  # where x is the list of CecretSamples to be updated
+  # where t is the minimum coverage threshold
+  # returns x, the updated list of CecretSamples
+  if (is.na(l) == FALSE) {
+    slot(x[[i]]@ORF1ab, "Num.Pos.Min.Cov") <- sum(l$ORF1ab >= t)
+    slot(x[[i]]@S, "Num.Pos.Min.Cov") <- sum(l$S >= t)
+    slot(x[[i]]@ORF3a, "Num.Pos.Min.Cov") <- sum(l$ORF3a >= t)
+    slot(x[[i]]@E, "Num.Pos.Min.Cov") <- sum(l$E >= t)
+    slot(x[[i]]@M, "Num.Pos.Min.Cov") <- sum(l$M >= t)
+    slot(x[[i]]@ORF6, "Num.Pos.Min.Cov") <- sum(l$ORF6 >= t)
+    slot(x[[i]]@ORF7a, "Num.Pos.Min.Cov") <- sum(l$ORF7a >= t)
+    slot(x[[i]]@ORF7b, "Num.Pos.Min.Cov") <- sum(l$ORF7b >= t)
+    slot(x[[i]]@ORF8, "Num.Pos.Min.Cov") <- sum(l$ORF8 >= t)
+    slot(x[[i]]@N, "Num.Pos.Min.Cov") <- sum(l$N >= t)
+    slot(x[[i]]@ORF10, "Num.Pos.Min.Cov") <- sum(l$ORF10 >= t)
+  } else {
+    slot(x[[i]]@ORF1ab, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@S, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF3a, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@E, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@M, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF6, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF7a, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF7b, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF8, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@N, "Num.Pos.Min.Cov") <- NA_real_
+    slot(x[[i]]@ORF10, "Num.Pos.Min.Cov") <- NA_real_
   }
   return(x)
 }
@@ -389,6 +424,8 @@ for (s in 1:length(uniqSampleIDs)) {
   # Mean.Depth
   # Note: uses length of ORF from pacbam data. Length reported out is derived from consensus data.
   outList <- updateMeanDepth(covORFList, s, outList)
+  # Num.Pos.Min.Cov
+  outList <- updateMinCov(covORFList, s, outList, as.numeric(args$minCov))
 
 }
 
@@ -430,4 +467,4 @@ write_tsv(outTable,
           file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
           col_names = TRUE)
 write_file(paste0("###### new run ######\n", toString(warnings(nwarnings = 10000))), file = file.path(args$analysisDirFP, "logs", "R_warnings_orf_stats.txt"))
-print(warnings(nwarnings = 10000))
+#print(warnings(nwarnings = 10000))
