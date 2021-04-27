@@ -250,6 +250,17 @@ orfLength <- function(v) {
   }
 }
 
+percentPosMinCov <- function(n, l) {
+  # where n is the number of positions meeting minimum coverage threshold
+  # where l is the length of the ORF
+  # returns percentage from n/l*100
+  if (is.na(n) == FALSE && is.na(l) == FALSE) {
+    return(round(n/l*100, digits = 1))
+  } else {
+    return(NA_real_)
+  }
+}
+
 updateMeanDepth <- function(l, i, x) {
   # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
   # where i is the index of the sample to process in l
@@ -317,6 +328,24 @@ updateMinCov <- function(l, i, x, t) {
     slot(x[[i]]@ORF10, "Num.Pos.Min.Cov") <- NA_real_
   }
   return(x)
+}
+
+updatePercPosMinCov <- function(l, i) {
+  # where l is list of CecretSample objects
+  # where i is index of target sample in object list
+  # returns updated list of CecretSample objects
+  slot(l[[i]]@ORF1ab, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF1ab, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF1ab, "Length"))
+  slot(l[[i]]@S, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@S, "Num.Pos.Min.Cov"), slot(l[[i]]@S, "Length"))
+  slot(l[[i]]@ORF3a, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF3a, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF3a, "Length"))
+  slot(l[[i]]@E, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@E, "Num.Pos.Min.Cov"), slot(l[[i]]@E, "Length"))
+  slot(l[[i]]@M, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@M, "Num.Pos.Min.Cov"), slot(l[[i]]@M, "Length"))
+  slot(l[[i]]@ORF6, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF6, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF6, "Length"))
+  slot(l[[i]]@ORF7a, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF7a, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF7a, "Length"))
+  slot(l[[i]]@ORF7b, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF7b, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF7b, "Length"))
+  slot(l[[i]]@ORF8, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF8, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF8, "Length"))
+  slot(l[[i]]@N, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@N, "Num.Pos.Min.Cov"), slot(l[[i]]@N, "Length"))
+  slot(l[[i]]@ORF10, "Percent.Pos.Min.Cov") <- percentPosMinCov(slot(l[[i]]@ORF10, "Num.Pos.Min.Cov"), slot(l[[i]]@ORF10, "Length"))
+  return(l)
 }
 
 ### Data ingest ###
@@ -426,7 +455,8 @@ for (s in 1:length(uniqSampleIDs)) {
   outList <- updateMeanDepth(covORFList, s, outList)
   # Num.Pos.Min.Cov
   outList <- updateMinCov(covORFList, s, outList, as.numeric(args$minCov))
-
+  # Percent.Pos.Min.Cov
+  outList <- updatePercPosMinCov(outList, s)
 }
 
 # Here we create the output table and write it to file.
