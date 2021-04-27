@@ -14,7 +14,7 @@ doc <- "Description: run this script to generate a table of ORF coverage statist
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat
-Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf>]
+Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -e <floatError>]
 config.R (-v | --version)
 config.R (-h | --help)
 Options:
@@ -27,6 +27,7 @@ Options:
 -m <minCov> --minCov=<minCov>                                 Minimum coverage threshold to call a position; integer [default: 30]
 -c <consensusDir> --consensusDir=<consensusDir>               Consensus output directory name; string [default: consensus]
 -f <consensusFileSuf> --consensusFileSuf=<consensusFileSuf>   Consensus file suffix; string [default: .consensus.fa]
+- e <floatError> --floatError=<floatError>                    Floating point error tolerance; numeric [default: 1e-5]
 -h --help                                                     Show this help and exit
 -v --version                                                  Show version and exit"
 
@@ -348,6 +349,41 @@ updatePercPosMinCov <- function(l, i) {
   return(l)
 }
 
+updateCovORF <- function(l, i, x, t, b) {
+  # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
+  # where i is the index of the sample to process in l
+  # where x is the list of CecretSamples to be updated
+  # where t is the minimum coverage threshold
+  # where b is the bedRegions tibble
+  # returns x, the updated list of CecretSamples
+  if (is.na(l) == FALSE) {
+    slot(x[[i]]@ORF1ab, "Coverage.ORF") <- round(sum(l$ORF1ab >= t) / b[indexFinder(b$ORF, "ORF1ab"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@S, "Coverage.ORF") <- round(sum(l$S >= t) / b[indexFinder(b$ORF, "S"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF3a, "Coverage.ORF") <- round(sum(l$ORF3a >= t) / b[indexFinder(b$ORF, "ORF3a"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@E, "Coverage.ORF") <- round(sum(l$E >= t) / b[indexFinder(b$ORF, "E"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@M, "Coverage.ORF") <- round(sum(l$M >= t) / b[indexFinder(b$ORF, "M"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF6, "Coverage.ORF") <- round(sum(l$ORF6 >= t) / b[indexFinder(b$ORF, "ORF6"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF7a, "Coverage.ORF") <- round(sum(l$ORF7a >= t) / b[indexFinder(b$ORF, "ORF7a"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF7b, "Coverage.ORF") <- round(sum(l$ORF7b >= t) / b[indexFinder(b$ORF, "ORF7b"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF8, "Coverage.ORF") <- round(sum(l$ORF8 >= t) / b[indexFinder(b$ORF, "ORF8"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@N, "Coverage.ORF") <- round(sum(l$N >= t) / b[indexFinder(b$ORF, "N"),]$LENGTH * 100, digits = 1)
+    slot(x[[i]]@ORF10, "Coverage.ORF") <- round(sum(l$ORF10 >= t) / b[indexFinder(b$ORF, "ORF10"),]$LENGTH * 100, digits = 1)
+  } else {
+    slot(x[[i]]@ORF1ab, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@S, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF3a, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@E, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@M, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF6, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF7a, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF7b, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF8, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@N, "Coverage.ORF") <- NA_real_
+    slot(x[[i]]@ORF10, "Coverage.ORF") <- NA_real_
+  }
+  return(x)
+}
+
 ### Data ingest ###
 
 # Read in the bed files and format in single table
@@ -359,7 +395,8 @@ bedRegions <- read_tsv(args$bedFile1FP,
   select(-TRASH, -REF, -POOL) %>%
   bind_rows(bedTemp) %>%
   arrange(START) %>%
-  relocate(ORF)
+  relocate(ORF) %>%
+  mutate(LENGTH = END - START)
 print(bedRegions)
 
 # Get a list of consensus files
@@ -457,6 +494,8 @@ for (s in 1:length(uniqSampleIDs)) {
   outList <- updateMinCov(covORFList, s, outList, as.numeric(args$minCov))
   # Percent.Pos.Min.Cov
   outList <- updatePercPosMinCov(outList, s)
+  # Coverage.ORF
+  outList <- updateCovORF(covORFList, s, outList, 1, bedRegions)
 }
 
 # Here we create the output table and write it to file.
@@ -474,11 +513,12 @@ for (sampleIndex in 1:length(outList)) {
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Percent.Pos.Min.Cov"),
                    slot(slot(outList[[sampleIndex]], sampleSlotName), "Coverage.ORF"))
       outTable <- rbind(outTable, tempRow)
+      # Note: R is coercing all data types into character during this process. And I hate it.
     }
   }
 }
 
-# Final table formatting
+# Detailed table formatting
 colnames(outTable) <- c("Sample.ID",
                         "ORF.ID",
                         "Mean.Depth",
@@ -490,9 +530,22 @@ colnames(outTable) <- c("Sample.ID",
                         "Coverage.ORF")
 outTable <- select(outTable, Sample.ID, ORF.ID, Length, Coverage.ORF, 
                    Mean.Depth, Num.Pos.Min.Cov, Percent.Pos.Min.Cov, 
-                   Num.Ns, Percent.Ns)
+                   Num.Ns, Percent.Ns) %>%
+            mutate(QC = case_when(
+                          as.numeric(Mean.Depth) >= 100 & as.numeric(Coverage.ORF) >= 95 ~ "PASS",
+                          TRUE ~ "FAIL"))
 
-# Write out table
+# Create a summary table
+outTableSummary <- group_by(outTable, Sample.ID) %>%
+                   summarise(ORFs.Passing.QC = sum(QC == "PASS")) #%>%
+                   # mutate(Per.Ns.S = ,
+                   #        Cov.S = ,
+                   #        Per.Pos.Min.Cov.S = ,
+                   #        Mean.Cov.S = )
+print(outTableSummary)
+
+
+# Write out files
 write_tsv(outTable, 
           file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
           col_names = TRUE)
