@@ -40,11 +40,16 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 1. Copy the Github repository to a folder  
 `git clone https://github.com/cdcent/SC2CLIA.git` 
 
+2. Build the R Singularity container  
+`sudo singularity build Cecret/configs/singularity-r.sif Cecret/configs/singularity-r.def`  
+Or without sudo access try [remote option](https://cloud.sylabs.io/builder).  
 
+3. Test the R image (should output R session info without errors)  
+`singularity exec Cecret/configs/singularity-r.sif Rscript Cecret/bin/report/test_r_container.Rscript`
 
 ## USAGE
 
-1. Run the following scrit at your base folder(replace `data_folder` with the path to your data; p is for pacbam; v is for vadr)  
+1. Run the following script at your base folder(replace `data_folder` with the path to your data; p is for pacbam; v is for vadr)  
  `./run_cecret.sh - d data_folder -p true(default false) -v true(default false)`  
 
 ## Note
