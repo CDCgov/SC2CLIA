@@ -59,7 +59,9 @@ current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 # OUTDIR=$CECRET_BASE/Run_$current_time_$(basename $DATA)
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
 
-$CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
+nextflow -v || (echo 'make sure nextflow is installed: wget -qO- https://get.nextflow.io | bash'; exit 1)
+
+nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
 							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
 							--pacbam $PB --nextcladeParse $NCPARSE
 
@@ -94,6 +96,6 @@ singularity exec \
 				--no-home \
 				-B $seqDir:/data:ro,${R_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw \
 				-H /usr/local/bin \
-				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data # > /dev/null
+				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data > /dev/null
 
 echo "Done!"
