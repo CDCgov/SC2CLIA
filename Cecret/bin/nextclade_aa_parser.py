@@ -47,7 +47,14 @@ class Nextclade_AA_Info:
 
         return s_prot_submuts
 
+def nextclade_blank_line(nextclade_csv):
 
+    seq_name = nextclade_csv.split('.')[0]
+    seq_name = seq_name.split('_')[0]
+
+    nextclade_obj = Nextclade_AA_Info(seq_name,'','','','')
+
+    return nextclade_obj
 
 def nextcladeParser(nextclade_csv):
 
@@ -69,24 +76,33 @@ def nextcladeParser(nextclade_csv):
 
     nextclade_headers = nextclade_info[0]
     nextclade_headers = re.split(''';(?=(?:[^'"]|'[^']*'|"[^"]*")*$)''',nextclade_headers)
-    nextclade_values = nextclade_info[1]
-    nextclade_values = re.split(''';(?=(?:[^'"]|'[^']*'|"[^"]*")*$)''',nextclade_values)
 
-    seq_name = nextclade_values[nextclade_headers.index('seqName')].split('.')[0]
+    try:
+        nextclade_values = nextclade_info[1]
+        nextclade_values = re.split(''';(?=(?:[^'"]|'[^']*'|"[^"]*")*$)''',nextclade_values)
 
-    seq_name = seq_name.split('_')[1]
+        seq_name = nextclade_values[nextclade_headers.index('seqName')].split('.')[0]
 
-    seq_subs = nextclade_values[nextclade_headers.index('aaSubstitutions')]
+        seq_name = seq_name.split('_')[1]
 
-    seq_sub_number = nextclade_values[nextclade_headers.index('totalAminoacidSubstitutions')]
+        seq_subs = nextclade_values[nextclade_headers.index('aaSubstitutions')]
 
-    seq_dels = nextclade_values[nextclade_headers.index('aaDeletions')]
+        seq_sub_number = nextclade_values[nextclade_headers.index('totalAminoacidSubstitutions')]
 
-    seq_del_number = nextclade_values[nextclade_headers.index('totalAminoacidDeletions')]
+        seq_dels = nextclade_values[nextclade_headers.index('aaDeletions')]
 
-    nextclade_obj = Nextclade_AA_Info(seq_name,seq_subs,seq_sub_number,seq_dels,seq_del_number)
+        seq_del_number = nextclade_values[nextclade_headers.index('totalAminoacidDeletions')]
 
-    return nextclade_obj
+        nextclade_obj = Nextclade_AA_Info(seq_name,seq_subs,seq_sub_number,seq_dels,seq_del_number)
+
+        return nextclade_obj
+
+    except IndexError:
+
+        nextclade_obj = nextclade_blank_line(nextclade_csv)
+
+        return nextclade_obj
+
 
 
 if __name__ == '__main__':
