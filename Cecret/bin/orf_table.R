@@ -13,8 +13,8 @@ suppressMessages(library(rlist))
 doc <- "Description: run this script to generate a table of ORF coverage statistics.
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
-R packages: docopt, testthat
-Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -e <floatError>]
+R packages: docopt, testthat, tidyverse, rlist
+Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -d <meanDepthQC -l <covQC>]
 config.R (-v | --version)
 config.R (-h | --help)
 Options:
@@ -27,14 +27,18 @@ Options:
 -m <minCov> --minCov=<minCov>                                 Minimum coverage threshold to call a position; integer [default: 30]
 -c <consensusDir> --consensusDir=<consensusDir>               Consensus output directory name; string [default: consensus]
 -f <consensusFileSuf> --consensusFileSuf=<consensusFileSuf>   Consensus file suffix; string [default: .consensus.fa]
-- e <floatError> --floatError=<floatError>                    Floating point error tolerance; numeric [default: 1e-5]
+-d <meanDepthQC> --meanDepthQC=<meanDepthQC>                  Mean depth threshold to pass basic QC; integer [default: 100]
+-l <covQC> --covQC=<covQC>                                    Percentage coverage threshold to pass basic ORF QC; integer [default: 95]
 -h --help                                                     Show this help and exit
 -v --version                                                  Show version and exit"
 
 args <- docopt(doc = doc, version = ver)
 
 ### Classes ###
+
 # To do: write proper setter and getter functions for classes.
+# CecretORF defines a class to hold relevant characteristics of a single ORF for a single sample
+# May want to add sequence and coverage data directly to class and doing all calcs with internal class functions during refactoring.
 setClass(Class = "CecretORF",
          slots = c(ORF.ID = "character",
                    Mean.Depth = "numeric",
@@ -52,6 +56,7 @@ setClass(Class = "CecretORF",
                           Percent.Ns = NA_real_,
                           Percent.Pos.Min.Cov = NA_real_,
                           Coverage.ORF = NA_real_))
+# CecretSample defines a class to hold a CecretORF object for each ORF in a single sample
 setClass(Class = "CecretSample",
          slots = c(Sample.ID = "character",
                    ORF1ab = "CecretORF",
@@ -80,13 +85,15 @@ setClass(Class = "CecretSample",
 
 ### Functions ###
 
+# Find the index of the target string in a vector
 indexFinder <- function(v, p) {
   # where v = vector to search
   # where p = pattern to find
-  # returns index of matching item in string
+  # returns index of matching item in vector
   return(which(str_detect(v, p)))
 }
 
+# Extract consensus sequence of target ORF from full sample consensus
 testAndSlice <- function(v, b, o) {
   # where v = vector to slice
   # where b = bed file tibble
@@ -101,6 +108,7 @@ testAndSlice <- function(v, b, o) {
   }
 }
 
+# Extract coverage data for target ORF from full sample coverage data
 covTestAndSlice <- function(t, b, o) {
   # where t = tibble to slice
   # where b = bed file tibble
@@ -117,8 +125,7 @@ covTestAndSlice <- function(t, b, o) {
   }
 }
 
-# Functions to read in data for a single sample
-# Read in consensus sequence
+# Read in consensus sequence for a single sample
 consensusReader <- function(f) {
   # where f = single record consensus file, not wrapped, full path
   # returns 2 item vector.  1 = fasta line 1, 2 = fasta line 2
@@ -126,7 +133,7 @@ consensusReader <- function(f) {
   return(consensusIn)
 }
 
-# Provides logic to determine which pb files to get for a given sample and initiates ingest
+# Provides logic to determine which pacbam files to get for a given sample and initiates ingest
 pbFileGetter <- function(v, i) {
   # where v is a vector of pacbam files
   # where i is a vector of indices for files to process in v
@@ -147,7 +154,7 @@ pbFileGetter <- function(v, i) {
 pbReader <- function(v) {
   # where v is a vector of file names
   # returns a tibble sorted by nucleotide position containing coverage at each position
-  # note that because of the way PacBam works, you will only have data for positions in your annotated in your bed file
+  # note that because of the way PacBam works, you will only have data for positions annotated in your bed file
   pbData <- tibble()
   for (f in v) {
     pbData <- bind_rows(pbData, read_tsv(file = f,
@@ -160,17 +167,16 @@ pbReader <- function(v) {
   return(pbData)
 }
 
-# Functions to format data for a single sample
 # Formatting consensus data
 consensusFormatter <- function(s, v) {
   # where v = 2 item list derived from consensusReader(). 1 = fasta line 1, 2 = fasta line 2
-  # where s = Sample.ID record (string). Write check later to confirm fasta line 1 contains Sample ID expected.
+  # where s = Sample.ID record (string). 
+  # To do: Write check later to confirm fasta line 1 contains Sample ID expected.
   # returns a vector where each letter in consensus is an item in the vector.
   return(unlist(str_split(v[2], "")))
 }
 
-# Functions to subset data by regions in bedRegions
-# Subset the consensus data
+# Subset the consensus data by regions in bedRegions
 consensusToORFs <- function(v, b) {
   # where v = consensus vector from consensusFormatter().
   # where b = tibble like bedRegions (should always be bedRegions in this script)
@@ -191,7 +197,7 @@ consensusToORFs <- function(v, b) {
   return(orfList)
 }
 
-#Subset the coverage data
+#Subset the coverage data by regions in bedRegions
 covByORFs <- function(t, b) {
   # where t = tibble of coverage data for the sample
   # where b = bed tibble like bedRegions (should always be bedRegions in this script)
@@ -216,11 +222,10 @@ covByORFs <- function(t, b) {
   }
 }
 
-# Function(s) to calculate mean depth, %pos meeting min cov, #n, %n per region. 
 # Calculate #N from consensus data for single ORF
 nCounter <- function(v) {
   # where v = vector of sequence for single ORF, as generated by consensusToORFs()
-  # returns integer
+  # returns integer count of Ns in vector
   # note: case sensitive
   if (is.na(v)) {
     return(NA_real_)
@@ -240,7 +245,7 @@ nPercent <- function(n, l) {
   }
 }
 
-# Calculate length of ORF; handles NAs
+# Calculate length of ORF
 orfLength <- function(v) {
   # where v is a vector of ORF sequence
   # returns length or NA as appropriate
@@ -251,6 +256,7 @@ orfLength <- function(v) {
   }
 }
 
+# Calculate the percentage of positions in ORF with minimum coverage
 percentPosMinCov <- function(n, l) {
   # where n is the number of positions meeting minimum coverage threshold
   # where l is the length of the ORF
@@ -262,6 +268,7 @@ percentPosMinCov <- function(n, l) {
   }
 }
 
+# Set Mean.Depth for all ORFs in sample
 updateMeanDepth <- function(l, i, x) {
   # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
   # where i is the index of the sample to process in l
@@ -297,6 +304,7 @@ updateMeanDepth <- function(l, i, x) {
   return(x)
 }
 
+# Calculate and set Num.Pos.Min.Cov for all ORFs in sample
 updateMinCov <- function(l, i, x, t) {
   # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
   # where i is the index of the sample to process in l
@@ -331,6 +339,7 @@ updateMinCov <- function(l, i, x, t) {
   return(x)
 }
 
+# Set Percent.Pos.Min.Cov for all ORFs in sample
 updatePercPosMinCov <- function(l, i) {
   # where l is list of CecretSample objects
   # where i is index of target sample in object list
@@ -349,6 +358,7 @@ updatePercPosMinCov <- function(l, i) {
   return(l)
 }
 
+# Calculate and set Coverage.ORF for all ORFs in sample
 updateCovORF <- function(l, i, x, t, b) {
   # where l is a list of named vectors of coverage values for each position is assembly and each vector represents 1 ORF
   # where i is the index of the sample to process in l
@@ -384,7 +394,7 @@ updateCovORF <- function(l, i, x, t, b) {
   return(x)
 }
 
-### Data ingest ###
+### One-time non-function data ingest ###
 
 # Read in the bed files and format in single table
 bedTemp <- read_tsv(args$bedFile2FP, 
@@ -397,7 +407,6 @@ bedRegions <- read_tsv(args$bedFile1FP,
   arrange(START) %>%
   relocate(ORF) %>%
   mutate(LENGTH = END - START)
-print(bedRegions)
 
 # Get a list of consensus files
 consensusFiles <- list.files(path = file.path(args$analysisDirFP, args$consensusDir),
@@ -422,7 +431,7 @@ for (f in 1:length(consensusFiles)) {
 }
 # Initialize outList. Add sample IDs to outList.
 # outList is a list of CecretSamples. Access Sample ID using outList[[n]]@Sample.ID.
-# CecretSample slots correspond to ORFs. Data needed in the output table for each ORF are contained within the CecretORF objects in each CecretSample class slot.
+# CecretSample slots correspond to ORFs. Data needed in the output tables for each ORF are contained within the CecretORF objects in each CecretSample class slot.
 uniqSampleIDs <- unique(sampleIDs) # This serves as an index for outList.
 outList <- list()
 for (i in 1:length(uniqSampleIDs)) {
@@ -498,7 +507,8 @@ for (s in 1:length(uniqSampleIDs)) {
   outList <- updateCovORF(covORFList, s, outList, 1, bedRegions)
 }
 
-# Here we create the output table and write it to file.
+# Here we create the output tables and write them to file.
+# outTable is the more detailed report
 outTable <- tibble()
 for (sampleIndex in 1:length(outList)) {
   for (sampleSlotName in slotNames(outList[[sampleIndex]])) {
@@ -532,22 +542,29 @@ outTable <- select(outTable, Sample.ID, ORF.ID, Length, Coverage.ORF,
                    Mean.Depth, Num.Pos.Min.Cov, Percent.Pos.Min.Cov, 
                    Num.Ns, Percent.Ns) %>%
             mutate(QC = case_when(
-                          as.numeric(Mean.Depth) >= 100 & as.numeric(Coverage.ORF) >= 95 ~ "PASS",
+                          as.numeric(Mean.Depth) >= as.numeric(args$meanDepthQC) & as.numeric(Coverage.ORF) >= as.numeric(args$covQC) ~ "PASS",
                           TRUE ~ "FAIL"))
 
-# Create a summary table
-outTableSummary <- group_by(outTable, Sample.ID) %>%
-                   summarise(ORFs.Passing.QC = sum(QC == "PASS")) #%>%
-                   # mutate(Per.Ns.S = ,
-                   #        Cov.S = ,
-                   #        Per.Pos.Min.Cov.S = ,
-                   #        Mean.Cov.S = )
-print(outTableSummary)
-
+# outTableSummary a summary table derived from outTable that gets added to summary.txt eventually.
+outTableSummaryA <- group_by(outTable, Sample.ID) %>%
+                   summarise(ORFs.Passing.QC = sum(QC == "PASS"))
+outTableSummaryB <- filter(outTable, ORF.ID == "S") %>%
+                    select(Sample.ID, 
+                           Coverage.ORF, 
+                           Mean.Depth, 
+                           Percent.Pos.Min.Cov, 
+                           Percent.Ns) %>%
+                    rename(Coverage.S = Coverage.ORF, 
+                           Mean.Depth.S = Mean.Depth, 
+                           Percent.Pos.Min.Cov.S = Percent.Pos.Min.Cov, 
+                           Percent.Ns.S = Percent.Ns)
+outTableSummary <- left_join(outTableSummaryA, outTableSummaryB, by = "Sample.ID")
 
 # Write out files
 write_tsv(outTable, 
           file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats.tsv"), 
           col_names = TRUE)
+write_tsv(outTableSummary, 
+          file = file.path(args$analysisDirFP, args$pacbamDir, "orf_stats_summary.tsv"), 
+          col_names = TRUE)
 write_file(paste0("###### new run ######\n", toString(warnings(nwarnings = 10000))), file = file.path(args$analysisDirFP, "logs", "R_warnings_orf_stats.txt"))
-#print(warnings(nwarnings = 10000))
