@@ -127,6 +127,17 @@ def main():
         sys.exit(1)
     
     samples = get_samples(summary_file)
+
+    # Still working out a way to exit gracefully if duplicates exist
+    possible_CSIDs = samples.str.findall('\d{10}') # Find all strings of 10 digits
+    possible_CUIDs = samples.str.findall('(?![A-Za-z]{8}|[0-9]{8})[0-9A-Za-z]{8}') # Find all alphanumeric, 8-char strings
+    # Note: this is really a hack. It won't accommodate multiple CSID-like/CUID-like strings that will be identified above
+    elims_identifier = = possible_CSIDs.astype('str').str.cat(possible_CUIDs.astype('str'), sep = '-', join='left') 
+    if not samples.is_unique:
+        print("There are duplicate CSID-CUIDs in your sample sheet.")
+        print("Duplicate samples cannot be uploaded to ELIMS.")
+        sys.exit()
+
     summary_output = get_summary_data(summary_file, samples)  
 
     # Use samples to traverse args.directory and get info about lineage substitutions and pangoLEARN vs
