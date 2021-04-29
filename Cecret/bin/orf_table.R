@@ -429,6 +429,9 @@ for (f in 1:length(consensusFiles)) {
                                         paste0("-", args$runID, args$consensusFileSuf), 
                                         ""))
 }
+# Quick and dirty fix for the lack of a run ID in Undetermined leaving the consensusFileSuf on Undecided.
+sampleIDs <- str_replace(sampleIDs, args$consensusFileSuf, "")
+
 # Initialize outList. Add sample IDs to outList.
 # outList is a list of CecretSamples. Access Sample ID using outList[[n]]@Sample.ID.
 # CecretSample slots correspond to ORFs. Data needed in the output tables for each ORF are contained within the CecretORF objects in each CecretSample class slot.

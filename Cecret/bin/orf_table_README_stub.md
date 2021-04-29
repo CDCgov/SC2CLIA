@@ -8,7 +8,7 @@ To view script options: `Rscript orf_table.R --help`
 #### Outputs
 All data outputs are placed in the Cecret analysis directory under pacbam_orfs by default.  
 
-orf_stats.tsv is a nine column tab-delimited table.
+orf_stats.tsv is a ten column tab-delimited table.
 * Sample.ID: sample identifier derived from the input consensus file names.
 * ORF.ID: SC2 ORF identifier.
 * Length: length of ORF as sequenced. Derived from consensus input files. Calculated by slicing the consensus sequence at the predicted location of the ORF according to input bed files. Performs no checking to see if sequence is actual or correct ORF. Returns NA if consensus is too short to provide complete ORF at predicted location.
