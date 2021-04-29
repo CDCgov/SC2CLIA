@@ -22,7 +22,7 @@ Options:
 -a <analysisDirFP> --analysisDirFP=<analysisDirFP>            Cecret output directory full path; string
 -b <bedFile1FP> --bedFile1FP=<bedFile1FP>                     Bed file 1 with full path; string [default: ../configs/MN908947.3-ORFs.bed]
 -t <bedFile2FP> --bedFile2FP=<bedFile2FP>                     Bed file 2 with full path; string [default: ../configs/MN908947.3-ORF7b.bed]
--p <pacbamDir> --pacbamDir=<pacbamDir>                        PacBam output directory name; string [default: pacbam_orfs]
+-p <pacbamDir> --pacbamDir=<pacbamDir>                        PacBam output directory name; string [default: pacbam_orf]
 -s <pacbamFileSuf> --pacbamFileSuf=<pacbamFileSuf>            PacBam output file suffic; string [default: .primertrim.sorted.pileup]
 -m <minCov> --minCov=<minCov>                                 Minimum coverage threshold to call a position; integer [default: 30]
 -c <consensusDir> --consensusDir=<consensusDir>               Consensus output directory name; string [default: consensus]

@@ -86,11 +86,26 @@ echo "Running R scripts to generate reports ..."
 R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
 # R_IMG=$PWD/SINGULARITY_CACHE/singularity-r.sif
 R_folder=${PWD}/Cecret/bin/report
+ORF_folder=${PWD}/Cecret/bin
+
+config_folder=${PWD}/Cecret/configs
+bed1="MN908947.3-ORFs.bed"
+bed2="MN908947.3-ORF7b.bed"
 
 # -r, -a, and -s
 runID=$(basename $DATA)
 analysisDir=$OUTDIR
 seqDir=$(realpath $DATA)
+
+echo "Starting orf_table.r"
+
+
+singularity exec \
+				--no-home \
+				-B ${ORF_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw,${config_folder}:/configs \
+				-H /usr/local/bin \
+				${R_IMG} orf_table.R -r ${runID} -a /OUTDIR -b /configs/${bed1} -t /configs/${bed2} > /dev/null
+
 
 singularity exec \
 				--no-home \
