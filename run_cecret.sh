@@ -97,20 +97,24 @@ runID=$(basename $DATA)
 analysisDir=$OUTDIR
 seqDir=$(realpath $DATA)
 
-echo "Starting orf_table.r"
-
 
 singularity exec \
 				--no-home \
 				-B ${ORF_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw,${config_folder}:/configs \
 				-H /usr/local/bin \
-				${R_IMG} orf_table.R -r ${runID} -a /OUTDIR -b /configs/${bed1} -t /configs/${bed2} > /dev/null
+				${R_IMG} orf_table.R -r ${runID} -a /OUTDIR -b /configs/${bed1} -t /configs/${bed2} #> /dev/null
 
 
 singularity exec \
 				--no-home \
 				-B $seqDir:/data:ro,${R_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw \
 				-H /usr/local/bin \
-				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data > /dev/null
+				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data #> /dev/null
+
+singularity exec \
+				--no-home \
+				-B ${ORF_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw,${config_folder}:/configs \
+				-H /usr/local/bin \
+				${R_IMG} append_tables.R -a /OUTDIR  -f /OUTDIR/summary.txt -s /OUTDIR/pacbam_orf/orf_stats_summary.tsv #> /dev/null
 
 echo "Done!"
