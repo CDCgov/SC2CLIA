@@ -113,14 +113,16 @@ file1 <- read_delim(file = args$file1FP,
                   col_names = TRUE,
                   quoted_na = FALSE,
                   trim_ws = TRUE,
-                  delim = f1Delim)
+                  delim = f1Delim,
+                  col_types = cols())
 
 # Read in file2
 file2 <- read_delim(file = args$file2FP,
                     col_names = TRUE,
                     quoted_na = FALSE,
                     trim_ws = TRUE,
-                    delim = f2Delim)
+                    delim = f2Delim,
+                    col_types = cols())
 
 test_that('input tables have same number of rows', {
   expect_equal(nrow(file1), nrow(file2))
