@@ -68,7 +68,7 @@ params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
-params.pacbam = false // for running pacbam
+params.pacbam = true // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
@@ -76,7 +76,7 @@ params.sc2ref = true // for calculating per. of reads pass qc and align to ref /
 params.ncbi_upload = true // for ncbi submission
 
 // for optional contamination determination with kraken
-params.kraken2 = false
+params.kraken2 = true // Switching to default on
 params.kraken2_db = ''
 
 // for optional route of tree generation and counting snps between samples
