@@ -158,7 +158,7 @@ pbReader <- function(v) {
   pbData <- tibble()
   for (f in v) {
     pbData <- bind_rows(pbData, read_tsv(file = f,
-                                         col_names = TRUE))
+                                         col_names = TRUE, col_types = cols()))
   }
   pbData <- select(pbData, pos, cov) %>%
             arrange(pos) %>%
@@ -398,10 +398,10 @@ updateCovORF <- function(l, i, x, t, b) {
 
 # Read in the bed files and format in single table
 bedTemp <- read_tsv(args$bedFile2FP, 
-                    col_names = c("REF", "START", "END", "ORF", "POOL", "TRASH")) %>%
+                    col_names = c("REF", "START", "END", "ORF", "POOL", "TRASH"), col_types = cols()) %>%
   select(-TRASH, -REF, -POOL)
 bedRegions <- read_tsv(args$bedFile1FP, 
-                       col_names = c("REF", "START", "END", "ORF", "POOL", "TRASH")) %>%
+                       col_names = c("REF", "START", "END", "ORF", "POOL", "TRASH"), col_types = cols()) %>%
   select(-TRASH, -REF, -POOL) %>%
   bind_rows(bedTemp) %>%
   arrange(START) %>%
