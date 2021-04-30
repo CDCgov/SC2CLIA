@@ -4,7 +4,7 @@
 # run_NCBI_UPLOAD.sh script under each run folder
 ID=samples.txt
 TEMPLATE=template.csv
-BIN=../../Cecret/bin
+BIN=../../../Pipeline/SC2CLIA/Cecret/bin
 FSA_FILE=submission.fsa
 SRC_FILE=submission.src
 SBT_TABLE=submission.sbt
