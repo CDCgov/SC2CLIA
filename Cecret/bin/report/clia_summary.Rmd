@@ -151,7 +151,7 @@ for (i in 1:colReps) {
 # Note at time of dev, adding scroll boxes was the only way AJW could get fixed_thead = TRUE to work as expected.
 sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
 
-knitr::kable(sumTab, escape = F, align = "l", format = "latex") %>% 
+knitr::kable(sumTab, escape = F, align = "l", format = "pandoc") %>% 
   column_spec(sampleIDIndices, background = "lightgray") %>%
   kable_styling(bootstrap_options = c("striped"))
 ```
