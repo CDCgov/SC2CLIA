@@ -31,7 +31,6 @@ Options:
 args <- docopt(doc = doc, version = ver)
 
 ### To dos ###
-# Change location of output files so they aren't rendered in bin/report to avoid multiple user collisions
 # Test input args to ensure they match expected values
 # Test that all *.Rmd files and multiQC report exist in expected locations
 # Test versions.sh output to ensure created and not empty
@@ -63,12 +62,3 @@ rmdFiles <- c("about.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov
 
 # Do the rendering
 lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
-
-# Move rendered files into single output directory
-# system2(command = "mv",
-#         args = c("*.html", paste(args$analysisDirFP, "report", sep = "/")),
-#         wait = TRUE)
-# system2(command = "mv",
-#         args = c("ref_docs/*.html", paste(args$analysisDirFP, "report/ref_docs/", sep = "/")),
-#         wait = TRUE)
-
