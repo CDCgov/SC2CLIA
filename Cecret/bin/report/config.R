@@ -58,7 +58,7 @@ params <- list(runID = args$runID,
                seqDirFP = args$seqDirFP)
 
 # Rmd files to render
-rmdFiles <- c("about.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
+rmdFiles <- c("about.Rmd", "sGene.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
 
 # Do the rendering
 lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
