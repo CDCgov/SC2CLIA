@@ -31,7 +31,7 @@ class Nextclade_AA_Info:
         """
 
 
-        s_prot_submuts = [self.seq_name,'S']
+        s_prot_submuts = []
         seq_subs = self.seq_subs.split(',')
         for s in seq_subs:
             if s.startswith('S'):
@@ -111,8 +111,6 @@ if __name__ == '__main__':
 
     parser.add_argument('nextclade_csv',type=str,help='File path to a nextclade csv file')
 
-    parser.add_argument('nextclade_aa_file',type=str,help='File path to a mutable output file')
-
     args = parser.parse_args()
 
     nextclade_obj = nextcladeParser(args.nextclade_csv)
@@ -122,9 +120,9 @@ if __name__ == '__main__':
 
     spikeProteinInfo = nextclade_obj.spikeProteinInfo()
 
-#Opens an appendable file to print the spikeProteinInfo list to
-    nextcladeOutFileHandle = open(args.nextclade_aa_file,'w')
 
 #Joins the list into csv format and prints to file
 
-    print(','.join(spikeProteinInfo),file=nextcladeOutFileHandle)
+    spikeProteinInfo = (','.join(spikeProteinInfo))
+
+    print('S'+'_'+spikeProteinInfo)
