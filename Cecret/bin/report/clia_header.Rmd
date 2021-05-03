@@ -1,0 +1,16 @@
+---
+output: html_fragment
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!-- Document header table from Grant Williams-->
+<div class="header" id="header" style="position:fixed">
+    <table border=1>
+        <tr><td width=180><img src="CDClogo.jpg" /></td><td colspan=3><b>Enteric Diseases Laboratory Branch</b></td></tr>
+        <tr><td colspan=4><b>Whole Genome Sequence Identification of Enteric Bacteria using the Average Nucleotide Identity Method</b></td></tr>
+        <tr><td colspan=2><b>Doc. No. </b>EDLB.TE.B.004</td><td><b>Ver. No. </b>03</td><td><b>Effective Date: </b>04/18/2019</td></tr>
+    </table>
+</div>
