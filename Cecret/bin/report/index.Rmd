@@ -122,7 +122,8 @@ colnames(sumTab) <- c("Sample.ID",
                       "Coverage.S",
                       "Mean.Depth.S",
                       "Percent.Pos.Min.Cov.S",
-                      "Percent.Ns.S")
+                      "Percent.Ns.S",
+                      "AA.Changes.S")
 
 # Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column

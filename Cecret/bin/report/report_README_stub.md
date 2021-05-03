@@ -62,3 +62,4 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 | Mean.Depth.S | Mean.Depth.S | mean depth of coverage of sequencing across predicted S gene |
 | Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | percentage of positions in the S gene that meet minimum coverage threshold |
 | Percent.Ns.S | Percent.Ns.S | percentage of Ns in the region of the consensus sequence for the S gene |
+| S_aa_indels | AA.Changes.S | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
