@@ -69,7 +69,8 @@ fi
 
 
 # If Rscript option turned on, begin Report block
-if [ ! ${RSCRIPT} ]; then
+# if [ ! ${RSCRIPT} ]; then
+if [ ! ${RSCRIPT} = true ]; then
 	echo "Completed Cecret pipeline";
 	exit 0;
 else
