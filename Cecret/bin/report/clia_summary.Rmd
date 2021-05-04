@@ -17,7 +17,7 @@ output: pdf_document
 rmarkdown::render(input = "Cecret/bin/report/clia_summary.Rmd", output_file = "clia_summary.pdf", output_format = "pdf_document", params = list(analysisDirFP = "../../../../testing", runID = "M3235-21-015", seqDirFP = "../../../../testing"))
 ```
 
-```{r setup, include=FALSE}
+```{r setup1, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(formattable)

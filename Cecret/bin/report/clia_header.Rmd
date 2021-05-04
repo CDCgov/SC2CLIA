@@ -2,7 +2,7 @@
 output: html_fragment
 ---
 
-```{r setup, include=FALSE}
+```{r setup2, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
