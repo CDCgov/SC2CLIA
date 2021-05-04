@@ -2,8 +2,6 @@
 title: null
 classoption: landscape,a0
 output: pdf_document
-  includes:
-    in_header: "clia_header.tex"
 params:
   analysisDirFP: null
   runID: null
@@ -23,12 +21,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(formattable)
 library(kableExtra)
+pdf_document(includes = includes(in_header = "clia_header.tex"))
 ```
 
-```{r, echo=FALSE, results='asis'}
-htmlHeader <- knitr::knit_child('clia_header.Rmd', quiet = TRUE)
-cat(htmlHeader, sep = '\n')
-```
 
 
 ```{r thresholds, include=FALSE}
