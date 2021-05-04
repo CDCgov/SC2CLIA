@@ -1,14 +1,14 @@
 ---
 title: null
 classoption: landscape,a0
+output: pdf_document
+  includes:
+    in_header: "clia_header.tex"
 params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
   sampleIDInsertFreq: 5
-output: pdf_document
-  includes:
-    in_header: "clia_header.tex"
 ---
 
 ```{r index-comments, include=FALSE, eval=FALSE}
