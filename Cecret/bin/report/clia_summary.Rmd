@@ -1,7 +1,5 @@
 ---
 title: null
-classoption: landscape
-output: pdf_document
 params:
   analysisDirFP: null
   runID: null
@@ -22,7 +20,6 @@ library(tidyverse)
 library(formattable)
 library(kableExtra)
 library(rmarkdown)
-#pdf_document(includes = includes(in_header = "clia_header.tex"))
 ```
 
 
@@ -146,7 +143,11 @@ for (i in 1:colReps) {
 # Note at time of dev, adding scroll boxes was the only way AJW could get fixed_thead = TRUE to work as expected.
 sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
 
-knitr::kable(sumTab, escape = F, align = "l", format = "pandoc") #%>% 
+for (s in sampleIDIndices) {
+  knitr::kable(select(sumTab, s:s+as.numeric(params$sampleIDInsertFreq)-1), escape = F, align = "l", format = "pandoc")
+  
+}
+#knitr::kable(sumTab, escape = F, align = "l", format = "pandoc") #%>% 
   #column_spec(sampleIDIndices, background = "lightgray") %>%
   #kable_styling(bootstrap_options = c("striped"))
 ```
