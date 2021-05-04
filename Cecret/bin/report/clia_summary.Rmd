@@ -1,6 +1,6 @@
 ---
 title: null
-classoption: landscape,a0
+classoption: landscape
 output: pdf_document
 params:
   analysisDirFP: null
@@ -22,7 +22,7 @@ library(tidyverse)
 library(formattable)
 library(kableExtra)
 library(rmarkdown)
-pdf_document(includes = includes(in_header = "clia_header.tex"))
+#pdf_document(includes = includes(in_header = "clia_header.tex"))
 ```
 
 
