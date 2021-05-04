@@ -17,7 +17,8 @@ rmarkdown::render(input = "Cecret/bin/report/clia_summary.Rmd", output_file = "c
 ```{r setup1, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(formattable)
+#library(formattable)
+library(knitr)
 library(kableExtra)
 library(rmarkdown)
 ```
@@ -140,18 +141,16 @@ for (i in 1:colReps) {
 ```
 
 ```{r display-sum, echo=FALSE}
-# Note at time of dev, adding scroll boxes was the only way AJW could get fixed_thead = TRUE to work as expected.
 sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
 
 for (s in sampleIDIndices) {
   if (s < tail(sampleIDIndices, n = 1)) {
-  knitr::kable(select(sumTab, s:s+as.numeric(params$sampleIDInsertFreq)-1), escape = F, align = "l", format = "pandoc")
+    y <- s+as.numeric(params$sampleIDInsertFreq)-1
   } else {
-    knitr::kable(select(sumTab, s:ncol(sumTab)), escape = F, align = "l", format = "pandoc")
+    y <- ncol(sumTab)
   }
-  
+  kable(x = select(sumTab, s:y), 
+        align = "l", 
+        format = "latex")
 }
-#knitr::kable(sumTab, escape = F, align = "l", format = "pandoc") #%>% 
-  #column_spec(sampleIDIndices, background = "lightgray") %>%
-  #kable_styling(bootstrap_options = c("striped"))
 ```
