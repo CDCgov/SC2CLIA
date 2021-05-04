@@ -141,15 +141,15 @@ for (i in 1:colReps) {
 ```
 
 ```{r display-sum, echo=FALSE}
-sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
+sampleIDColNames <- str_starts(colnames(sumTab), "Sample.Name")
 
-for (s in sampleIDIndices) {
-  if (s < tail(sampleIDIndices, n = 1)) {
-    y <- s+as.numeric(params$sampleIDInsertFreq)-1
+for (s in sampleIDColNames) {
+  if (s != tail(sampleIDColNames, n = 1)) {
+    y <- colnames(sumTab)[which(str_detect(colnames(sumTab), s)) + params$sampleIDInsertFreq - 1]
   } else {
-    y <- ncol(sumTab)
+    y <- tail(colnames(sumTab), n = 1)
   }
-  kable(x = select(sumTab, s:y), 
+  kable(x = select(sumTab, all_of(colnames(sumTab)[s:y])), 
         align = "l", 
         format = "latex")
 }
