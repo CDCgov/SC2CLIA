@@ -19,7 +19,8 @@ header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \lhead{\textbf{Enteric Diseases Laboratory Branch Sars-CoV-2 Variant Whole Genome Sequencing Run Summary}}
+- \setlength{\headheight}{23pt}
+- \chead{\textbf{Enteric Diseases Laboratory Branch SARS-CoV-2 Variant Whole Genome Sequencing Run Summary}}
 - \cfoot{\textbf{Ver. No.}01}
 - \lfoot{\textbf{Doc. No.} EDLB.TE.C.032.F02}
 - \rfoot{\textbf{Effective Date:}TBD}
@@ -177,6 +178,5 @@ for (s in 1:length(sampleIDIndices)) {
             booktabs = T,
             align = "l") %>%
         kable_styling(latex_options = "striped"))
-#cat('\n\n<!-- -->\n\n')
 }
 ```
