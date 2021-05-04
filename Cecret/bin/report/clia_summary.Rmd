@@ -144,7 +144,11 @@ for (i in 1:colReps) {
 sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
 
 for (s in sampleIDIndices) {
+  if (s < tail(sampleIDIndices, n = 1)) {
   knitr::kable(select(sumTab, s:s+as.numeric(params$sampleIDInsertFreq)-1), escape = F, align = "l", format = "pandoc")
+  } else {
+    knitr::kable(select(sumTab, s:ncol(sumTab)), escape = F, align = "l", format = "pandoc")
+  }
   
 }
 #knitr::kable(sumTab, escape = F, align = "l", format = "pandoc") #%>% 
