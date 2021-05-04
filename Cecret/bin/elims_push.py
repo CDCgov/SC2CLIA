@@ -5,9 +5,11 @@
 import os, sys, re, argparse
 import pandas as pd
 from functools import partial, reduce
+import numpy as np
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 __author__ = 'Jessica Rowell'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'Jessica Rowell'
 __email__ = '***REMOVED***'
 __status__ = 'Development'
@@ -23,9 +25,9 @@ out_formats = {
     "fastqc_raw_reads_1":"Total Reads",
     "Total_Reads_Analyzed":"Mapped Reads",
     "percent_mapped":"Percent Mapped Reads",
-    "placeholder2":"Open Reading Frames",
-    "placeholder3":"S-gene Coverage",
-    "spike_subs":"Spike Protein Substitutions",
+    "ORFs.Passing.QC":"Open Reading Frames",
+    "Coverage.S":"S-gene Coverage",
+    "S_aa_INDELs":"Spike Protein Substitutions",
     "pangolin_lineage":"Lineage",
     "num_pangolin_subs":"Number of Lineage-Defined Substitutions",
     "pangoLEARN_version":"pangoLEARN Version",
@@ -65,8 +67,8 @@ def get_samples(filename):
     except Exception:
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
-    # Get only the real samples (exclude controls) - right now excluding if they start with non-decimal digit
-    non_sample_pattern = "^PC-|-PC-|^NC-|-NC-|^Undetermined"
+    # Get only the real samples (exclude controls) - right now excluding if it contains PC, NC, WA, or CA
+    non_sample_pattern = "^PC-|-PC-|^NC-|-NC-|^CA|^WA|^Undetermined"
     filter = summary_table['sample'].str.contains(non_sample_pattern)
     summary_table = summary_table[~filter]
     return(summary_table['sample']) 
@@ -80,7 +82,8 @@ def get_summary_data(filename, samples):
         sys.exit(1)
     # Modify to take in samples and only keeps where rows that are real samples
     summary_table = summary_table[summary_table["sample"].isin(samples)]
-    summary_subset = summary_table.loc[:,('sample','depth_after_trimming','coverage_after_trimming','fastqc_raw_reads_1','Total_Reads_Analyzed','pangolin_lineage')]
+    summary_subset = summary_table.loc[:,('sample','depth_after_trimming','coverage_after_trimming','fastqc_raw_reads_1', \
+                                          'Total_Reads_Analyzed','pangolin_lineage', 'ORFs.Passing.QC', 'Coverage.S', 'S_aa_INDELs')]
     summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
     summary_subset['min_cov_threshold'] = 30
     summary_subset['CSID'] = summary_table['sample'].str.split('-').str[0]
@@ -102,7 +105,8 @@ def out_elims_data(summary_df):
     cols = ['CSID','CUID','CDC Local Aliquot ID','QC Type','Test Name','Analyte (required)', \
             'Replicate','Raw Result (required)','Interpretation','QA Analysis']
     long_data = long_data[cols]
-    long_data.sort_values(by=['CSID','CUID'], inplace=True)
+    long_data.sort_values(by=['CSID','CUID'], inplace=True) # ignore_index=True is only available after Pandas 1.0.0, M3 is still on 0.25.0
+    long_data.reset_index(drop=True, inplace=True)
     long_data.loc[-1] = db_row
     long_data.index = long_data.index + 1
     long_data = long_data.sort_index() # I've done it this way because I'm inserting a list, not a dict/Series with colnames
@@ -129,14 +133,14 @@ def main():
     samples = get_samples(summary_file)
 
     # Still working out a way to exit gracefully if duplicates exist
-    possible_CSIDs = samples.str.findall('\d{10}') # Find all strings of 10 digits
-    possible_CUIDs = samples.str.findall('(?![A-Za-z]{8}|[0-9]{8})[0-9A-Za-z]{8}') # Find all alphanumeric, 8-char strings
+    #possible_CSIDs = samples.str.findall('\d{10}') # Find all strings of 10 digits
+    #possible_CUIDs = samples.str.findall('(?![A-Za-z]{8}|[0-9]{8})[0-9A-Za-z]{8}') # Find all alphanumeric, 8-char strings
     # Note: this is really a hack. It won't accommodate multiple CSID-like/CUID-like strings that will be identified above
-    elims_identifier = = possible_CSIDs.astype('str').str.cat(possible_CUIDs.astype('str'), sep = '-', join='left') 
-    if not samples.is_unique:
-        print("There are duplicate CSID-CUIDs in your sample sheet.")
-        print("Duplicate samples cannot be uploaded to ELIMS.")
-        sys.exit()
+    #elims_identifier = possible_CSIDs.astype('str').str.cat(possible_CUIDs.astype('str'), sep = '-', join='left') 
+    #if not elims_identifier.is_unique:
+    #    print("There are duplicate CSID-CUIDs in your sample sheet.")
+    #    print("Duplicate samples cannot be uploaded to ELIMS.")
+    #    sys.exit()
 
     summary_output = get_summary_data(summary_file, samples)  
 
@@ -162,33 +166,18 @@ def main():
             pangolin_list.append(data_trio)
     pangolin_substitutions = pd.DataFrame(pangolin_list, columns = ['sample', 'num_pangolin_subs', 'pangoLEARN_version'])
 
-    # Get the Spike protein substitutions info  (Note: This file nomenclature is ridiculous.)
-    s_list = []
-    for sample in samples:
-        s_file = args.directory + '/nextclade_parse/' + sample + '_nextclade_parsed.csv'
-        if os.path.isfile(s_file) == True:
-            try:
-                s_data = pd.read_csv(s_file, header = None) # will always have >=2 columns
-            except Exception:
-                print(f"Could not import {s_file} using Pandas")
-                pass
-        s = ",".join(s_data.loc[0,2:].values.tolist()) # skip 1st two cells, sample & 'S'
-        s_pair = (sample, s)
-        s_list.append(s_pair)
-    s_substitutions = pd.DataFrame(s_list, columns = ['sample','spike_subs'])
-
-
-
     # Merge all the info
-    dfs = [summary_output, pangolin_substitutions, s_substitutions] # add additional dfs as needed: orfs, s-cov 
+    # Note: can be done with just one merge  because there are only two dfs, but I've left it in case we add more
+    dfs = [summary_output, pangolin_substitutions] # add additional dfs as needed
     merge = partial(pd.merge, on='sample', how='left') # merge object, partial function
     full_data = reduce(merge, dfs) # apply the merge object to all the dfs
 
 
     # Rearrange columns 
     cols = ['CSID','CUID','min_cov_threshold','depth_after_trimming','coverage_after_trimming', \
-            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', \
-            'spike_subs', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version'] # add orfs, s-cov, genbank
+            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', 'S_aa_INDELs', \
+            'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version'] # add orfs, s-cov, genbank
+
     full_data = full_data[cols]
 
     final_data = out_elims_data(full_data)
