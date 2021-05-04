@@ -1,6 +1,7 @@
 ---
 title: null
 papersize: a4
+orientation: landscape
 params:
   analysisDirFP: null
   runID: null
@@ -23,16 +24,11 @@ library(formattable)
 library(kableExtra)
 ```
 
-<!--html_preserve-->
-<!-- Document header table from Grant Williams-->
-<div class="header" id="header" style="position:fixed">
-    <table border=1>
-        <tr><td width=180><img src="CDClogo.jpg" /></td><td colspan=3><b>Enteric Diseases Laboratory Branch</b></td></tr>
-        <tr><td colspan=4><b>Whole Genome Sequence Identification of Enteric Bacteria using the Average Nucleotide Identity Method</b></td></tr>
-        <tr><td colspan=2><b>Doc. No. </b>EDLB.TE.B.004</td><td><b>Ver. No. </b>03</td><td><b>Effective Date: </b>04/18/2019</td></tr>
-    </table>
-</div>
-<!--/html_preserve-->
+```{r, echo=FALSE, results='asis'}
+htmlHeader <- knitr::knit_child('clia_header.Rmd', quiet = TRUE)
+cat(htmlHeader, sep = '\n')
+```
+
 
 ```{r thresholds, include=FALSE}
 fastqcRawThreshold <- 100000          # min number of raw reads accepted in fastqc_raw column
