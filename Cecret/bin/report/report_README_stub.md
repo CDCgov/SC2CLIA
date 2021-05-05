@@ -63,9 +63,9 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 | len_largest_deletion | Length.Longest.Del | not included | |
 | ORFs.Passing.QC | ORFs.Passing.QC | Open Reading Frames | a count of ORFs with >=95% coverage and mean depth of >=100x |
 | Coverage.S | Coverage.S | S-gene Coverage | percentage of positions in the predicted S gene length that have any (even 1 read) sequencing data |
-| Mean.Depth.S | Mean.Depth.S | mean depth of coverage of sequencing across predicted S gene |
-| Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | percentage of positions in the S gene that meet minimum coverage threshold |
-| Percent.Ns.S | Percent.Ns.S | percentage of Ns in the region of the consensus sequence for the S gene |
+| Mean.Depth.S | Mean.Depth.S | not included | mean depth of coverage of sequencing across predicted S gene |
+| Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | not included | percentage of positions in the S gene that meet minimum coverage threshold |
+| Percent.Ns.S | Percent.Ns.S | not included | percentage of Ns in the region of the consensus sequence for the S gene |
 | S_aa_indels | AA.Changes.S | Spike Protein Substitutions | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
 | not included | not included | Minimum Coverage Threshold | 30x |
 | not included | not included | Percent Mapped Reads | Calculated as (Total Reads Analyzed / Total Reads)*100 |
