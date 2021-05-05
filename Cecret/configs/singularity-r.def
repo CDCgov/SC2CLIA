@@ -24,7 +24,7 @@ From: ubuntu:20.04
   apt update
 
   # Install pkgs
-  apt-get install -y libopenblas-dev r-base r-base-core r-base-dev r-recommended jags libcurl4-openssl-dev libopenmpi-dev openmpi-bin openmpi-common openmpi-doc openssh-client openssh-server libssh-dev wget vim git nano cmake gfortran g++ curl wget libxml2-dev libssl-dev pandoc libmagick++-dev haskell-platform libfontconfig1-dev texlive-latex-extra texlive-latex-extra-utils ghostscript pdftk
+  apt-get install -y libopenblas-dev r-base r-base-core r-base-dev r-recommended jags libcurl4-openssl-dev libopenmpi-dev openmpi-bin openmpi-common openmpi-doc openssh-client openssh-server libssh-dev wget vim git nano cmake gfortran g++ curl wget libxml2-dev libssl-dev pandoc libmagick++-dev haskell-platform libfontconfig1-dev texlive-latex-extra texlive-extra-utils ghostscript pdftk
 
   # Install required R packages
   R --slave -e 'install.packages(pkgs = "remotes", dependencies = TRUE, lib = "/usr/lib/R/library")'
