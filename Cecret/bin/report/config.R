@@ -70,10 +70,18 @@ render(input = "clia_summary.Rmd",
        output_dir = file.path(args$analysisDirFP, "report"),
        envir = new.env())
 
-# Merge CLIA pdf with template digisignature page
+# Merge CLIA pdf with template digital signature page
 system2(command = "pdftk",
         args = c(file.path(args$analysisDirFP, "report", "clia_summary.pdf"), 
                  file.path("clia_sig_page_digsig.pdf"),
                  "cat",
                  "output",
-                 file.path(args$analysisDirFP, "report", "clia_summary_digsig.pdf")))
+                 file.path(args$analysisDirFP, "report", "clia_summary_digsig.pdf")),
+        wait = TRUE)
+
+# Clean up intermediate pdf file
+if (file.exists(file.path(args$analysisDirFP, "report", "clia_summary.pdf"))) {
+  system2(command = "rm",
+          args = c(args$analysisDirFP, "report", "clia_summary.pdf"),
+          wait = TRUE)
+}
