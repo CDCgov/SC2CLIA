@@ -26,45 +26,50 @@ The other output is clia_summary_digsig.pdf located in the report directory. Thi
 ### Summary Table Details
 Note that the Sample.Name column is repeated regularly to aid in readability. Numbers are appended to the ends of the repeated column headers.
 
-| summary.txt column | index.html column | value description |
-| --- | --- | --- |
-| sample_id | Sample.ID | Sample ID fragment starting at beginning and going through first hyphen |
-| sample | Sample.Name | Full sample identifier |
-| aligner_version | not included | |
-| ivar_version | not included | |
-| pangolin_lineage | Pangolin | |
-| pangolin_status | Pangolin.QC | |
-| nextclade_clade | NextClade | |
-| fastqc_raw_reads_1 | #FastQC.R1 | |
-| fastqc_raw_reads_2 | #FastQC.R2 | |
-| seqyclean_pairs_kept_after_cleaning | #Seqyclean.Pairs | |
-| seqyclean_percent_kept_after_cleaning | %Seqyclean.Pairs | |
-| fastp_reads_passed | not included | |
-| depth_after_trimming | Depth.Post.Trim | |
-| coverage_after_trimming | Coverage.Post.Trim | | 
-| %_human_reads | %Human.Reads | |
-| %_SARS-COV-2_reads | %SC2.Reads | |
-| ivar_num_variants_identified | #iVar.Variants | |
-| bcftools_variants_identified | #BCFTools.Variants | |
-| bedtools_num_failed_amplicons | #BEDTools.Failed.Amps | |
-| samtools_num_failed_amplicons | SAMTools.Failed.Amps | |
-| num_N | #N | |
-| num_degenerage | #Degenerate | |
-| num_ACTG | #ACTG | |
-|num_total | #Total.Bases | |
-| Total_Reads_Analyzed | Total.Reads.Analyzed | |
-| %_N | %N | |
-| ave_cov_depth | Mean.Cov.Depth | |
-| %_Reads_Matching_SC2_Ref | %Reads.Mapping.SC2 | |
-| vadr_status | Vadr | |
-| vdr_sample_orfshift | Vadr.All.ORF.Shift | |
-| vdr_sgene_orftshift | Vadr.S.ORF.Shift | |
-| len_largest_insertion | Length.Longest.Insert | |
-| len_largest_deletion | Length.Longest.Del | |
-| ORFs.Passing.QC | ORFs.Passing.QC | a count of ORFs with >=95% coverage and mean depth of >=100x |
-| Coverage.S | Coverage.S | percentage of positions in the predicted S gene length that have any (even 1 read) sequencing data |
+| summary.txt column | index.html column | eLIMS report column | value description |
+| --- | --- | --- | --- |
+| sample_id | Sample.ID | CSID | Sample ID fragment starting at beginning and going through first hyphen |
+| sample | Sample.Name | CSID_CUID | Full sample identifier |
+| aligner_version | not included | not included | |
+| ivar_version | not included | not included | |
+| pangolin_lineage | Pangolin | Lineage | |
+| pangolin_status | Pangolin.QC | not included | |
+| nextclade_clade | NextClade | not included | |
+| fastqc_raw_reads_1 | #FastQC.R1 | Total Reads | |
+| fastqc_raw_reads_2 | #FastQC.R2 | not included | |
+| seqyclean_pairs_kept_after_cleaning | #Seqyclean.Pairs | not included | |
+| seqyclean_percent_kept_after_cleaning | %Seqyclean.Pairs | not included | |
+| fastp_reads_passed | not included | not included | |
+| depth_after_trimming | Depth.Post.Trim | Average Depth | |
+| coverage_after_trimming | Coverage.Post.Trim | Percent Genome Coverage | |
+| %_human_reads | %Human.Reads | not included | |
+| %_SARS-COV-2_reads | %SC2.Reads | not included | |
+| ivar_num_variants_identified | #iVar.Variants | not included | |
+| bcftools_variants_identified | #BCFTools.Variants | not included | |
+| bedtools_num_failed_amplicons | #BEDTools.Failed.Amps | not included | |
+| samtools_num_failed_amplicons | SAMTools.Failed.Amps | not included | |
+| num_N | #N | not included | |
+| num_degenerage | #Degenerate | not included | |
+| num_ACTG | #ACTG | not included | |
+| num_total | #Total.Bases | not included | |
+| Total_Reads_Analyzed | Total.Reads.Analyzed | Mapped Reads | |
+| %_N | %N | not included | |
+| ave_cov_depth | Mean.Cov.Depth | not included | |
+| %_Reads_Matching_SC2_Ref | %Reads.Mapping.SC2 | not included | |
+| vadr_status | Vadr | not included | |
+| vdr_sample_orfshift | Vadr.All.ORF.Shift | not included | |
+| vdr_sgene_orftshift | Vadr.S.ORF.Shift | not included | |
+| len_largest_insertion | Length.Longest.Insert | not included | |
+| len_largest_deletion | Length.Longest.Del | not included | |
+| ORFs.Passing.QC | ORFs.Passing.QC | Open Reading Frames | a count of ORFs with >=95% coverage and mean depth of >=100x |
+| Coverage.S | Coverage.S | S-gene Coverage | percentage of positions in the predicted S gene length that have any (even 1 read) sequencing data |
 | Mean.Depth.S | Mean.Depth.S | mean depth of coverage of sequencing across predicted S gene |
 | Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | percentage of positions in the S gene that meet minimum coverage threshold |
 | Percent.Ns.S | Percent.Ns.S | percentage of Ns in the region of the consensus sequence for the S gene |
-| S_aa_indels | AA.Changes.S | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
+| S_aa_indels | AA.Changes.S | Spike Protein Substitutions | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
+| not included | not included | Minimum Coverage Threshold | 30x |
+| not included | not included | Percent Mapped Reads | Calculated as (Total Reads Analyzed / Total Reads)*100 |
+| not included | not included | Number of Lineage-Defined Substitutions | |
+| not included | not included | pangoLEARN Version | |
+| not included | not included | GenBank Accession # | |
 
