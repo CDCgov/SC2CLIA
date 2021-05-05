@@ -64,7 +64,11 @@ rmdFiles <- c("about.Rmd", "sGene.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd",
 lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
 
 # Render the CLIA summary-signature page as PDF
-render(input = "clia_summary.Rmd", output_format = "pdf_document", params = params, output_dir = file.path(args$analysisDirFP, "report"))
+render(input = "clia_summary.Rmd", 
+       output_format = "pdf_document", 
+       params = params, 
+       output_dir = file.path(args$analysisDirFP, "report"),
+       envir = new.env())
 
 # Merge CLIA pdf with template digisignature page
 system2(command = "pdftk",
