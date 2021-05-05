@@ -4,7 +4,6 @@ params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
-  v.vadr: "1.2"
   v.pacbam: "1.6.0"
   v.multiqc: "1.10.1"
 ---
