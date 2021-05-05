@@ -82,6 +82,6 @@ system2(command = "pdftk",
 # Clean up intermediate pdf file
 if (file.exists(file.path(args$analysisDirFP, "report", "clia_summary.pdf"))) {
   system2(command = "rm",
-          args = c(args$analysisDirFP, "report", "clia_summary.pdf"),
+          args = c(file.path(args$analysisDirFP, "report", "clia_summary.pdf")),
           wait = TRUE)
 }
