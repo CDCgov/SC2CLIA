@@ -1,14 +1,19 @@
-### Cecret R Singularity Build README Stub
+### Cecret R Singularity README Stub
 
 ***
 
 #### Purpose
-Currently all R-based scripts and versions.sh execute within this container from the outside. In future versions the scripts will be included in the container.
+Currently all R-based scripts and versions.sh execute within a custom Singularity container built for this pipeline from the outside. In future versions the scripts will be included in the container.
 
 #### Requires
-* Cecret/configs/singularity-r.def: the Singularity definition file for the container
+_All_
 * Singularity v.3.7.3+
+_Build_
+* Cecret/configs/singularity-r.def: the Singularity definition file for the container
 * Sudo permissions on the host machine where the build is occurring (note AJW has been building on her Linux subsystem for Windows)
+_Test_
+* Singularity container (*.sif) built from Cecret/configs/singularity-r.def
+* Cecret/bin/report/test_r_container.Rscript
 
 #### Use
 _To build container_  
