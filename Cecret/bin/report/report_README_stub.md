@@ -2,6 +2,10 @@
 
 ***
 
+#### Requires
+The Singularity container described in Cecret/configs/singularity-r.def. Currently all R-based scripts and versions.sh execute within this container from the outside. 
+`singularity exec --bind /mnt,/path/to/host/directory/containing/all/files/required/for/analysis singularity_container_name.sif Rscript script_name.R <args>` Note the mount point in the host directory tree must include both the required scripts and the required input files.
+
 #### Use
 To view script options: `Rscript config.R --help`
 
@@ -16,7 +20,7 @@ All html outputs are placed in the Cecret analysis directory under report by def
 
 <br>
 
-The other output is summary_signature.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output.
+The other output is clia_summary_digsig.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output with an electronic signature.
 
 
 ### Summary Table Details
@@ -63,3 +67,4 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 | Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | percentage of positions in the S gene that meet minimum coverage threshold |
 | Percent.Ns.S | Percent.Ns.S | percentage of Ns in the region of the consensus sequence for the S gene |
 | S_aa_indels | AA.Changes.S | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
+
