@@ -186,7 +186,8 @@ for (s in 1:length(sampleIDIndices)) {
     print(kbl(select(sumTab, all_of(y)),
               booktabs = T,
               align = "l") %>%
-          kable_styling(latex_options = "striped"))
+          kable_styling(latex_options = "striped") %>%
+          column_spec(sampleIDIndices, width = "15em"))
 }
 
 print(kbl(aaTab,
