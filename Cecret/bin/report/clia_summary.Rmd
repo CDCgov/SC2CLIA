@@ -160,6 +160,9 @@ for (i in 1:colReps) {
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
+# split out AA.Changes.S into it's own table
+aaTab <- select(sumTab, Sample.Name, AA.Changes.S)
+sumTab <- select(sumTab, -AA.Changes.S)
 ```
 
 ```{r display-sum, echo=FALSE, results='asis'}
@@ -183,4 +186,11 @@ for (s in 1:length(sampleIDIndices)) {
               align = "l") %>%
           kable_styling(latex_options = "striped"))
 }
+
+print(kbl(aaTab,
+          booktabs = T,
+          align = "l") %>%
+      kable_styling(latex_options = "striped") %>%
+      column_spec(2, width = "30em")
+)
 ```
