@@ -191,6 +191,7 @@ print(kbl(aaTab,
           booktabs = T,
           align = "l") %>%
       kable_styling(latex_options = "striped") %>%
-      column_spec(2, width = "30em")
+      column_spec(1, width = "10em") %>%
+      column_spec(2, width = "15em")
 )
 ```
