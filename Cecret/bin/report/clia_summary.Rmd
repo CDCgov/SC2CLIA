@@ -73,7 +73,7 @@ sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
           # remember to mod column names to match if columns included change
           select(-aligner_version, -ivar_version, -fastp_reads_passed) %>%
-          mutate(sumTab, S_aa_INDELs = str_replace_all(S_aa_INDELs, c("," = ", ")))
+          mutate(S_aa_INDELs = str_replace_all(S_aa_INDELs, c("," = ", ")))
           # mutate(
           #   pangolin_lineage = cell_spec(pangolin_lineage,
           #                                color = ifelse(pangolin_lineage == "None", "red", "black"),
