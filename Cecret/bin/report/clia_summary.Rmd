@@ -178,11 +178,9 @@ for (s in 1:length(sampleIDIndices)) {
       y <- colnames(sumTab)[sampleIDIndices[s]:i]
     }
   }
-  if (is.na(y) == FALSE) {
     print(kbl(select(sumTab, all_of(y)),
               booktabs = T,
               align = "l") %>%
           kable_styling(latex_options = "striped"))
-  }
 }
 ```
