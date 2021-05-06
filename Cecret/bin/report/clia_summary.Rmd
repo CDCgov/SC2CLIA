@@ -72,7 +72,8 @@ sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
 # This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
           # remember to mod column names to match if columns included change
-          select(-aligner_version, -ivar_version, -fastp_reads_passed) #%>%
+          select(-aligner_version, -ivar_version, -fastp_reads_passed) %>%
+          mutate(sumTab, S_aa_INDELs = str_replace(S_aa_INDELs, ",", ", "))
           # mutate(
           #   pangolin_lineage = cell_spec(pangolin_lineage,
           #                                color = ifelse(pangolin_lineage == "None", "red", "black"),
@@ -143,6 +144,10 @@ colnames(sumTab) <- c("Sample.ID",
                       "Percent.Ns.S"
 )
 
+# split out AA.Changes.S into it's own table
+aaTab <- select(sumTab, Sample.Name, AA.Changes.S)
+sumTab <- select(sumTab, -AA.Changes.S)
+
 # Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column
 colReps <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
@@ -160,9 +165,6 @@ for (i in 1:colReps) {
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
-# split out AA.Changes.S into it's own table
-aaTab <- select(sumTab, Sample.Name, AA.Changes.S)
-sumTab <- select(sumTab, -AA.Changes.S)
 ```
 
 ```{r display-sum, echo=FALSE, results='asis'}
@@ -191,7 +193,7 @@ print(kbl(aaTab,
           booktabs = T,
           align = "l") %>%
       kable_styling(latex_options = "striped") %>%
-      column_spec(1, width = "10em") %>%
-      column_spec(2, width = "15em")
+      column_spec(1, width = "15em") %>%
+      column_spec(2, width = "30em")
 )
 ```
