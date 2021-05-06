@@ -77,8 +77,8 @@ else
 	echo "Running R scripts to generate reports ...";
 fi
 
-R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
-# R_IMG=$PWD/SINGULARITY_CACHE/singularity-r.sif
+# R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
+R_IMG= ***replace with your own path here***
 R_folder=${PWD}/Cecret/bin/report
 ORF_folder=${PWD}/Cecret/bin
 
