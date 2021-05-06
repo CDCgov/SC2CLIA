@@ -187,7 +187,7 @@ for (s in 1:length(sampleIDIndices)) {
               booktabs = T,
               align = "l") %>%
           kable_styling(latex_options = "striped") %>%
-          column_spec(sampleIDIndices, width = "15em"))
+          column_spec(1, width = "15em"))
 }
 
 print(kbl(aaTab,
