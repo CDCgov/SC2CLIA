@@ -170,18 +170,12 @@ for (s in 1:length(sampleIDIndices)) {
     i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
     y <- colnames(sumTab)[1:i]
   } else {
-    if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
-      i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
-      y <- colnames(sumTab)[sampleIDIndices[s]:i]
-    } else {
-      y <- NA
-    }
+    i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
+    y <- colnames(sumTab)[sampleIDIndices[s]:i]
   }
-  if (is.na(y) == FALSE) {
-    print(kbl(select(sumTab, all_of(y)),
-              booktabs = T,
-              align = "l") %>%
-          kable_styling(latex_options = "striped"))
-  }
+  print(kbl(select(sumTab, all_of(y)),
+            booktabs = T,
+            align = "l") %>%
+        kable_styling(latex_options = "striped"))
 }
 ```
