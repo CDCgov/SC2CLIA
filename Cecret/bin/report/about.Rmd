@@ -4,7 +4,6 @@ params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
-  v.vadr: "1.1.3"
   v.pacbam: "1.6.0"
   v.multiqc: "1.10.1"
 ---
@@ -26,12 +25,22 @@ library(kableExtra)
 ```
 
 ```{r version-import, include=FALSE}
-vTab <- readr::read_delim(file = paste(params$analysisDirFP, "versions.txt", sep = "/"),
-                          col_names = c("Cecret Output Directory", "Tool Version"),
+vTab <- readr::read_delim(file = file.path(params$analysisDirFP, "versions.txt"),
+                          col_names = c("Cecret Output Directory", 
+                                        "Tool Version", 
+                                        "C3", 
+                                        "C4"),
                           delim = ":",
-                          trim_ws = TRUE)
-vTab <- bind_rows(vTab, c("Cecret Output Directory" = "vadr", "Tool Version" = params$v.vadr), 
-                        c("Cecret Output Directory" = "pacbam", "Tool Version" = params$v.pacbam), 
+                          trim_ws = TRUE) %>%
+        mutate(`Tool Version` = case_when(
+                                          `Cecret Output Directory` == "bwa" ~ paste(`Tool Version`, C3, sep = " "),
+                                          `Cecret Output Directory` == "seqyclean" ~ paste(`Tool Version`, C4, sep = " "),
+                                          `Cecret Output Directory` == "vadr" ~ paste(`Tool Version`, str_replace(str_extract(C3, "^.*>>"), " >>", ""), sep = " "),
+                                          TRUE ~ `Tool Version`
+        )) %>%
+        select(-C3, -C4)
+vTab <- bind_rows(vTab, c("Cecret Output Directory" = "pacbam", "Tool Version" = params$v.pacbam), 
+                        c("Cecret Output Directory" = "pacbam_orf", "Tool Version" = params$v.pacbam),
                         c("Cecret Output Directory" = "multiqc", "Tool Version" = params$v.multiqc)
                   )
 ```

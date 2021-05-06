@@ -14,7 +14,7 @@ doc <- "Description: run this script to generate a report from Cecret pipeline o
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 
 Dependencies:
-R packages: docopt, testthat
+R packages: docopt, testthat, rmarkdown
 
 Usage: config.R -r <runID> -a <analysisDirFP> -s <seqDirFP>
 config.R (-v | --version)
@@ -27,34 +27,30 @@ Options:
 -h --help                                             Show this help and exit
 -v --version                                          Show version and exit"
 
+# Parse input args
 args <- docopt(doc = doc, version = ver)
 
-# Run bash script to generate list of component versions
-# print(args$analysisDirFP)
-# if (isTRUE(file.exists("../versions.sh"))) {
-#   print("found versions")
-# } else {
-#   print("cannot find versions")
-# }
+### To dos ###
+# Test input args to ensure they match expected values
+# Test that all *.Rmd files and multiQC report exist in expected locations
+# Test versions.sh output to ensure created and not empty
+# Add input args to specify file locations, eg. versions.sh, *.Rmd
 
+# Set up the output directory
+suppressWarnings(dir.create(file.path(args$analysisDirFP, "report")))
+suppressWarnings(dir.create(file.path(args$analysisDirFP, "report", "subpages")))
+
+# Cp multiqc output to report directory
+# Note weirdness: on 4/18 I had a typo with a double / in the middle of the -a path when launching the script and it only failed on this step. WHY???
+system2(command = "cp",
+        args = c(file.path(args$analysisDirFP, "MultiQC", "multiqc_report.html"),
+                 file.path(args$analysisDirFP, "report", "subpages")),
+        wait = TRUE)
+
+# Run versions.sh
 system2(command = "./versions.sh",
         args = c(args$analysisDirFP),
         wait = TRUE)
-# tryCatch(
-#   expr = { 
-#     test_that(desc = "versions.sh ran successfully",
-#               code = {
-#               expect_true(file.exists(paste0(args$analysisDirFP, "/versions.txt")))
-#               expect_that(file.size(paste0(args$analysisDirFP, "/versions.txt")) > 0)
-#           })
-#   },
-#   error = function(e){
-#     print(e)
-#     print("versions.sh did not execute successfully.")
-#     print(paste0("Could not find: ", paste0(args$analysisDirFP, "/versions.txt"), " or file size was 0"))
-#     stop()
-#   }
-# )
 
 # Parameters to pass to Rmd files
 params <- list(runID = args$runID,
@@ -62,21 +58,30 @@ params <- list(runID = args$runID,
                seqDirFP = args$seqDirFP)
 
 # Rmd files to render
-rmdFiles <- c("about.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
-lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params))
+rmdFiles <- c("about.Rmd", "sGene.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
 
-# Move rendered files into single output directory
-suppressWarnings(dir.create(file.path(args$analysisDirFP, "report")))
-suppressWarnings(dir.create(file.path(args$analysisDirFP, "report", "ref_docs")))
-system2(command = "mv",
-        args = c("*.html", paste(args$analysisDirFP, "report", sep = "/")),
+# Do the rendering
+lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
+
+# Render the CLIA summary-signature page as PDF
+render(input = "clia_summary.Rmd", 
+       output_format = "pdf_document", 
+       params = params, 
+       output_dir = file.path(args$analysisDirFP, "report"),
+       envir = new.env())
+
+# Merge CLIA pdf with template digital signature page
+system2(command = "pdftk",
+        args = c(file.path(args$analysisDirFP, "report", "clia_summary.pdf"), 
+                 file.path("SC2_Variant_WGS_Run_Summary.pdf"),
+                 "cat",
+                 "output",
+                 file.path(args$analysisDirFP, "report", "clia_summary_digsig.pdf")),
         wait = TRUE)
-system2(command = "mv",
-        args = c("ref_docs/*.html", paste(args$analysisDirFP, "report/ref_docs/", sep = "/")),
-        wait = TRUE)
-# Cp multiqc output to report directory
-# Note weirdness: on 4/18 I had a typo with a double / in the middle of the -a path when launching the script and it only failed on this step. WHY???
-system2(command = "cp",
-        args = c(paste(args$analysisDirFP, "MultiQC/multiqc_report.html", sep = "/"),
-                 paste(args$analysisDirFP, "report", sep = "/")),
-        wait = TRUE)
+
+# Clean up intermediate pdf file
+if (file.exists(file.path(args$analysisDirFP, "report", "clia_summary.pdf"))) {
+  system2(command = "rm",
+          args = c(file.path(args$analysisDirFP, "report", "clia_summary.pdf")),
+          wait = TRUE)
+}
