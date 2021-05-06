@@ -9,7 +9,7 @@ import numpy as np
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 __author__ = 'Jessica Rowell'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'Jessica Rowell'
 __email__ = '***REMOVED***'
 __status__ = 'Development'
@@ -95,8 +95,9 @@ def get_summary_data(filename, samples):
 
 #Change from wide to long format, add in the extra columns, rearrange, format the Analyte columns
 def out_elims_data(summary_df):
-    long_data = pd.melt(summary_df, id_vars=['CSID','CUID'], var_name='Analyte (required)', value_name='Raw Result (required)')
-    long_data['CDC Local Aliquot ID'] = ''
+    long_data = pd.melt(summary_df, id_vars=['CSID','CUID', 'sample'], var_name='Analyte (required)', value_name='Raw Result (required)')
+    long_data = long_data.rename(columns = {'sample':'CDC Local Aliquot ID'}) # We need a place to store full sample, so Jo can use it for report
+    #long_data['CDC Local Aliquot ID'] = '' # Old version left this as a blank field, which is out eLIMS wants it
     long_data['QC Type'] = 'N/A'
     long_data['Test Name'] = 'SARS-CoV-2 Genetic Analysis'
     long_data['Replicate'] = ''
@@ -133,7 +134,7 @@ def main():
     samples = get_samples(summary_file)
 
     # Still working out a way to exit gracefully if duplicates exist
-    #possible_CSIDs = samples.str.findall('\d{10}') # Find all strings of 10 digits
+    #possible_CSIDs = set(samples.str.findall('\d{10}')) # Find all strings of 10 digits
     #possible_CUIDs = samples.str.findall('(?![A-Za-z]{8}|[0-9]{8})[0-9A-Za-z]{8}') # Find all alphanumeric, 8-char strings
     # Note: this is really a hack. It won't accommodate multiple CSID-like/CUID-like strings that will be identified above
     #elims_identifier = possible_CSIDs.astype('str').str.cat(possible_CUIDs.astype('str'), sep = '-', join='left') 
@@ -175,8 +176,8 @@ def main():
 
     # Rearrange columns 
     cols = ['CSID','CUID','min_cov_threshold','depth_after_trimming','coverage_after_trimming', \
-            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', 'S_aa_INDELs', \
-            'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version'] # add orfs, s-cov, genbank
+            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', 'S_aa_INDELs', 'genbank', \
+            'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version', 'sample'] # add orfs, s-cov, genbank
 
     full_data = full_data[cols]
 
