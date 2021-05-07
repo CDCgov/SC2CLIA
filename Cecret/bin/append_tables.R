@@ -25,6 +25,7 @@ Options:
 -e <delimiter2> --delimiter2=<delimiter2>             Delimiter for file 2, accepts 't' or 'c' for tab or comma [default: t]
 -i <idCol1> --idCol1=<idCol1>                         Column name in file 1 containing info for matching between files, if NULL performs string matching to ID column; string [default: NULL]
 -c <idCol2> --idCol2=<idCol2>                         Column name in file 2 containing info for matching between files; string [default: Sample.ID]
+-l <elimsCol> --elimsCol=<elimsCol>                   T/F indicating whether or not to append extra eLIMS columns Percent Mapped Reads and GenBank number; logical [default: TRUE]
 -h --help                                             Show this help and exit
 -v --version                                          Show version and exit"
 
@@ -45,6 +46,7 @@ test_that("all input args are valid", {
   expect_true(file.exists(args$file2FP))
   expect_match(args$delimiter1, "[t^c]")
   expect_match(args$delimiter2, "[t^c]")
+  expect_type(as.logical(args$elimsCol), "logical")
 })
 if (args$outputFileFP != "file1FP") {
   test_that("output file locations are valid", {
@@ -58,6 +60,9 @@ f2Delim <- ifelse(args$delimiter2 == "t", "\t", ",")
 
 # This flag controls whether table rows are matched on user-specified columns or using fuzzy matching
 fuzzyFlag <- ifelse(args$idCol1 == "NULL", TRUE, FALSE)
+
+# This flag controls whether or not 2 additional fields for eLIMS outputs are appended to the final summary.txt output.
+elimsFlag <- ifelse(args$elimsCol == "TRUE", TRUE, FALSE)
 
 # Translate output file from args
 if (args$outputFileFP == "file1FP") {
@@ -127,6 +132,13 @@ file2 <- read_delim(file = args$file2FP,
 test_that('input tables have same number of rows', {
   expect_equal(nrow(file1), nrow(file2))
 })
+
+# Unless turned off, add columns for eLIMS to output
+if (elimsFlag == TRUE) {
+  file1 <- mutate(file1, 
+                  Percent.Mapped.Reads = (Total_Reads_Analyzed / fastqc_raw_reads_1) * 100,
+                  `GenBank#` = "")
+}
 
 ### Match rows between columns ###
 if (fuzzyFlag == FALSE) {
