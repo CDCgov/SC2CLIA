@@ -28,7 +28,8 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 
 | summary.txt column | index.html column | eLIMS report column | value description |
 | --- | --- | --- | --- |
-| sample_id | Sample.ID | CSID | Sample ID fragment starting at beginning and going through first hyphen |
+| sample_id | Sample.ID | not included | Sample ID fragment starting at beginning and going through first hyphen |
+| not included | not included | CSID | |
 | sample | Sample.Name | CSID_CUID | Full sample identifier |
 | aligner_version | not included | not included | |
 | ivar_version | not included | not included | |
