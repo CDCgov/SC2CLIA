@@ -1044,7 +1044,7 @@ process pangolin {
     pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
     pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
     pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
-    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | awk '{for(i=1;i<=NF;i++){ if($i ~ /[0-9]+[/][0-9]+/){print $i} } }'
+    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '\b[[:digit:]]+[/][[:digit:]]+\b' || echo "NA" )
 
     if [ -z "$pangolin_lineage" ] ; then pangolin_lineage="NA" ; fi
     if [ -z "$pangolin_status" ] ; then pangolin_status="NA" ; fi
