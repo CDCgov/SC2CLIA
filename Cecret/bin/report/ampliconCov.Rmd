@@ -24,6 +24,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(formattable)
 library(DT)
+# stop summarise messages https://rstats-tips.net/2020/07/31/get-rid-of-info-of-dplyr-when-grouping-summarise-regrouping-output-by-species-override-with-groups-argument/
+options(dplyr.summarise.inform = FALSE)
 ```
 
 #### Per Amplicon Coverage Summary
@@ -114,7 +116,7 @@ cov_sum <- group_by(keepers_sum, SampleID) %>%
 
 # Add a column with hyperlinks to the detailed report pages.
 cov_sum <- mutate(cov_sum, 
-                  Report = paste0('<a href="ref_docs/', 
+                  Report = paste0('<a href="subpages/', 
                                   SampleID, 
                                   '-amplicon-detail.html">report</a>'))
 
@@ -163,8 +165,9 @@ formattable(cov_sum_controls, list(
 ```{r spawn, include=FALSE}
 #echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 for (s in 1:nrow(cov_sum)) {
-  rmarkdown::render(input = "ref_docs/ampliconDetailTemplate.Rmd", 
+  rmarkdown::render(input = "subpage_templates/ampliconDetailTemplate.Rmd", 
                     output_file = paste0(cov_sum[s,]$SampleID, "-amplicon-detail.html"), 
+                    output_dir = file.path(args$analysisDirFP, "report", "subpages"),
                     params = list(covTable = filter(keepers, 
                                                     SampleID == cov_sum[s,]$SampleID),
                                   sampleID = cov_sum[s,]$SampleID,

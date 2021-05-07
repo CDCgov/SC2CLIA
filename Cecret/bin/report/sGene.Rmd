@@ -1,0 +1,18 @@
+---
+title: "S Gene"
+params:
+  analysisDirFP: null
+  runID: null
+  seqDirFP: null
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r index-comments, include=FALSE, eval=FALSE}
+# For rapid testing:
+rmarkdown::render(input = "sGene.Rmd", output_file = "sGene.html", params = list(analysisDirFP = "../../../../runs/M347-21-013", runID = "M347-21-013", seqDirFP = "../../../../runs/M347-21-013"))
+```
+
+This page is still under development and was left intentionally blank.

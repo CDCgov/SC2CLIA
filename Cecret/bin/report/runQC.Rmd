@@ -4,7 +4,7 @@ params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
-  multiQC: "multiqc_report.html"
+  multiQC: "subpages/multiqc_report.html"
   insertDir: "samtools_insertsizes/aligned"
   insertFileSuffix: ".insertsizes.txt"
   expectedInsertSize: 200

@@ -6,20 +6,14 @@
 
 # NOTE:
 # this script should only be ran in $CECRET_BASE or your local git repo folder
-# this script can be called upon as: ./run_cecret.sh -d sample_folder -p true -r true
-# -p is optional to turn on pacbam process
+# this script can be called upon as: ./run_cecret.sh -d sample_folder [-r true/false]
 
-usage() { echo "Usage: $0 <-d  specify data folder> <-p  true:false flag to run pacbam> <-r  true:false flag to generate report files>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 <-d  specify data folder> <-r  true:false flag to generate report files>" 1>&2; exit 1; }
 
-# NCPARSE is turning off the nextcladeParse process for the failures on the "NC" reads
-NCPARSE=false
-
-PB=true
 RSCRIPT=true
-while getopts "d:p:r:" o; do
+while getopts "d:r:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
-    	p) PB=${OPTARG} ;;
 		r) RSCRIPT=${OPTARG} ;;
 		*) usage ;;
 	esac
@@ -59,41 +53,64 @@ current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 # OUTDIR=$CECRET_BASE/Run_$current_time_$(basename $DATA)
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
 
-$CECRET_BASE/nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
-							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db \
-							--pacbam $PB --nextcladeParse $NCPARSE
+nextflow -v || (echo 'make sure nextflow is installed: wget -qO- https://get.nextflow.io | bash'; exit 1)
+
+nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
+							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
 
+# Check for final summary file
 if [ ! -f "$OUTDIR/summary.txt" ]; then
 	echo "Run failed to complete...";
 	exit 1;
 fi
 
-echo "Completed Cecret pipeline"
-
-if [ ! ${RSCRIPT} ]; then
-	echo "Done.";
-	exit 0;
-fi
 
 # If Rscript option turned on, begin Report block
-echo "Running R scripts to generate reports ..."
+# if [ ! ${RSCRIPT} ]; then
+if [ ! ${RSCRIPT} = true ]; then
+	echo "Completed Cecret pipeline";
+	exit 0;
+else
+	echo "Running R scripts to generate reports ...";
+fi
 
-R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
-# R_IMG=$PWD/SINGULARITY_CACHE/singularity-r.sif
+# R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
+R_IMG= ***replace with your own path here***
 R_folder=${PWD}/Cecret/bin/report
+ORF_folder=${PWD}/Cecret/bin
+
+config_folder=${PWD}/Cecret/configs
+
+# -b, -t
+bed1="MN908947.3-ORFs.bed"
+bed2="MN908947.3-ORF7b.bed"
 
 # -r, -a, and -s
 runID=$(basename $DATA)
 analysisDir=$OUTDIR
 seqDir=$(realpath $DATA)
 
+
+singularity exec \
+				--no-home \
+				-B ${ORF_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw,${config_folder}:/configs \
+				-H /usr/local/bin \
+				${R_IMG} orf_table.R -r ${runID} -a /OUTDIR -b /configs/${bed1} -t /configs/${bed2} 2>&1 >/dev/null
+
+
 singularity exec \
 				--no-home \
 				-B $seqDir:/data:ro,${R_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw \
 				-H /usr/local/bin \
-				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data # > /dev/null
+				${R_IMG} config.R -r ${runID} -a /OUTDIR -s /data 2>&1 >/dev/null
+
+singularity exec \
+				--no-home \
+				-B ${ORF_folder}:/usr/local/bin:rw,${analysisDir}:/OUTDIR:rw,${config_folder}:/configs \
+				-H /usr/local/bin \
+				${R_IMG} append_tables.R -a /OUTDIR  -f /OUTDIR/summary.txt -s /OUTDIR/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
 
 echo "Done!"

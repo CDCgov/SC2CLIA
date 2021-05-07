@@ -68,7 +68,7 @@ params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
-params.pacbam = false // for running pacbam
+params.pacbam = true // for running pacbam
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
@@ -76,7 +76,7 @@ params.sc2ref = true // for calculating per. of reads pass qc and align to ref /
 params.ncbi_upload = true // for ncbi submission
 
 // for optional contamination determination with kraken
-params.kraken2 = false
+params.kraken2 = true // Switching to default on
 params.kraken2_db = ''
 
 // for optional route of tree generation and counting snps between samples
@@ -1095,13 +1095,17 @@ process nextcladeParse {
   set val(sample), file(csv) from nextclade_csv_out
 
   output:
-  file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
+  //file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
+  tuple sample, env(nextclade_parsed_result) into nextclade_parsed_out
 
 
  shell:
  '''
-    mkdir -p nextclade_parse
-    python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
+    # mkdir -p nextclade_parse
+    # python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
+
+    # the python script will return sth like: S_N501Y,P681H,A701V,T716I,D1118H,H69del,V70del,Y144del
+    nextclade_parsed_result=`python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv}`
 
  '''
  }
@@ -1307,6 +1311,7 @@ consensus_results
   .join(vadr_result, remainder: true, by: 0)
   .join(vadr_sample_orfshift, remainder: true, by:0)
   .join(vadr_sgene_orfshift, remainder: true, by:0)
+  .join(nextclade_parsed_out, remainder: true, by:0)
   .set { results }
 
 process summary {
@@ -1339,7 +1344,8 @@ process summary {
     val(sc2ref_result),
     val(vadr_result),
     val(vadr_sample_orfshift),
-    val(vadr_sgene_orfshift) from results
+    val(vadr_sgene_orfshift),
+    val(nextclade_parsed_result) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1365,8 +1371,12 @@ process summary {
 
     fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}" >> summary/!{sample}.summary.txt
+    # for Spike Protein Substitutions
+    aaChange=`echo "!{nextclade_parsed_result}" | awk -F _ '{print $2}'` 
+    if [[ $aaChange = '' ]]; then aaChange=NA;fi
+
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift\tS_aa_INDELs" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}\t${aaChange}" >> summary/!{sample}.summary.txt
   '''
 }
 
