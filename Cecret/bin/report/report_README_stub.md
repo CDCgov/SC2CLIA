@@ -67,9 +67,8 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 | Percent.Pos.Min.Cov.S | Percent.Pos.Min.Cov.S | not included | percentage of positions in the S gene that meet minimum coverage threshold |
 | Percent.Ns.S | Percent.Ns.S | not included | percentage of Ns in the region of the consensus sequence for the S gene |
 | S_aa_indels | AA.Changes.S | Spike Protein Substitutions | list of insertions, deletions, and substitions found in the amino acids reported for the S gene |
-| not included | not included | Minimum Coverage Threshold | 30x |
-| not included | not included | Percent Mapped Reads | Calculated as (Total Reads Analyzed / Total Reads)*100 |
-| not included | not included | Number of Lineage-Defined Substitutions | |
-| not included | not included | pangoLEARN Version | |
-| not included | not included | GenBank Accession # | |
+| Percent.Mapped.Reads | Percent.Mapped.Reads | Percent Mapped Reads | Calculated as (Total Reads Analyzed / Total Reads)*100 |
+| TBD | #Lineage.Subs | Number of Lineage-Defined Substitutions | |
+| TBD | pangoLearn.v | pangoLEARN Version | |
+| GenBank# | GenBank# | GenBank Accession # | |
 
