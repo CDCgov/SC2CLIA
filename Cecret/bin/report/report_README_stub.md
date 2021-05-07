@@ -30,7 +30,8 @@ Note that the Sample.Name column is repeated regularly to aid in readability. Nu
 | --- | --- | --- | --- |
 | sample_id | Sample.ID | not included | Sample ID fragment starting at beginning and going through first hyphen |
 | not included | not included | CSID | |
-| sample | Sample.Name | CSID_CUID | Full sample identifier |
+| not included | not included | CUID | |
+| sample | Sample.Name | not included | Full sample identifier |
 | aligner_version | not included | not included | |
 | ivar_version | not included | not included | |
 | pangolin_lineage | Pangolin | Lineage | |
