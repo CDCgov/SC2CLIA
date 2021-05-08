@@ -154,7 +154,8 @@ for (i in 1:colRepsSumTab) {
   sumTab <- relocate(sumTab, 
                      eval(paste0("V", i)), 
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
-            rename_with(colNamer, starts_with(paste0("V", i)))
+            rename_with(colNamer, starts_with(paste0("V", i))) %>%
+            relocate(Sample.Name)
 }
 for (i in 1:colRepsElimsTab) {
   elimsTab <- relocate(elimsTab, 
@@ -181,16 +182,16 @@ myTableSplittr <- function(t) {
     if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
       i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
       y <- colnames(t)[1:i]
-      z <- 2
+      #z <- 2
     } else {
       if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
         i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
         y <- colnames(t)[sampleIDIndices[s]:i]
-        z <- 1
+        #z <- 1
       } else {
         i <- length(colnames(t))
         y <- colnames(t)[sampleIDIndices[s]:i]
-        z <- 1
+        #z <- 1
       }
     }
       print(kbl(select(t, all_of(y)),
@@ -198,7 +199,7 @@ myTableSplittr <- function(t) {
                 longtable = T,
                 align = "l") %>%
             kable_styling(latex_options = c("striped", "repeat_header")) %>%
-            column_spec(z, width = "15em"))
+            column_spec(1, width = "15em"))
   }
   return()
 }
