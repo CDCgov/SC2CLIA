@@ -158,6 +158,7 @@ for (i in 1:colReps) {
 ```{r display-sum, echo=FALSE, results='asis'}
 print(kbl(elimsTab,
           booktabs = T,
+          longtable = T,
           align = "l") %>%
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
       column_spec(1, width = "15em"))
@@ -190,9 +191,9 @@ myTableSplittr <- function(t) {
   return()
 }
 
-
 print(kbl(aaTab,
           booktabs = T,
+          longtable = T,
           align = "l") %>%
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
       column_spec(1, width = "15em") %>%
