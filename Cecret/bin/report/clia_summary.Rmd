@@ -117,12 +117,12 @@ elimsTab <- select(sumTab,
                    S.gene.Coverage = Coverage.S,
                    Percent.Mapped.Reads,
                    Number.Lineage.Defined.Substitutions = `#Lineage.Subs`,
-                   pangoLEARN.version = pangoLearn.v,
+                   pangoLEARN.version = pangoLEARN.v,
                    `GenBank.Accession#` = `GenBank#`) %>%
             arrange(Sample.Name)
 sumTab <- select(sumTab, 
                  -AA.Changes.S,
-                 -Lineage = Pangolin,
+                 -Pangolin,
                  -`#FastQC.R1`,
                  -Depth.Post.Trim,
                  -Coverage.Post.Trim,
@@ -131,7 +131,7 @@ sumTab <- select(sumTab,
                  -Coverage.S,
                  -Percent.Mapped.Reads,
                  -`#Lineage.Subs`,
-                 -pangoLearn.v,
+                 -pangoLEARN.v,
                  -`GenBank#`) %>%
           arrange(Sample.Name)
 
