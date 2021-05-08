@@ -122,7 +122,7 @@ elimsTab <- select(sumTab,
             arrange(Sample.Name)
 sumTab <- select(sumTab, 
                  -AA.Changes.S,
-                 -Lineage = Pangolin,
+                 -Pangolin,
                  -`#FastQC.R1`,
                  -Depth.Post.Trim,
                  -Coverage.Post.Trim,
