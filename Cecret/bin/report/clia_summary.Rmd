@@ -157,7 +157,8 @@ for (i in 1:colReps) {
 
 ```{r display-sum, echo=FALSE, results='asis'}
 print(kbl(elimsTab,
-          booktabs = T,
+          longtable = T,
+	  booktabs = T,
           align = "l",
           caption = "eLIMS Fields") %>%
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
@@ -165,6 +166,7 @@ print(kbl(elimsTab,
 
 print(kbl(aaTab,
           booktabs = T,
+          longtable = T,
           align = "l",
           caption = "eLIMS Fields") %>%
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
@@ -191,6 +193,7 @@ for (s in 1:length(sampleIDIndices)) {
   }
     print(kbl(select(sumTab, all_of(y)),
               booktabs = T,
+              longtable = T,
               align = "l",
               caption = "Other Fields") %>%
           kable_styling(latex_options = c("striped", "repeat_header")) %>%
