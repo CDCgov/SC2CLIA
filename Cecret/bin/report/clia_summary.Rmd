@@ -186,7 +186,7 @@ myTableSplittr <- function(t) {
         y <- colnames(t)[sampleIDIndices[s]:i]
       }
     # }
-    if (length(y) > 1) {
+    if (length(y) > 1 & is.null(y) == FALSE) {
       print(kbl(select(t, all_of(y)),
                 booktabs = T,
                 longtable = T,
