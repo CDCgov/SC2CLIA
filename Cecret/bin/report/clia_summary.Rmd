@@ -114,7 +114,7 @@ elimsTab <- select(sumTab,
                    Percent.Genome.Coverage = Coverage.Post.Trim,
                    Mapped.Reads = Total.Reads.Analyzed,
                    Open.Reading.Frames = ORFs.Passing.QC,
-                   S.gene.Coverage = Coverage.S,
+                   S.Gene.Coverage = Coverage.S,
                    Percent.Mapped.Reads,
                    Number.Lineage.Defined.Substitutions = `#Lineage.Subs`,
                    pangoLEARN.version = pangoLEARN.v,
@@ -196,7 +196,7 @@ myTableSplittr <- function(t) {
       cat('\\pagebreak')
     }
   }
-  return(paste0(""))
+  return(cat('\\pagebreak'))
 }
 
 myTableSplittr(elimsTab)
