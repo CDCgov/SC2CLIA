@@ -137,14 +137,14 @@ sumTab <- select(sumTab,
 
 # Round off some numbers to make them prettier
 elimsTab <- mutate(elimsTab,
-                   Average.Depth = round(Average.Depth),
-                   Percent.Genome.Coverage = round(Percent.Genome.Coverage, n = 1))
+                   Average.Depth = base::round(Average.Depth),
+                   Percent.Genome.Coverage = base::round(Percent.Genome.Coverage, n = 1))
 sumTab <- mutate(sumTab,
-                 `%Seqclean.Pairs` = round(`%Seqclean.Pairs`, n = 1),
-                 `%SC2.Reads` = round(`%SC2.Reads`, n = 1),
-                 `%N` = round(`%N`, n = 1),
-                 Mean.Depth.Coverage = round(Mean.Depth.Coverage, n = 1),
-                 `%Reads.Mapping.SC2` = round(`%Reads.Mapping.SC2`, n = 1))
+                 `%Seqclean.Pairs` = base::round(`%Seqclean.Pairs`, n = 1),
+                 `%SC2.Reads` = base::round(`%SC2.Reads`, n = 1),
+                 `%N` = base::round(`%N`, n = 1),
+                 Mean.Depth.Coverage = base::round(Mean.Depth.Coverage, n = 1),
+                 `%Reads.Mapping.SC2` = base::round(`%Reads.Mapping.SC2`, n = 1))
 
 # Insert SampleID column into sumTab at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column
