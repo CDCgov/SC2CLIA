@@ -27,7 +27,8 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 
 2. Nextflow version 20+ is required [here](https://www.nextflow.io/docs/latest/getstarted.html).  
 
-3. [Singularity](https://singularity.lbl.gov/install-linux) 
+3. [Singularity](https://singularity.lbl.gov/install-linux)  version 3.7 is recommended. run `singularity --version` in your terminal <br>
+   ***Warning: version 3.5 does not work***
 
 4. Cecret workflow installed.  Read more about Cecret [here](https://github.com/UPHL-BioNGS/Cecret/tree/erin-dev).
 
@@ -49,8 +50,8 @@ Or without sudo access try [remote option](https://cloud.sylabs.io/builder).
 
 ## USAGE
 
-1. Run the following script at your base folder(replace `data_folder` with the path to your data; p is for pacbam; v is for vadr)  
- `./run_cecret.sh - d data_folder -p true(default false) -v true(default false)`  
+1. Run the following script at your base folder(replace `data_folder` with the path to your data; r is for generating report files)  
+ `./run_cecret.sh - d data_folder `  (there is an optional flag `-r false(default true)` if you want to turn it off)
 
 ## Note
 
