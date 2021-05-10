@@ -142,7 +142,7 @@ sumTab <- mutate(sumTab,
                  `%Seqyclean.Pairs` = round(`%Seqyclean.Pairs`, digits = 1),
                  `%SC2.Reads` = round(`%SC2.Reads`, digits = 1),
                  `%N` = round(`%N`, digits = 1),
-                 Mean.Depth.Coverage = round(Mean.Depth.Coverage, digits = 1),
+                 Mean.Cov.Depth = round(Mean.Cov.Depth, digits = 1),
                  `%Reads.Mapping.SC2` = round(`%Reads.Mapping.SC2`, digits = 1))
 
 # Insert SampleID column into sumTab at every nth column (params$sampleIDInsertFreq) position
