@@ -214,6 +214,6 @@ cat('\\pagebreak')
 
 #### Other Dry Lab Fields
 
-```{r display-tabs, echo=FALSE, results='asis'}
+```{r display-sumTab, echo=FALSE, results='asis'}
 myTableSplittr(sumTab)
 ```
