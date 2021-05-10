@@ -186,17 +186,17 @@ myTableSplittr <- function(t) {
         y <- colnames(t)[sampleIDIndices[s]:i]
       }
     }
-    if (length(y) > 1 & is.null(y) == FALSE) {
+    if (length(y) > 1) {
       print(kbl(select(t, all_of(y)),
                 booktabs = T,
                 longtable = T,
                 align = "l") %>%
             kable_styling(latex_options = c("striped", "repeat_header")) %>%
             column_spec(1, width = "15em"))
-      #cat('\\pagebreak')
+      cat('\\pagebreak')
     }
   }
-  return()
+  return(paste0(""))
 }
 
 myTableSplittr(elimsTab)
