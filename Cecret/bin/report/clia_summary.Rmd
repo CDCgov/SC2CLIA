@@ -30,7 +30,7 @@ params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
-  sampleIDInsertFreq: 6
+  sampleIDInsertFreq: 5
 
 ---
 
@@ -120,7 +120,7 @@ elimsTab <- select(sumTab,
                    pangoLEARN.version = pangoLEARN.v,
                    `GenBank.Accession#` = `GenBank#`) %>%
             arrange(Sample.Name)
-sumTab <- select(sumTab, 
+sumTab <- select(sumTab,
                  -AA.Changes.S,
                  -Pangolin,
                  -`#FastQC.R1`,
@@ -140,7 +140,8 @@ sumTab <- select(sumTab,
 colRepsSumTab <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
 colRepsElimsTab <- floor(ncol(elimsTab) / params$sampleIDInsertFreq) 
 # create and bind columns to insert
-sumTab <- bind_cols(sumTab, as_tibble(replicate(colRepsSumTab, sumTab$Sample.Name))) 
+sumTab <- bind_cols(sumTab, as_tibble(replicate(colRepsSumTab, sumTab$Sample.Name))) %>%
+          relocate(Sample.Name)
 sumTabColNames <- colnames(sumTab)
 elimsTab <- bind_cols(elimsTab, as_tibble(replicate(colRepsElimsTab, elimsTab$Sample.Name))) 
 elimsTabColNames <- colnames(elimsTab)
@@ -154,8 +155,7 @@ for (i in 1:colRepsSumTab) {
   sumTab <- relocate(sumTab, 
                      eval(paste0("V", i)), 
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
-            rename_with(colNamer, starts_with(paste0("V", i))) %>%
-            relocate(Sample.Name)
+            rename_with(colNamer, starts_with(paste0("V", i)))
 }
 for (i in 1:colRepsElimsTab) {
   elimsTab <- relocate(elimsTab, 
@@ -174,10 +174,10 @@ myTableSplittr <- function(t) {
   # returns nothing; run for side effect of printing tables
   sampleIDIndices <- which(str_starts(colnames(t), "Sample.Name"))
   for (s in 1:length(sampleIDIndices)) {
-    # if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
-    #   i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
-    #   y <- colnames(t)[1:i]
-    # } else {
+    if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
+      i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 1
+      y <- colnames(t)[1:i]
+    } else {
       if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
         i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
         y <- colnames(t)[sampleIDIndices[s]:i]
@@ -185,7 +185,7 @@ myTableSplittr <- function(t) {
         i <- length(colnames(t))
         y <- colnames(t)[sampleIDIndices[s]:i]
       }
-    # }
+    }
     if (length(y) > 1 & is.null(y) == FALSE) {
       print(kbl(select(t, all_of(y)),
                 booktabs = T,
