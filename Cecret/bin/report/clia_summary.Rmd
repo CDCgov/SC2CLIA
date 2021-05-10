@@ -166,8 +166,9 @@ for (i in 1:colRepsElimsTab) {
 
 ```
 
+#### eLIMS Fields
 
-```{r display-sum, echo=FALSE, results='asis'}
+```{r display-tabs, echo=FALSE, results='asis'}
 
 myTableSplittr <- function(t) {
   # Where t is a table that is too wide for one page and needs to be split up
@@ -209,6 +210,10 @@ print(kbl(aaTab,
       column_spec(1, width = "15em") %>%
       column_spec(2, width = "45em"))
 cat('\\pagebreak')
+```
 
+#### Other Dry Lab Fields
+
+```{r display-tabs, echo=FALSE, results='asis'}
 myTableSplittr(sumTab)
 ```
