@@ -48,6 +48,12 @@ library(kableExtra)
 library(rmarkdown)
 ```
 
+```{css, echo=FALSE}
+h1, h2, h3 {
+  text-align: center;
+}
+```
+
 ```{r read-tabs, include=FALSE}
 # Read summary.txt in
 sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
@@ -166,7 +172,7 @@ for (i in 1:colRepsElimsTab) {
 
 ```
 
-#### eLIMS Fields
+### eLIMS Fields
 
 ```{r display-tabs, echo=FALSE, results='asis'}
 
@@ -212,7 +218,7 @@ print(kbl(aaTab,
 cat('\\pagebreak')
 ```
 
-#### Other Dry Lab Fields
+### Other Dry Lab Fields
 
 ```{r display-sumTab, echo=FALSE, results='asis'}
 myTableSplittr(sumTab)
