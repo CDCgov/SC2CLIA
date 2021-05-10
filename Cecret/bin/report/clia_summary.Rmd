@@ -168,38 +168,33 @@ for (i in 1:colRepsElimsTab) {
 
 
 ```{r display-sum, echo=FALSE, results='asis'}
-# print(kbl(elimsTab,
-#           booktabs = T,
-#           longtable = T,
-#           align = "l") %>%
-#       kable_styling(latex_options = c("striped", "repeat_header")) %>%
-#       column_spec(1, width = "15em"))
 
 myTableSplittr <- function(t) {
   # Where t is a table that is too wide for one page and needs to be split up
+  # returns nothing; run for side effect of printing tables
   sampleIDIndices <- which(str_starts(colnames(t), "Sample.Name"))
   for (s in 1:length(sampleIDIndices)) {
-    if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
-      i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
-      y <- colnames(t)[1:i]
-      #z <- 2
-    } else {
+    # if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
+    #   i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
+    #   y <- colnames(t)[1:i]
+    # } else {
       if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
         i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
         y <- colnames(t)[sampleIDIndices[s]:i]
-        #z <- 1
       } else {
         i <- length(colnames(t))
         y <- colnames(t)[sampleIDIndices[s]:i]
-        #z <- 1
       }
-    }
+    # }
+    if (length(y) != 1) {
       print(kbl(select(t, all_of(y)),
                 booktabs = T,
                 longtable = T,
                 align = "l") %>%
             kable_styling(latex_options = c("striped", "repeat_header")) %>%
             column_spec(1, width = "15em"))
+      cat('\\pagebreak')
+    }
   }
   return()
 }
@@ -213,6 +208,7 @@ print(kbl(aaTab,
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
       column_spec(1, width = "15em") %>%
       column_spec(2, width = "45em"))
+cat('\\pagebreak')
 
 myTableSplittr(sumTab)
 ```
