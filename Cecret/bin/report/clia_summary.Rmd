@@ -193,7 +193,7 @@ myTableSplittr <- function(t) {
                 align = "l") %>%
             kable_styling(latex_options = c("striped", "repeat_header")) %>%
             column_spec(1, width = "15em"))
-      cat('\\pagebreak')
+      #cat('\\pagebreak')
     }
   }
   return()
