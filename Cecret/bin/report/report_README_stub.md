@@ -20,7 +20,7 @@ All html outputs are placed in the Cecret analysis directory under report by def
 
 <br>
 
-The other output is clia_summary_digsig.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output with an electronic signature.
+The other output is SC2_Variant_WGS_Run_Summary.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output with an electronic signature. It is split up into two sections, eLIMS Fields and Other Dry Lab Fields.
 
 
 ### Summary Table Details
