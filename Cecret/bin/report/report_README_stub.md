@@ -61,7 +61,7 @@ The "use" column indicates whether a row is reported in eLIMS, not reported in e
 | not reported | num_degenerage | #Degenerate | not included | | |
 | not reported | num_ACTG | #ACTG | not included | | |
 | not reported | num_total | #Total.Bases | not included | | |
-| not reported | Total_Reads_Analyzed | Total.Reads.Analyzed | Mapped Reads | 100,000 | |
+| not reported | Total_Reads_Analyzed | Total.Reads.Analyzed | not included | | |
 | QC-NR | %_N | %N | not included | <10% | |
 | not reported | ave_cov_depth | Mean.Cov.Depth | not included | | |
 | QC-R | %_Reads_Matching_SC2_Ref | %Reads.Mapping.SC2 | Percent Mapped Reads | >=65% | |
