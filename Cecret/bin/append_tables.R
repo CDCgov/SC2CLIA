@@ -136,7 +136,6 @@ test_that('input tables have same number of rows', {
 # Unless turned off, add columns for eLIMS to output
 if (elimsFlag == TRUE) {
   file1 <- mutate(file1, 
-                  Percent.Mapped.Reads = as.numeric(Total_Reads_Analyzed) / as.numeric(fastqc_raw_reads_1) * 100,
                   `GenBank#` = "")
 }
 
