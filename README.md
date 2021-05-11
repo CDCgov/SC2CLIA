@@ -77,14 +77,14 @@ Or without sudo access try [remote option](https://cloud.sylabs.io/builder).
 #### EDLB custom processes are:
 - [vadr](https://github.com/ncbi/vadr) - for annotating fastas like NCBI (different than Erin's version)
 - [pacbam](https://bitbucket.org/CibioBCG/pacbam/src/master) - for characterization of genomic regions and single nucleotide positions (for amplicons)
-- [pacbam_orfs]() - for characterization of genomic regions and single nucleotide positions (for ORFs)
+- [pacbam_orfs](https://bitbucket.org/CibioBCG/pacbam/src/master) - for characterization of genomic regions and single nucleotide positions (for ORFs)
 - [nextcladeParse](https://clades.nextstrain.org/) - for parsing nextclade csv file and generating aa change stats
-- [ivar_vcf]() - for converting ivar_variants tsv file into standard vcf file
-- [aocd]() - for calculating average read coverage over non-N consensus positions
-- [sc2ref]() - for calculating percentage of reads passing QC and align to reference / total number of reads passing QC
-- [ncbi_upload]() - for ncbi GenBank submission
+- [ivar_vcf](https://andersen-lab.github.io/ivar/html/manualpage.html) - for converting ivar_variants tsv file into standard vcf file
+- [aocd](https://github.com/cdcent/SC2CLIA/blob/master/Cecret/Cecret_alltools.nf) - for calculating average read coverage over non-N consensus positions
+- [sc2ref](https://github.com/cdcent/SC2CLIA/blob/master/Cecret/Cecret_alltools.nf) - for calculating percentage of reads passing QC that align to reference
+- [ncbi_upload](https://github.com/cdcent/SC2CLIA/blob/master/Cecret/Cecret_alltools.nf) - for ncbi GenBank submission
 - [mqc](https://github.com/ewels/MultiQC) - for generating MultiQC report
-- [post_process]() - for 
+- [post_process](https://github.com/cdcent/SC2CLIA/blob/master/Cecret/Cecret_alltools.nf) - for 
   1. calculating largest INDEL length 
   2. generating amplicon drop outs stats 
   3. generate datasheet to push samples to ELIMS
