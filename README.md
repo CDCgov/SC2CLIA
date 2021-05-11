@@ -9,6 +9,7 @@ Active development by EDLB
 * [Requirements](#requirements)
 * [INSTALL](#install)
 * [USAGE](#usage)
+* [Main Components](#main-components)
 * [NOTE](#note)
 * [Contributing](#contributing)
 * [Future Plans](#future-plans)
@@ -52,6 +53,42 @@ Or without sudo access try [remote option](https://cloud.sylabs.io/builder).
 
 1. Run the following script at your base folder(replace `data_folder` with the path to your data; r is for generating report files)  
  `./run_cecret.sh - d data_folder `  (there is an optional flag `-r false(default true)` if you want to turn it off)
+ 
+## Main Components
+
+#### original Cecret processes by Dr. Erin are:
+
+- [seqyclean](https://github.com/ibest/seqyclean) - for cleaning reads
+- [fastp](https://github.com/OpenGene/fastp) - for cleaning reads ; optional, faster alternative to seqyclean
+- [bwa](http://bio-bwa.sourceforge.net/) - for aligning reads to the reference
+- [minimap2](https://github.com/lh3/minimap2) - an alternative to bwa
+- [ivar](https://andersen-lab.github.io/ivar/html/manualpage.html) - calling variants and creating a consensus fasta; optional primer trimmer
+- [samtools](http://www.htslib.org/) - for QC metrics and sorting; optional primer trimmer; optional converting bam to fastq files
+- [fastqc](https://github.com/s-andrews/FastQC) - for QC metrics
+- [bedtools](https://bedtools.readthedocs.io/en/latest/) - for depth estimation over amplicons
+- [kraken2](https://ccb.jhu.edu/software/kraken2/) - for read classification
+- [pangolin](https://github.com/cov-lineages/pangolin) - for lineage classification
+- [nextclade](https://clades.nextstrain.org/) - for clade classification
+- [mafft](https://mafft.cbrc.jp/alignment/software/) - for multiple sequence alignment (optional, relatedness must be set to "true")
+- [snp-dists](https://github.com/tseemann/snp-dists) - for relatedness determination (optional, relatedness must be set to "true")
+- [iqtree](http://www.iqtree.org/) - for phylogenetic tree generation (optional, relatedness must be set to "true")
+- [bamsnap](https://github.com/parklab/bamsnap) - to create images of SNPs
+
+#### EDLB custom processes are:
+- [vadr](https://github.com/ncbi/vadr) - for annotating fastas like NCBI (different than Erin's version)
+- [pacbam](https://bitbucket.org/CibioBCG/pacbam/src/master) - for characterization of genomic regions and single nucleotide positions (for amplicons)
+- [pacbam_orfs]() - for characterization of genomic regions and single nucleotide positions (for ORFs)
+- [nextcladeParse](https://clades.nextstrain.org/) - for parsing nextclade csv file and generating aa change stats
+- [ivar_vcf]() - for converting ivar_variants tsv file into standard vcf file
+- [aocd]() - for calculating average read coverage over non-N consensus positions
+- [sc2ref]() - for calculating percentage of reads passing QC and align to reference / total number of reads passing QC
+- [ncbi_upload]() - for ncbi GenBank submission
+- [mqc](https://github.com/ewels/MultiQC) - for generating MultiQC report
+- [post_process]() - for 
+  1. calculating largest INDEL length 
+  2. generating amplicon drop outs stats 
+  3. generate datasheet to push samples to ELIMS
+
 
 ## Note
 
