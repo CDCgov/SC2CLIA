@@ -26,38 +26,38 @@ The other output is SC2_Variant_WGS_Run_Summary.pdf located in the report direct
 ### Summary Table Details
 Note that the Sample.Name column is repeated regularly to aid in readability. Numbers are appended to the ends of the repeated column headers.
 
-| summary.txt column | index.html column | eLIMS report column | value description |
-| --- | --- | --- | --- |
-| sample_id | Sample.ID | not included | Sample ID fragment starting at beginning and going through first hyphen |
-| not included | not included | CSID | |
-| not included | not included | CUID | |
-| sample | Sample.Name | not included | Full sample identifier |
-| aligner_version | not included | not included | |
-| ivar_version | not included | not included | |
-| pangolin_lineage | Pangolin | Lineage | |
-| pangolin_status | Pangolin.QC | not included | |
-| nextclade_clade | NextClade | not included | |
-| fastqc_raw_reads_1 | #FastQC.R1 | Total Reads | |
-| fastqc_raw_reads_2 | #FastQC.R2 | not included | |
-| seqyclean_pairs_kept_after_cleaning | #Seqyclean.Pairs | not included | |
-| seqyclean_percent_kept_after_cleaning | %Seqyclean.Pairs | not included | |
-| fastp_reads_passed | not included | not included | |
-| depth_after_trimming | Depth.Post.Trim | Average Depth | |
-| coverage_after_trimming | Coverage.Post.Trim | Percent Genome Coverage | |
-| %_human_reads | %Human.Reads | not included | |
-| %_SARS-COV-2_reads | %SC2.Reads | not included | |
-| ivar_num_variants_identified | #iVar.Variants | not included | |
-| bcftools_variants_identified | #BCFTools.Variants | not included | |
-| bedtools_num_failed_amplicons | #BEDTools.Failed.Amps | not included | |
-| samtools_num_failed_amplicons | SAMTools.Failed.Amps | not included | |
-| num_N | #N | not included | |
-| num_degenerage | #Degenerate | not included | |
-| num_ACTG | #ACTG | not included | |
-| num_total | #Total.Bases | not included | |
-| Total_Reads_Analyzed | Total.Reads.Analyzed | Mapped Reads | |
-| %_N | %N | not included | |
-| ave_cov_depth | Mean.Cov.Depth | not included | |
-| %_Reads_Matching_SC2_Ref | %Reads.Mapping.SC2 | not included | |
+| CLIA QC metric | summary.txt column | index.html column | eLIMS report column | threshold | value description |
+| --- | --- | --- | --- | --- | --- |
+| false | sample_id | Sample.ID | not included | not null | Sample ID fragment starting at beginning and going through first hyphen |
+| true | not included | not included | CSID | not null | |
+| true | not included | not included | CUID | not null | |
+| false | sample | Sample.Name | not included | not null | Full sample identifier |
+| false | aligner_version | not included | not included | not null | |
+| false | ivar_version | not included | not included | not null | |
+| true | pangolin_lineage | Pangolin | Lineage | not null | |
+| used in calc | pangolin_status | Pangolin.QC | not included | true | |
+| false | nextclade_clade | NextClade | not included | | |
+| true | fastqc_raw_reads_1 | #FastQC.R1 | Total Reads | >=100,000 | |
+| false | fastqc_raw_reads_2 | #FastQC.R2 | not included | >=100,00 | |
+| false | seqyclean_pairs_kept_after_cleaning | #Seqyclean.Pairs | not included | | |
+| false | seqyclean_percent_kept_after_cleaning | %Seqyclean.Pairs | not included | | |
+| false | fastp_reads_passed | not included | not included | | |
+| true | depth_after_trimming | Depth.Post.Trim | Average Depth | >=100x | |
+| true | coverage_after_trimming | Coverage.Post.Trim | Percent Genome Coverage | >=95% | |
+| false | %_human_reads | %Human.Reads | not included | | |
+| false | %_SARS-COV-2_reads | %SC2.Reads | not included | | |
+| false | ivar_num_variants_identified | #iVar.Variants | not included | | |
+| false | bcftools_variants_identified | #BCFTools.Variants | not included | | |
+| false | bedtools_num_failed_amplicons | #BEDTools.Failed.Amps | not included | | |
+| false | samtools_num_failed_amplicons | SAMTools.Failed.Amps | not included | | |
+| false | num_N | #N | not included | | |
+| false | num_degenerage | #Degenerate | not included | | |
+| false | num_ACTG | #ACTG | not included | | |
+| false | num_total | #Total.Bases | not included | | |
+| used in calc | Total_Reads_Analyzed | Total.Reads.Analyzed | Mapped Reads | 100,000 | |
+| false | %_N | %N | not included | | |
+| false | ave_cov_depth | Mean.Cov.Depth | not included | | |
+| | %_Reads_Matching_SC2_Ref | %Reads.Mapping.SC2 | not included | |
 | vadr_status | Vadr | not included | |
 | vdr_sample_orfshift | Vadr.All.ORF.Shift | not included | |
 | vdr_sgene_orftshift | Vadr.S.ORF.Shift | not included | |
