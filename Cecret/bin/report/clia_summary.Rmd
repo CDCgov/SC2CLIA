@@ -82,7 +82,7 @@ colnames(sumTab) <- c("Sample.ID",
                       "Total.Reads.Analyzed", 
                       "%N", 
                       "Mean.Cov.Depth", 
-                      "%Reads.Mapping.SC2", 
+                      "Percent.Mapped.Reads", 
                       "Vadr", 
                       "Vadr.All.ORF.Shift",
                       "Vadr.S.ORF.Shift", 
@@ -91,7 +91,6 @@ colnames(sumTab) <- c("Sample.ID",
                       "Length.Longest.Del",
                       "pangoLEARN.v",
                       "#Lineage.Subs",
-                      "Percent.Mapped.Reads",
                       "GenBank#",
                       "ORFs.Passing.QC",
                       "Coverage.S",
@@ -107,31 +106,40 @@ aaTab <- select(sumTab,
          arrange(Sample.Name)
 elimsTab <- select(sumTab,
                    Sample.Name,
-                   Lineage = Pangolin,
-                   Total.Reads = `#FastQC.R1`,
                    Average.Depth = Depth.Post.Trim,
                    Percent.Genome.Coverage = Coverage.Post.Trim,
-                   Mapped.Reads = Total.Reads.Analyzed,
+                   Total.Reads = `#FastQC.R1`,
+                   Percent.Mapped.Reads = `%Reads.Mapping.SC2`,
                    Open.Reading.Frames = ORFs.Passing.QC,
                    S.Gene.Coverage = Coverage.S,
-                   Percent.Mapped.Reads,
+                   Lineage = Pangolin,
                    Number.Lineage.Defined.Substitutions = `#Lineage.Subs`,
                    pangoLEARN.version = pangoLEARN.v,
                    `GenBank.Accession#` = `GenBank#`) %>%
             arrange(Sample.Name)
+qcTab <- select(sumTab,
+                Sample.Name,
+                Pangolin.QC,
+                `%Ambiguous.Base.Calls` = `%N`,
+                `%Ambiguous.Base.Calls.S` = Percent.Ns.S,
+                Frameshifts = Vadr.S.ORF.Shift) %>%
+          arrange(Sample.Name)
 sumTab <- select(sumTab,
                  -AA.Changes.S,
-                 -Pangolin,
-                 -`#FastQC.R1`,
                  -Depth.Post.Trim,
                  -Coverage.Post.Trim,
-                 -Total.Reads.Analyzed,
+                 -`#FastQC.R1`,
+                 -`%Reads.Mapping.SC2`,
                  -ORFs.Passing.QC,
                  -Coverage.S,
-                 -Percent.Mapped.Reads,
+                 -Pangolin,
                  -`#Lineage.Subs`,
                  -pangoLEARN.v,
-                 -`GenBank#`) %>%
+                 -`GenBank#`
+                 -Pangolin.QC,
+                 -`%N`,
+                 -Percent.Ns.S,
+                 -Vadr.S.ORF.Shift) %>%
           arrange(Sample.Name)
 
 # Round off some numbers to make them prettier
@@ -221,6 +229,20 @@ print(kbl(aaTab,
       kable_styling(latex_options = c("striped", "repeat_header")) %>%
       column_spec(1, width = "15em") %>%
       column_spec(2, width = "45em"))
+cat('\\pagebreak')
+```
+
+\begin{center}
+\textbf{\huge{Other QC Fields}}
+\end{center}
+
+```{r display-qcTab, echo=FALSE, results='asis'}
+print(kbl(qcTab,
+          booktabs = T,
+          longtable = T,
+          align = "l") %>%
+      kable_styling(latex_options = c("striped", "repeat_header")) %>%
+      column_spec(1, width = "15em"))
 cat('\\pagebreak')
 ```
 
