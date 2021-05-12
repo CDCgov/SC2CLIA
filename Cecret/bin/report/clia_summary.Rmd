@@ -144,8 +144,8 @@ sumTab <- tibble(Sample.ID = character(),
                   Coverage.S = numeric(),
                   Mean.Depth.S = numeric(),
                   Percent.Pos.Min.Cov.S = numeric(),
-                  Percent.Ns.S = numeric()
-)
+                  Percent.Ns.S = numeric()) %>%
+  bind_rows(c(Sample.Name = NA))
 ```
 
 
@@ -206,35 +206,6 @@ sumTab <- mutate(sumTab,
                  `%Seqyclean.Pairs` = round(`%Seqyclean.Pairs`, digits = 1),
                  `%SC2.Reads` = round(`%SC2.Reads`, digits = 1),
                  Mean.Cov.Depth = round(Mean.Cov.Depth, digits = 1))
-# # 
-# # Insert SampleID column into sumTab at every nth column (params$sampleIDInsertFreq) position
-# # how many times to insert sampleID column
-# colRepsSumTab <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
-# colRepsElimsTab <- floor(ncol(elimsTab) / params$sampleIDInsertFreq) 
-# # create and bind columns to insert
-# sumTab <- bind_cols(sumTab, as_tibble(replicate(colRepsSumTab, sumTab$Sample.Name))) %>%
-#           relocate(Sample.Name)
-# sumTabColNames <- colnames(sumTab)
-# elimsTab <- bind_cols(elimsTab, as_tibble(replicate(colRepsElimsTab, elimsTab$Sample.Name))) 
-# elimsTabColNames <- colnames(elimsTab)
-# 
-# # function to rename columns slightly more nicely. Note R won't allow redundant column names.
-# colNamer <- function(c) {
-#   return(paste0("Sample.Name", str_replace(c, "V", "")))
-# }
-# # move new sampleID columns to right place
-# for (i in 1:colRepsSumTab) {
-#   sumTab <- relocate(sumTab, 
-#                      eval(paste0("V", i)), 
-#                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
-#             rename_with(colNamer, starts_with(paste0("V", i)))
-# }
-# for (i in 1:colRepsElimsTab) {
-#   elimsTab <- relocate(elimsTab, 
-#                      eval(paste0("V", i)), 
-#                      .after = elimsTabColNames[i*params$sampleIDInsertFreq]) %>%
-#             rename_with(colNamer, starts_with(paste0("V", i)))
-# }
 
 ```
 
@@ -243,36 +214,6 @@ sumTab <- mutate(sumTab,
 \end{center}
 
 ```{r display-tabs, echo=FALSE, results='asis'}
-
-# myTableSplittr <- function(t) {
-#   # Where t is a table that is too wide for one page and needs to be split up
-#   # returns nothing; run for side effect of printing tables
-#   sampleIDIndices <- which(str_starts(colnames(t), "Sample.Name"))
-#   for (s in 1:length(sampleIDIndices)) {
-#     if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
-#       i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 1
-#       y <- colnames(t)[1:i]
-#     } else {
-#       if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
-#         i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
-#         y <- colnames(t)[sampleIDIndices[s]:i]
-#       } else {
-#         i <- length(colnames(t))
-#         y <- colnames(t)[sampleIDIndices[s]:i]
-#       }
-#     }
-#     if (length(y) > 1) {
-#       print(kbl(select(t, all_of(y)),
-#                 booktabs = T,
-#                 longtable = T,
-#                 align = "l") %>%
-#             kable_styling(latex_options = c("striped", "repeat_header")) %>%
-#             column_spec(1, width = "15em"))
-#       cat('\\pagebreak')
-#     }
-#   }
-#   return(cat('\\pagebreak'))
-# }
 
 newTableSplittr <- function(t, f, c) {
   # Where t is a tibble that is too wide to display on one page
