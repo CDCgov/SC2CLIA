@@ -38,6 +38,12 @@ covAfterTrimThreshold <- 95           # min coverage after trimming
 perHumanThreshold <- NULL             # max percentage human reads allowed per sample (not in use)
 perSC2Threshold <- 65                 # min percentage SC2 reads allowed per sample
 perNThreshold <- 10                   # max percentage N allowed in genome
+totMappedReads <- 100000              # min number of reads mapping to SC2 Wuhan reference
+perMappedReads <- 65                  # min percentage of reads mapping to SC2 Wuhan reference
+numORFsThreshold <- 10                # min number of ORFs passing QC
+sGeneCovThreshold <- 95               # min percentage of bases in S gene with any coverage
+sPerNThreshold <- 10                  # min percentage of Ns in S gene causing failure
+sGeneFrameshiftThreshold <- FALSE     # frameshifts allowed in S gene?
 ```
 
 ```{r format-fnc, include=FALSE}
@@ -85,7 +91,25 @@ sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID),
                               bold = ifelse(`%_N` >= perNThreshold, T, F)),
             vadr_status = cell_spec(vadr_status, 
                                      color = ifelse(vadr_status == "PASS", "black", "red"), 
-                                     bold = ifelse(vadr_status == "PASS", F, T)))
+                                     bold = ifelse(vadr_status == "PASS", F, T)),
+            Total_Reads_Analyzed = cell_spec(Total_Reads_Analyzed,
+                                             color = ifelse(Total_Reads_Analyzed < totMappedReads, "red", "black"), 
+                              bold = ifelse(Total_Reads_Analyzed < totMappedReads, T, F)),
+            Percent.Mapped.Reads = cell_spec(Percent.Mapped.Reads,
+                                             color = ifelse(Percent.Mapped.Reads < perMappedReads, "red", "black"), 
+                              bold = ifelse(Percent.Mapped.Reads < perMappedReads, T, F)),
+            ORFs.Passing.QC = cell_spec(ORFs.Passing.QC,
+                                        color = ifelse(ORFs.Passing.QC < numORFsThreshold, "red", "black"), 
+                              bold = ifelse(ORFs.Passing.QC < numORFsThreshold, T, F)),
+            Coverage.S = cell_spec(Coverage.S, 
+                                   color = ifelse(Coverage.S < sGeneCovThreshold, "red", "black"), 
+                              bold = ifelse(Coverage.S < sGeneCovThreshold, T, F)),
+            Percent.Ns.S = cell_spec(Percent.Ns.S,
+                                     color = ifelse(Percent.Ns.S >= sPerNThreshold, "red", "black"), 
+                              bold = ifelse(Percent.Ns.S >= sPerNThreshold, T, F)),
+            vdr_sgene_orfshift = cell_spec(vdr_sgene_orfshift,
+                                           color = ifelse(vdr_sgene_orfshift != sGeneFrameshiftThreshold, "red", "black"), 
+                              bold = ifelse(vdr_sgene_orfshift != sGeneFrameshiftThreshold, T, F)))
 
 # Make column names nicer
 colnames(sumTab) <- c("Sample.ID", 
@@ -119,6 +143,10 @@ colnames(sumTab) <- c("Sample.ID",
                       "AA.Changes.S",
                       "Length.Longest.Insert", 
                       "Length.Longest.Del",
+                      "pangoLEARN.v",
+                      "#Lineage.Subs",
+                      "Percent.Mapped.Reads",
+                      "GenBank#",
                       "ORFs.Passing.QC",
                       "Coverage.S",
                       "Mean.Depth.S",
@@ -126,11 +154,14 @@ colnames(sumTab) <- c("Sample.ID",
                       "Percent.Ns.S"
 )
 
-# Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
+# Insert Sample.Name column into table at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column
 colReps <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
 # create and bind columns to insert
-sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.Name))) 
+sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.Name)))
+# Move Sample.Name to the first column
+sumTab <- relocate(sumTab, Sample.Name)
+# Grab the vector of column names
 sumTabColNames <- colnames(sumTab)
 # function to rename columns slightly more nicely. Note R won't allow redundant column names.
 colNamer <- function(c) {
