@@ -164,6 +164,25 @@ for (i in 1:colReps) {
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
+
+# Add global QC column
+sumTab <- mutate(sumTab, 
+                 Global.QC = case_when(
+                                       Depth.Post.Trim < depthAfterTrimThreshold ~ "FAIL",
+                                       `#FastQC.R1` < fastqcRawThreshold ~ "FAIL",
+                                       `%Reads.Mapping.SC2` < perMappedReads ~ "FAIL",
+                                       ORFs.Passing.QC < numORFsThreshold ~ "FAIL",
+                                       Coverage.S < sGeneCovThreshold ~ "FAIL",
+                                       Pangolin == "None" ~ "FAIL",
+                                       Pangolin.QC == "fail" ~ "FAIL",
+                                       `%N` >= perNThreshold ~ "FAIL",
+                                       Percent.Ns.S >= perNThreshold ~ "FAIL",
+                                       Vadr.S.ORF.Shift != sGeneFrameshiftThreshold ~ "FAIL",
+                                       TRUE ~ "pass"
+                 )) %>%
+          mutate(Global.QC = cell_spec(Global.QC,
+                                       color = ifelse(Global.QC == "FAIL", "red", "black"), 
+                                       bold = ifelse(Global.QC == "FAIL", T, F)))
 ```
 
 ```{r display-sum, echo=FALSE}
