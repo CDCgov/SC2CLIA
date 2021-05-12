@@ -194,19 +194,19 @@ sumTab <- select(sumTab,
           arrange(Sample.Name)
 
 # Round off some numbers to make them prettier
-elimsTab <- mutate(elimsTab,
-                   Percent.Mapped.Reads = round(Percent.Mapped.Reads, digits = 1),
-                   S.Gene.Coverage = round(S.Gene.Coverage, digits = 1),
-                   Average.Depth = round(Average.Depth, digits = 1),
-                   Percent.Genome.Coverage = round(Percent.Genome.Coverage, digits = 1))
-qcTab <- mutate(qcTab,
-                `%Ambiguous.Base.Calls` = round(`%Ambiguous.Base.Calls`, digits = 1),
-                `%Ambiguous.Base.Calls.S` = round(`%Ambiguous.Base.Calls.S`, digits = 1))
-sumTab <- mutate(sumTab,
-                 `%Seqyclean.Pairs` = round(`%Seqyclean.Pairs`, digits = 1),
-                 `%SC2.Reads` = round(`%SC2.Reads`, digits = 1),
-                 Mean.Cov.Depth = round(Mean.Cov.Depth, digits = 1))
-# 
+# elimsTab <- mutate(elimsTab,
+#                    Percent.Mapped.Reads = round(Percent.Mapped.Reads, digits = 1),
+#                    S.Gene.Coverage = round(S.Gene.Coverage, digits = 1),
+#                    Average.Depth = round(Average.Depth, digits = 1),
+#                    Percent.Genome.Coverage = round(Percent.Genome.Coverage, digits = 1))
+# qcTab <- mutate(qcTab,
+#                 `%Ambiguous.Base.Calls` = round(`%Ambiguous.Base.Calls`, digits = 1),
+#                 `%Ambiguous.Base.Calls.S` = round(`%Ambiguous.Base.Calls.S`, digits = 1))
+# sumTab <- mutate(sumTab,
+#                  `%Seqyclean.Pairs` = round(`%Seqyclean.Pairs`, digits = 1),
+#                  `%SC2.Reads` = round(`%SC2.Reads`, digits = 1),
+#                  Mean.Cov.Depth = round(Mean.Cov.Depth, digits = 1))
+# # 
 # # Insert SampleID column into sumTab at every nth column (params$sampleIDInsertFreq) position
 # # how many times to insert sampleID column
 # colRepsSumTab <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
