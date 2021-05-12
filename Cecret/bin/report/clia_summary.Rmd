@@ -281,9 +281,9 @@ newTableSplittr <- function(t, f, c) {
   repeatCol <- select(t, matches(c))
   t <- select(t, -matches(c))
   myColNames <- colnames(t)
-  numSplits <- floor(length(myColNames) / f)
+  numSplits <- floor(length(myColNames) / as.numeric(f))
   for (g in 1:numSplits) {
-    subT <- select(t, all_of(myColNames[g:g + f - 1])) %>%
+    subT <- select(t, all_of(myColNames[g:g + as.numeric(f) - 1])) %>%
       bind_cols(repeatCol) %>%
       relocate(Sample.Name)
     print(kbl(subT,
