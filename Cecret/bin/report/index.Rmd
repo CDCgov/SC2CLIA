@@ -168,8 +168,8 @@ for (i in 1:colReps) {
 # Add global QC column
 sumTab <- mutate(sumTab, 
                  Global.QC = case_when(
-                                       Depth.Post.Trim < depthAfterTrimThreshold ~ "FAIL",
-                                       `#FastQC.R1` < fastqcRawThreshold ~ "FAIL",
+                                       Depth.Post.Trim < depthAfterTrimThreshold ~ "Depth.Post.Trim", #"FAIL",
+                                       `#FastQC.R1` < fastqcRawThreshold ~  "#FastQC.R1",#"FAIL",
                                        `%Reads.Mapping.SC2` < perMappedReads ~ "FAIL",
                                        ORFs.Passing.QC < numORFsThreshold ~ "FAIL",
                                        Coverage.S < sGeneCovThreshold ~ "FAIL",
@@ -180,9 +180,10 @@ sumTab <- mutate(sumTab,
                                        Vadr.S.ORF.Shift != sGeneFrameshiftThreshold ~ "FAIL",
                                        TRUE ~ "pass"
                  )) %>%
-          mutate(Global.QC = cell_spec(Global.QC,
-                                       color = ifelse(Global.QC == "FAIL", "red", "black"), 
-                                       bold = ifelse(Global.QC == "FAIL", T, F)))
+          # mutate(Global.QC = cell_spec(Global.QC,
+          #                              color = ifelse(Global.QC == "FAIL", "red", "black"), 
+          #                              bold = ifelse(Global.QC == "FAIL", T, F))) %>%
+          relocate(Global.QC)
 ```
 
 ```{r display-sum, echo=FALSE}
