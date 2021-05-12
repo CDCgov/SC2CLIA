@@ -165,6 +165,8 @@ for (i in 1:colReps) {
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
 
+print(typeof(sumTab$Depth.Post.Trim))
+
 # Add global QC column
 sumTab <- mutate(sumTab, 
                  Global.QC = case_when(
