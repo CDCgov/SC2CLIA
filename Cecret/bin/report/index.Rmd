@@ -165,12 +165,10 @@ for (i in 1:colReps) {
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
 
-print(typeof(sumTab$Depth.Post.Trim))
-
 # Add global QC column
 sumTab <- mutate(sumTab, 
                  Global.QC = case_when(
-                                       Depth.Post.Trim < depthAfterTrimThreshold ~ "Depth.Post.Trim", #"FAIL",
+                                       as.numeric(Depth.Post.Trim) < depthAfterTrimThreshold ~ "Depth.Post.Trim", #"FAIL",
                                        `#FastQC.R1` < fastqcRawThreshold ~  "#FastQC.R1",#"FAIL",
                                        `%Reads.Mapping.SC2` < perMappedReads ~ "%Reads.Mapping.SC2",  #"FAIL",
                                        ORFs.Passing.QC < numORFsThreshold ~ "ORFs.Passing.QC", #"FAIL",
