@@ -23,7 +23,7 @@ out_formats = {
     "coverage_after_trimming":"Percent Genome Coverage",
     "fastqc_raw_reads_1":"Total Reads",
     "Total_Reads_Analyzed":"Mapped Reads",
-    "percent_mapped":"Percent Mapped Reads",
+    "%_Reads_Matching_SC2_Ref":"Percent Mapped Reads",
     "ORFs.Passing.QC":"Open Reading Frames",
     "Coverage.S":"S-gene Coverage",
     "S_aa_INDELs":"Spike Protein Substitutions",
@@ -81,10 +81,10 @@ def get_summary_data(filename, samples):
         sys.exit(1)
     # Modify to take in samples and only keeps where rows that are real samples
     summary_table = summary_table[summary_table["sample"].isin(samples)]
-    summary_subset = summary_table.loc[:,('sample','depth_after_trimming','coverage_after_trimming','fastqc_raw_reads_1', \
-                                          'Total_Reads_Analyzed','pangolin_lineage', 'ORFs.Passing.QC', 'Coverage.S', 'S_aa_INDELs', \
-                                          'pangolin_substitutions', 'pangoLEARN_version')]
-    summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
+    summary_subset = summary_table.loc[:,('sample', 'depth_after_trimming', 'coverage_after_trimming', 'fastqc_raw_reads_1', \
+                                          'Total_Reads_Analyzed', '%_Reads_Matching_SC2_Ref', 'pangolin_lineage', 'ORFs.Passing.QC', \
+                                          'Coverage.S', 'S_aa_INDELs', 'pangolin_substitutions', 'pangoLEARN_version')]
+    #summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
     summary_subset['min_cov_threshold'] = 30
     summary_subset['CSID'] = summary_table['sample'].str.split('-').str[0]
     summary_subset['CUID'] = summary_table['sample'].str.split('-').str[1]
@@ -147,7 +147,7 @@ def main():
 
     # Rearrange columns 
     cols = ['CSID','CUID','min_cov_threshold','depth_after_trimming','coverage_after_trimming', \
-            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', 'S_aa_INDELs', 'genbank', \
+            'fastqc_raw_reads_1','Total_Reads_Analyzed','%_Reads_Matching_SC2_Ref', 'S_aa_INDELs', 'genbank', \
             'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'pangolin_substitutions','pangoLEARN_version', 'sample'] # add orfs, s-cov, genbank
 
     summary_output = summary_output[cols]
