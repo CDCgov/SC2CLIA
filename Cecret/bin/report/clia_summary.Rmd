@@ -225,7 +225,6 @@ newTableSplittr <- function(t, f, c) {
   numSplits <- ceiling(length(myColNames) / f)
   for (g in 1:numSplits) {
     x <- ifelse(g * f <= length(myColNames), g * f, length(myColNames))
-    print(x)
     subT <- select(t, all_of(myColNames[(g * f - f + 1):x])) %>%
       bind_cols(repeatCol) %>%
       relocate(Sample.Name)
