@@ -110,7 +110,7 @@ sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID),
             Percent.Ns.S = cell_spec(Percent.Ns.S,
                                      color = ifelse(is.na(Percent.Ns.S) | Percent.Ns.S >= sPerNThreshold, "red", "black"), 
                                      bold = ifelse(is.na(Percent.Ns.S) | Percent.Ns.S >= sPerNThreshold, T, F)),
-            vdr_sgene_orftshift = cell_spec(vdr_sgene_orfshift,
+            vdr_sgene_orftshift = cell_spec(vdr_sgene_orftshift,
                                            color = ifelse(vdr_sgene_orftshift != sGeneFrameshiftThreshold, "red", "black"), 
                                            bold = ifelse(vdr_sgene_orftshift != sGeneFrameshiftThreshold, T, F)))
 
