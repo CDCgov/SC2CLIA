@@ -281,7 +281,7 @@ newTableSplittr <- function(t, f, c) {
   repeatCol <- select(t, matches(c))
   t <- select(t, -matches(c))
   myColNames <- colnames(t)
-  numSplits <- floor(length(myColNames) / f)
+  numSplits <- ceiling(length(myColNames) / f)
   for (g in 1:numSplits) {
     x <- ifelse(g * f <= length(myColNames), g * f, length(myColNames))
     print(x)
