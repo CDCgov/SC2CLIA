@@ -278,8 +278,8 @@ newTableSplittr <- function(t, f, c) {
   # Where t is a tibble that is too wide to display on one page
   # Where f is the frequency with which to split
   # Where c is the column name to repeat at the beginning of each split
-  repeatCol <- t$c
-  t <- select(t, -c)
+  repeatCol <- select(t, matches(c))
+  t <- select(t, -matches(c))
   myColNames <- colnames(t)
   numSplits <- floor(length(myColNames) / f)
   for (g in 1:numSplits) {
