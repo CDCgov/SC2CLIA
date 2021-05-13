@@ -1027,7 +1027,7 @@ process pangolin {
   tuple sample, env(pangolin_lineage) into pangolin_lineage_results
   tuple sample, env(pangolin_status) into pangolin_status_results
   tuple sample, env(pangoLEARN_version) into pangoLEARN_version_results
-  tuple sample, env(pangolin_subs) into pangolin_subs_results
+  tuple sample, env(pangolin_subs) into pangolin_subs_results 
   file("logs/pangolin/${sample}.${workflow.sessionId}.{log,err}")
 
   shell:
@@ -1044,12 +1044,13 @@ process pangolin {
     pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
     pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
     pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
-    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '\b[[:digit:]]+[/][[:digit:]]+\b' || echo "NA" )
+    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '[[:digit:]]+[/][[:digit:]]+' || echo "NA" ) 
 
     if [ -z "$pangolin_lineage" ] ; then pangolin_lineage="NA" ; fi
     if [ -z "$pangolin_status" ] ; then pangolin_status="NA" ; fi
     if [ -z "$pangoLEARN_version" ] ; then pangoLEARN_version="NA" ; fi
-    if [ -z "$pangolin_subs" ] ; then pangolin_subs="NA" ; fi
+    if [ -z "$pangolin_subs" ] ; then pangolin_subs="NA" ; fi 
+
   '''
 }
 
