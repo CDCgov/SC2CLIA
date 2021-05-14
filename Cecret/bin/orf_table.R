@@ -14,7 +14,7 @@ doc <- "Description: run this script to generate a table of ORF coverage statist
 Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat, tidyverse, rlist
-Usage: config.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -d <meanDepthQC -l <covQC>]
+Usage: orf_table.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -d <meanDepthQC -l <covQC>]
 config.R (-v | --version)
 config.R (-h | --help)
 Options:
