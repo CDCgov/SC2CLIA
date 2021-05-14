@@ -6,7 +6,7 @@ params:
   seqDirFP: null
   pacbamDir: "pacbam"
   pacbamFileSuffix: ".primertrim.sorted.pileup"
-  ampBED: "ref_docs/nCoV-2019.insert.bed"
+  ampBED: "nCoV-2019.insert.bed"
   ampMinCov: 30
   ampMeanCov: 100
   ampMaxNFail: 5
@@ -39,7 +39,7 @@ ampInfo <- select(ampInfo, -TRASH, -REF)
 ```
 ```{r amp_cov, include=FALSE}
 # Read in the names of all of the files; note cache=TRUE for this block because it takes a long time to read everything in.
-pbFiles <- list.files(path = paste(params$analysisDirFP, params$pacbamDir, sep = "/"),
+pbFiles <- list.files(path = file.path(params$analysisDirFP, params$pacbamDir),
                       full.names = TRUE,
                       recursive = TRUE)
 
@@ -165,7 +165,7 @@ formattable(cov_sum_controls, list(
 ```{r spawn, include=FALSE}
 #echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 for (s in 1:nrow(cov_sum)) {
-  rmarkdown::render(input = "subpage_templates/ampliconDetailTemplate.Rmd", 
+  rmarkdown::render(input = "ampliconDetailTemplate.Rmd", 
                     output_file = paste0(cov_sum[s,]$SampleID, "-amplicon-detail.html"), 
                     output_dir = file.path(args$analysisDirFP, "report", "subpages"),
                     params = list(covTable = filter(keepers, 
