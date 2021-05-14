@@ -43,8 +43,41 @@ From: ubuntu:20.04
   # Resolves R failure in containers when TZ is not set and R defaults to timedatectl described in https://github.com/rocker-org/rocker-versioned/issues/242
   export TZ='UTC'
 
+%files
+  ../bin/append_tables.R /opt
+  ../bin/orf_table.R /opt
+  ../bin/versions.sh /opt
+  ../bin/report/_site.yml /opt
+  ../bin/report/about.Rmd /opt
+  ../bin/report/ampliconCov.Rmd /opt
+  ../bin/report/clia_sig_page_digsig.pdf /opt
+  ../bin/report/clia_sig_page.Rmd /opt
+  ../bin/report/clia_summary.Rmd /opt
+  ../bin/report/config.R /opt
+  ../bin/report/index.Rmd /opt
+  ../bin/report/runInfo.Rmd /opt
+  ../bin/report/runQC.Rmd /opt
+  ../bin/report/sGene.Rmd /opt
+  ../bin/report/subpage_templates/ampliconDetailTemplate.Rmd /opt
+  ../bin/report/test_r_container.R /opt
+  ../bin/report/ref_docs/nCoV-2019.insert.bed /opt
+
 %runscript
-#  fortune | cowsay | lolcat
+  exec Rscript /opt/orf_table.R -a $2 -r $1
+  exec Rscript /opt/append_tables.R -a $2 -f $4 -s $5
+  exec Rscript /opt/config.R -a $2 -r $1 -s $3
+
 
 %labels
-  Author A. Jo Williams-Newkirk ***REMOVED***
+  Author A. Jo Williams-Newkirk
+  Email ***REMOVED***
+  Version 1.1
+
+%help
+  Purpose: This container contains all dependencies to execute the R scripts for the Cecret pipeline written by CDC to analyze SARS-CoV-2 short read genomic assemblies. 
+  Usage: To run the container as a part of the standard Cecret pipeline process
+  singularity --bind /mnt,<hostMntPt> run singularity-r-v1.1.sif <runID> <analysisDirFP> <seqDirFP> <file1FP> <file2FP>
+  Definitions: <runID> = Sequencing run ID (string); <analysisDirFP> = Cecret output directory full path (string); <seqDirFP> = Full path to sequencing run directory (string); <file1FP> = Table file 1 full path for append_tables.R (string); <file2FP> = Table file 2 full path for append_tables.R (string)
+
+%test
+  Rscript /opt/test_r_container.R
