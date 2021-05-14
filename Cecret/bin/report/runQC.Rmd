@@ -31,9 +31,8 @@ insertSizes <- tibble()
 colnames(insertSizes) <- c("SampleID", "Insert_Size")
 
 # Find input files
-insertDataFiles <- list.files(path = paste(params$analysisDirFP, 
-                                           params$insertDir, 
-                                           sep = "/"),
+insertDataFiles <- list.files(path = file.path(params$analysisDirFP, 
+                                           params$insertDir),
                               full.names = TRUE,
                               recursive = TRUE, 
                               pattern = params$insertFileSuffix)
