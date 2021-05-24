@@ -2,9 +2,10 @@ import unittest
 import pandas as pd
 import argparse
 import sys
+from datetime import datetime
 
 __author__ = 'Rong Jin'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'Rong Jin'
 __email__ = '***REMOVED***'
 
@@ -21,7 +22,7 @@ numeric_columns = ['fastqc_raw_reads_1','depth_after_trimming','coverage_after_t
 non_numeric_columns = ['pangolin_lineage','S_aa_INDELs','vdr_sgene_orftshift']
 # 'pangoLEARN_version','GenBank#' are not currently in summary.txt
 
-class MyTestCase(unittest.TestCase):
+class SummaryTestCase(unittest.TestCase):
 
     def setUp(self):
 
@@ -43,8 +44,8 @@ class MyTestCase(unittest.TestCase):
             sys.exit(1)
 
     def test_numeric_columns(self):
-        """ testing columns with numeric values. we compare the absolute value within user-configurable {error_margin},
-            default is 10% """
+        # testing columns with numeric values. we compare the absolute value within user-configurable {error_margin},
+        # default is 10%
         for col in numeric_columns:
             for ind in self.summary_standard_df.index:
                 test_value = self.summary_test_df[col][ind]
@@ -55,8 +56,8 @@ class MyTestCase(unittest.TestCase):
                     self.assertTrue(expr, f"test_value: {test_value} ; standard_value: {standard_value}")
 
     def test_non_numeric_columns(self):
-        """ testing columns with non-numeric values. we compare the literal value for each cell
-            """
+        # testing columns with non-numeric values. we compare the literal value for each cell
+
         for col in non_numeric_columns:
             for ind in self.summary_standard_df.index:
                 test_value = self.summary_test_df[col][ind]
@@ -65,9 +66,18 @@ class MyTestCase(unittest.TestCase):
                     self.assertEqual(test_value, standard_value)
 
 
+def main(out=sys.stderr, verbosity=2):
+    # Writing the results of running unit tests to a file instead of being
+    # printed to standard output
+    # un-comment this if we need to print to stdout
+
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromModule(sys.modules[__name__])
+    unittest.TextTestRunner(out, verbosity=verbosity).run(suite)
 
 
 if __name__ == '__main__':
+    # USAGE: python -m test_validation_data -s -t
     parser = argparse.ArgumentParser(description = 'use validation data for unit test.')
     parser.add_argument('-s', '--summary_standard', metavar = '', required = True, help = 'Specify gold-standard summary.txt')
     parser.add_argument('-t', '--summary_test', metavar = '', required = True, help = 'Specify the test summary.txt')
@@ -77,9 +87,20 @@ if __name__ == '__main__':
     summary_test = args.summary_test
     error_margin = args.error_margin
 
+    # un-comment this if we need to print to stdout
     # these are for passing arguments under unittest setting
-    ns, args = parser.parse_known_args(namespace=unittest)
-    remaining_args = sys.argv[:1] + args
-
+    # ns, args = parser.parse_known_args(namespace=unittest)
+    # remaining_args = sys.argv[:1] + args
+    #
     # USAGE: python -m test_validation_data -s -t
-    unittest.main(argv=remaining_args)
+    # unittest.main(argv=remaining_args)
+
+    # comment this if we need to print to stdout
+    with open('unittest.log', 'a') as f:
+        f.write("\n*********************\n")
+        f.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+        f.write("\n*********************\n")
+        f.write(f"\nstandard summary file is: {summary_standard} \n")
+        f.write(f"test summary file is: {summary_test} \n")
+        main(f)
+        f.write("\n")
