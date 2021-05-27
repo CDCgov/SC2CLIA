@@ -18,11 +18,14 @@ Currently all R-based scripts and versions.sh execute within a custom Singularit
 #### Use
 * To build container
   * `sudo singularity build singularity-YourContainerName.sif singularity-r.def`  
-* To test container (does not require sudo)
+* To test container manually (does not require sudo)
   * `singularity exec --bind /mnt,/path/to/host/directory/containing/all/files/required/for/analysis singularity_container_name.sif Rscript test_r_container.Rscript`  
+  * Note that as of v1.1 this script is automatically run as a part of the build process (see %test section in def file).  
 * To run container (does not require sudo)
   * `singularity exec --bind /mnt,/path/to/host/directory/containing/all/files/required/for/analysis singularity_container_name.sif Rscript script_name.R <args>`  
   * Note the mount point in the host directory tree must include both the required scripts and the required input files.
+* To see container help file (does not require sudo)
+  * `singularity run-help singularity-container-name.sif`
 
 #### Outputs
 * From build
