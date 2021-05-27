@@ -6,7 +6,7 @@ params:
   seqDirFP: null
   pacbamDir: "pacbam"
   pacbamFileSuffix: ".primertrim.sorted.pileup"
-  ampBED: "nCoV-2019.insert.bed"
+  ampBED: "/opt/nCoV-2019.insert.bed"
   ampMinCov: 30
   ampMeanCov: 100
   ampMaxNFail: 5
@@ -165,7 +165,7 @@ formattable(cov_sum_controls, list(
 ```{r spawn, include=FALSE}
 #echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 for (s in 1:nrow(cov_sum)) {
-  rmarkdown::render(input = "ampliconDetailTemplate.Rmd", 
+  rmarkdown::render(input = "/opt/ampliconDetailTemplate.Rmd", 
                     output_file = paste0(cov_sum[s,]$SampleID, "-amplicon-detail.html"), 
                     output_dir = file.path(args$analysisDirFP, "report", "subpages"),
                     params = list(covTable = filter(keepers, 
