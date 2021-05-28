@@ -39,6 +39,7 @@ args <- docopt(doc = doc, version = ver)
 # Set up the output directory
 suppressWarnings(dir.create(file.path(args$analysisDirFP, "report")))
 suppressWarnings(dir.create(file.path(args$analysisDirFP, "report", "subpages")))
+suppressWarnings(dir.create(file.path(args$analysisDirFP, "report", "temp")))
 
 # Cp multiqc output to report directory
 # Note weirdness: on 4/18 I had a typo with a double / in the middle of the -a path when launching the script and it only failed on this step. WHY???
@@ -58,13 +59,18 @@ params <- list(runID = args$runID,
                seqDirFP = args$seqDirFP)
 
 # Rmd files to render
-rmdFiles <- c("/opt/about.Rmd", "/opt/sGene.Rmd", "/opt/index.Rmd", "/opt/runInfo.Rmd", "/opt/runQC.Rmd", "/opt/ampliconCov.Rmd")
+rmdFiles <- c("about.Rmd", "sGene.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
+moreRmdFiles <- c("ampliconDetailTemplate.Rmd", "clia_summary.Rmd")
+
+# As of writing, Rmd files cannot be knitted from a non-writeable location. 
+lapply(rmdFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(args$analysisDirFP, "report", "temp"), overwrite = TRUE))
+lapply(moreRmdFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(args$analysisDirFP, "report", "temp"), overwrite = TRUE))
 
 # Do the rendering
-lapply(rmdFiles, FUN = function(x) render(input = x, output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
+lapply(rmdFiles, FUN = function(x) render(input = file.path(args$analysisDirFP, "report", "temp", x), output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
 
 # Render the CLIA summary-signature page as PDF
-render(input = "/opt/clia_summary.Rmd", 
+render(input = file.path(args$analysisDirFP, "report", "temp", "clia_summary.Rmd"), 
        output_format = "pdf_document", 
        params = params, 
        output_dir = file.path(args$analysisDirFP, "report"),
@@ -79,9 +85,12 @@ system2(command = "pdftk",
                  file.path(args$analysisDirFP, "report", "SC2_Variant_WGS_Run_Summary.pdf")),
         wait = TRUE)
 
-# Clean up intermediate pdf file
+# Clean up intermediate files
 if (file.exists(file.path(args$analysisDirFP, "report", "clia_summary.pdf"))) {
   system2(command = "rm",
           args = c(file.path(args$analysisDirFP, "report", "clia_summary.pdf")),
           wait = TRUE)
+}
+if (dir.exists(file.path(args$analysisDirFP, "report", "temp"))) {
+  unlink(file.path(args$analysisDirFP, "report", "temp"), recursive = TRUE)
 }
