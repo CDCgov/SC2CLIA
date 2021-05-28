@@ -27,6 +27,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(formattable)
 library(kableExtra)
+# Note that Rmd files use the location of the Rmd file as their working directory during knitting. This causes problems when trying to unambiguously locate external dependencies that aren't in the same directory. Setting working directory below to address.
+knitr::opts_knit$set(root.dir = params$analysisDirFP)
 ```
 
 ```{r thresholds, include=FALSE}
@@ -57,7 +59,7 @@ highGood <- function(v, t) {
 
 ```{r read-sum, include=FALSE}
 # Read summary.txt in
-sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
+sumTab <- read_tsv("summary.txt")
 
 # This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
