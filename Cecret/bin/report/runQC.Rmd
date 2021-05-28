@@ -20,7 +20,8 @@ __FastQC Report:__ [report link](`r params$multiQC`)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-#library(DT)
+# Note that Rmd files use the location of the Rmd file as their working directory during knitting. This causes problems when trying to unambiguously locate external dependencies that aren't in the same directory. Setting working directory below to address.
+knitr::opts_knit$set(root.dir = params$analysisDirFP)
 ```
 
 ### Insert Sizes
@@ -31,8 +32,7 @@ insertSizes <- tibble()
 colnames(insertSizes) <- c("SampleID", "Insert_Size")
 
 # Find input files
-insertDataFiles <- list.files(path = file.path(params$analysisDirFP, 
-                                           params$insertDir),
+insertDataFiles <- list.files(path = params$insertDir,
                               full.names = TRUE,
                               recursive = TRUE, 
                               pattern = params$insertFileSuffix)
