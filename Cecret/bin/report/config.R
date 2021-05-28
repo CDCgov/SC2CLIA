@@ -48,7 +48,7 @@ system2(command = "cp",
         wait = TRUE)
 
 # Run versions.sh
-system2(command = "./versions.sh",
+system2(command = "/opt/versions.sh",
         args = c(args$analysisDirFP),
         wait = TRUE)
 
