@@ -1026,6 +1026,8 @@ process pangolin {
   file("pangolin/${sample}/lineage_report.csv")
   tuple sample, env(pangolin_lineage) into pangolin_lineage_results
   tuple sample, env(pangolin_status) into pangolin_status_results
+  tuple sample, env(pangoLEARN_version) into pangoLEARN_version_results
+  tuple sample, env(pangolin_subs) into pangolin_subs_results 
   file("logs/pangolin/${sample}.${workflow.sessionId}.{log,err}")
 
   shell:
@@ -1041,9 +1043,14 @@ process pangolin {
 
     pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
     pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
+    pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
+    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '[[:digit:]]+[/][[:digit:]]+' || echo "NA" ) 
 
     if [ -z "$pangolin_lineage" ] ; then pangolin_lineage="NA" ; fi
     if [ -z "$pangolin_status" ] ; then pangolin_status="NA" ; fi
+    if [ -z "$pangoLEARN_version" ] ; then pangoLEARN_version="NA" ; fi
+    if [ -z "$pangolin_subs" ] ; then pangolin_subs="NA" ; fi 
+
   '''
 }
 
@@ -1301,6 +1308,8 @@ consensus_results
   .join(kraken2_sars_results, remainder: true, by: 0)
   .join(pangolin_lineage_results, remainder: true, by: 0)
   .join(pangolin_status_results, remainder: true, by: 0)
+  .join(pangoLEARN_version_results, remainder: true, by: 0)
+  .join(pangolin_subs_results, remainder: true, by: 0)
   .join(nextclade_clade_results, remainder: true, by: 0)
   .join(bedtools_results, remainder: true, by: 0)
   .join(samtools_ampliconstats_results, remainder: true, by: 0)
@@ -1335,6 +1344,8 @@ process summary {
     val(percentage_cov),
     val(pangolin_lineage),
     val(pangolin_status),
+    val(pangoLEARN_version),
+    val(pangolin_subs),
     val(nextclade_clade),
     val(bedtools_num_failed_amplicons),
     val(samtools_num_failed_amplicons),
@@ -1375,8 +1386,8 @@ process summary {
     aaChange=`echo "!{nextclade_parsed_result}" | awk -F _ '{print $2}'` 
     if [[ $aaChange = '' ]]; then aaChange=NA;fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift\tS_aa_INDELs" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}\t${aaChange}" >> summary/!{sample}.summary.txt
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift\tS_aa_INDELs\tpangoLEARN_version\tpangolin_substitutions" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}\t${aaChange}\t!{pangoLEARN_version}\t!{pangolin_subs}" >> summary/!{sample}.summary.txt
   '''
 }
 
