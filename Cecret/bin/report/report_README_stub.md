@@ -3,11 +3,12 @@
 ***
 
 #### Requires
-The Singularity container described in Cecret/configs/singularity-r.def. Currently all R-based scripts and versions.sh execute within this container from the outside. 
-`singularity exec --bind /mnt,/path/to/host/directory/containing/all/files/required/for/analysis singularity_container_name.sif Rscript script_name.R <args>` Note the mount point in the host directory tree must include both the required scripts and the required input files.
+The Singularity container described in Cecret/configs/singularity-r.def. As of container version 2.0, all R-based scripts and versions.sh are included in this container and execute within it.  
+`singularity --bind /mnt,<hostMntPt> exec --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
+Note that the mount point in the host directory tree must be high enough to include all required input files and output locations below it.  
 
 #### Use
-To view script options: `Rscript config.R --help`
+To view script options: `singularity run-help --app report <singularity-container-name.sif>`
 
 #### Outputs
 All html outputs are placed in the Cecret analysis directory under report by default. Standard outputs include:
@@ -20,8 +21,7 @@ All html outputs are placed in the Cecret analysis directory under report by def
 
 <br>
 
-The other output is SC2_Variant_WGS_Run_Summary.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output with an electronic signature. It is split up into two sections, eLIMS Fields and Other Dry Lab Fields.
-
+The other output is SC2_Variant_WGS_Run_Summary.pdf located in the report directory. This file is for the CLIA technical supervisor to record official approval of the analysis output with an electronic signature. It is split into three sections, eLIMS Fields, Other QC Fields, and Other Dry Lab Fields.
 
 ### Summary Table Details
 Note that the Sample.Name column is repeated regularly to aid in readability in the report documents. Numbers are appended to the ends of the repeated column headers.  
