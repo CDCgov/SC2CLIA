@@ -4,7 +4,7 @@
 
 #### Requires
 The Singularity container described in Cecret/configs/singularity-r.def. As of container version 2.0, all R-based scripts and versions.sh are included in this container and execute within it.  
-`singularity --bind /mnt,<hostMntPt> exec --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
+`singularity --bind /mnt,<hostMntPt> run --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
 Note that the mount point in the host directory tree must be high enough to include all required input files and output locations below it.  
 
 #### Use

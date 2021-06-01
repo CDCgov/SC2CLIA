@@ -32,9 +32,9 @@ Prior to version 2.0, all R-based scripts and versions.sh execute within this cu
   * Note  
     * As of v2.0 each script is installed in the container as a separate app and must be called individually as a part of the pipeline.  
     * The mount point in the host directory tree must be high enough to include all required input files and output locations below it.  
-  * `singularity --bind /mnt,<hostMntPt> exec --app orf_table <singularity_container_name.sif> <runID> <analysisDirFP>`  
-  * `singularity --bind /mnt,<hostMntPt> exec --app append_tables <singularity_container_name.sif> <analysisDirFP> <file1FP> <file2FP>`  
-  * `singularity --bind /mnt,<hostMntPt> exec --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
+  * `singularity --bind /mnt,<hostMntPt> run --app orf_table <singularity_container_name.sif> <runID> <analysisDirFP>`  
+  * `singularity --bind /mnt,<hostMntPt> run --app append_tables <singularity_container_name.sif> <analysisDirFP> <file1FP> <file2FP>`  
+  * `singularity --bind /mnt,<hostMntPt> run --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
   * Definitions  
     * <runID> = Sequencing run ID (string)  
     * <analysisDirFP> = Cecret output directory __full path__ (string)  
