@@ -60,13 +60,13 @@ params <- list(runID = args$runID,
 
 # Rmd files to render
 rmdFiles <- c("about.Rmd", "sGene.Rmd", "index.Rmd", "runInfo.Rmd", "runQC.Rmd", "ampliconCov.Rmd")
-moreRmdFiles <- c("ampliconDetailTemplate.Rmd", "clia_summary.Rmd")
+moreFiles <- c("ampliconDetailTemplate.Rmd", "clia_summary.Rmd", "_site.yml")
 
 # As of writing, Rmd files cannot be knitted from a non-writeable location. 
 lapply(rmdFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(args$analysisDirFP, "report", "temp"), overwrite = TRUE))
-lapply(moreRmdFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(args$analysisDirFP, "report", "temp"), overwrite = TRUE))
+lapply(moreFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(args$analysisDirFP, "report", "temp"), overwrite = TRUE))
 
-# Do the rendering
+# Do the html rendering
 lapply(rmdFiles, FUN = function(x) render(input = file.path(args$analysisDirFP, "report", "temp", x), output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
 
 # Render the CLIA summary-signature page as PDF
