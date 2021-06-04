@@ -27,22 +27,31 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(formattable)
 library(kableExtra)
+# Note that Rmd files use the location of the Rmd file as their working directory during knitting. This causes problems when trying to unambiguously locate external dependencies that aren't in the same directory. Setting working directory below to address.
+knitr::opts_knit$set(root.dir = params$analysisDirFP)
 ```
 
 ```{r thresholds, include=FALSE}
 fastqcRawThreshold <- 100000          # min number of raw reads accepted in fastqc_raw column
-seqycleanKeptReviewThreshold <- 90    # min percent of reads remaining after seqyclean (pass/review)
-seqycleanKeptFailThreshold <- 70      # min percent of reads remaining after seqyclean (review/fail)
+#seqycleanKeptReviewThreshold <- 90    # min percent of reads remaining after seqyclean (pass/review)
+#seqycleanKeptFailThreshold <- 70      # min percent of reads remaining after seqyclean (review/fail)
 depthAfterTrimThreshold <- 100        # min depth after trimming
-covAfterTrimThreshold <- 95           # min coverage after trimming
-perHumanThreshold <- NULL             # max percentage human reads allowed per sample (not in use)
+covAfterTrimThreshold <- 90           # min coverage after trimming
+#perHumanThreshold <- NULL             # max percentage human reads allowed per sample (not in use)
 perSC2Threshold <- 65                 # min percentage SC2 reads allowed per sample
 perNThreshold <- 10                   # max percentage N allowed in genome
+#totMappedReads <- 100000              # min number of reads mapping to SC2 Wuhan reference
+perMappedReads <- 65                  # min percentage of reads mapping to SC2 Wuhan reference
+numORFsThreshold <- 10                # min number of ORFs passing QC
+sGeneCovThreshold <- 95               # min percentage of bases in S gene with any coverage
+sPerNThreshold <- 10                  # min percentage of Ns in S gene causing failure
+sGeneFrameshiftThreshold <- FALSE     # frameshifts allowed in S gene?
 ```
 
 ```{r format-fnc, include=FALSE}
 highGood <- function(v, t) {
   # accepts value and threshhold and returns green if value >= threshhold and gray if not
+  # for color bar formatting
   return(ifelse(v >= t, "lightgreen", "lightgray"))
 }
 ```
@@ -50,7 +59,7 @@ highGood <- function(v, t) {
 
 ```{r read-sum, include=FALSE}
 # Read summary.txt in
-sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
+sumTab <- read_tsv("summary.txt")
 
 # This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
 sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
@@ -65,72 +74,86 @@ sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID),
                                         bold = ifelse(pangolin_status == "passed_qc", F, T)),
             fastqc_raw_reads_1 = color_bar(color = highGood(fastqc_raw_reads_1, fastqcRawThreshold))(fastqc_raw_reads_1), 
             fastqc_raw_reads_2 = color_bar(color = highGood(fastqc_raw_reads_2, fastqcRawThreshold))(fastqc_raw_reads_2),
-            seqyclean_percent_kept_after_cleaning = cell_spec(seqyclean_percent_kept_after_cleaning, 
-                                        background = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, "red", ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, "yellow", "white")), 
-                                        bold = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, T, ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, T, F))),
             depth_after_trimming = cell_spec(depth_after_trimming, 
                                              color = ifelse(depth_after_trimming >= depthAfterTrimThreshold, "black", "red"), 
                                              bold = ifelse(depth_after_trimming >= depthAfterTrimThreshold, F, T)),
             coverage_after_trimming = cell_spec(coverage_after_trimming, 
                                                 color = ifelse(coverage_after_trimming >= covAfterTrimThreshold, "black", "red"), 
                                                 bold = ifelse(coverage_after_trimming >= covAfterTrimThreshold, F, T)),
-            # `%_human_reads` = cell_spec(`%_human_reads`, 
-            #                                     color = ifelse(`%_human_reads` < perHumanThreshold, "black", "red"), 
-            #                                     bold = ifelse(`%_human_reads` < perHumanThreshold, F, T)),
-            `%_SARS-COV-2_reads` = cell_spec(`%_SARS-COV-2_reads`, 
-                                                color = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, "black", "red"), 
-                                                bold = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, F, T)),
             `%_N` = cell_spec(`%_N`, 
                               color = ifelse(`%_N` >= perNThreshold, "red", "black"), 
                               bold = ifelse(`%_N` >= perNThreshold, T, F)),
             vadr_status = cell_spec(vadr_status, 
                                      color = ifelse(vadr_status == "PASS", "black", "red"), 
-                                     bold = ifelse(vadr_status == "PASS", F, T)))
+                                     bold = ifelse(vadr_status == "PASS", F, T)),
+            `%_Reads_Matching_SC2_Ref` = cell_spec(`%_Reads_Matching_SC2_Ref`,
+                                                   color = ifelse(`%_Reads_Matching_SC2_Ref` < perMappedReads, "red", "black"), 
+                                                   bold = ifelse(`%_Reads_Matching_SC2_Ref` < perMappedReads, T, F)),
+            ORFs.Passing.QC = cell_spec(ORFs.Passing.QC,
+                                        color = ifelse(ORFs.Passing.QC < numORFsThreshold, "red", "black"), 
+                                        bold = ifelse(ORFs.Passing.QC < numORFsThreshold, T, F)),
+            Coverage.S = cell_spec(Coverage.S, 
+                                   color = ifelse(is.na(Coverage.S) == TRUE | Coverage.S < sGeneCovThreshold, "red", "black"), 
+                                   bold = ifelse(is.na(Coverage.S) == TRUE | Coverage.S < sGeneCovThreshold, T, F)),
+            Percent.Ns.S = cell_spec(Percent.Ns.S,
+                                     color = ifelse(is.na(Percent.Ns.S) | Percent.Ns.S >= sPerNThreshold, "red", "black"), 
+                                     bold = ifelse(is.na(Percent.Ns.S) | Percent.Ns.S >= sPerNThreshold, T, F)),
+            vdr_sgene_orftshift = cell_spec(vdr_sgene_orftshift,
+                                           color = ifelse(vdr_sgene_orftshift != sGeneFrameshiftThreshold, "red", "black"), 
+                                           bold = ifelse(vdr_sgene_orftshift != sGeneFrameshiftThreshold, T, F)),
+            S_aa_INDELs = str_replace_all(S_aa_INDELs, c("," = ", ")))
 
 # Make column names nicer
-colnames(sumTab) <- c("Sample.ID", 
-                      "Sample.Name", 
-                      "Pangolin", 
-                      "Pangolin.QC", 
-                      "NextClade", 
-                      "#FastQC.R1", 
-                      "#FastQC.R2", 
-                      "#Seqyclean.Pairs", 
-                      "%Seqyclean.Pairs", 
-                      "Depth.Post.Trim", 
-                      "Coverage.Post.Trim", 
-                      "%Human.Reads", 
-                      "%SC2.Reads", 
-                      "#iVar.Variants", 
-                      "#BCFTools.Variants", 
-                      "#BEDTools.Failed.Amps", 
-                      "#SAMTools.Failed.Amps", 
-                      "#N", 
-                      "#Degenerate", 
-                      "#ACTG", 
-                      "#Total.Bases", 
-                      "Total.Reads.Analyzed", 
-                      "%N", 
-                      "Mean.Cov.Depth", 
-                      "%Reads.Mapping.SC2", 
-                      "Vadr", 
-                      "Vadr.All.ORF.Shift",
-                      "Vadr.S.ORF.Shift", 
-                      "AA.Changes.S",
-                      "Length.Longest.Insert", 
-                      "Length.Longest.Del",
-                      "ORFs.Passing.QC",
-                      "Coverage.S",
-                      "Mean.Depth.S",
-                      "Percent.Pos.Min.Cov.S",
-                      "Percent.Ns.S"
+sumTab <- select(sumTab,
+                 Sample.ID = sample_id, 
+                 Sample.Name = sample,  
+                 Depth.Post.Trim = depth_after_trimming, 
+                 Coverage.Post.Trim = coverage_after_trimming, 
+                 `#FastQC.R1` = fastqc_raw_reads_1, 
+                 `#FastQC.R2` = fastqc_raw_reads_2, 
+                 `%Reads.Mapping.SC2` = `%_Reads_Matching_SC2_Ref`, 
+                 ORFs.Passing.QC, 
+                 Coverage.S, 
+                 Pangolin = pangolin_lineage, 
+                 Pangolin.QC = pangolin_status, 
+                 `#Lineage.Subs` = pangolin_substitutions, 
+                 pangoLEARN.v = pangoLEARN_version, 
+                 `GenBank#`, 
+                 `%N` = `%_N`, 
+                 Percent.Ns.S, 
+                 Vadr.S.ORF.Shift = vdr_sgene_orftshift, 
+                 NextClade = nextclade_clade, 
+                 `#Seqyclean.Pairs` = seqyclean_pairs_kept_after_cleaning, 
+                 `%Seqyclean.Pairs` = seqyclean_percent_kept_after_cleaning, 
+                 `%Human.Reads` = `%_human_reads`, 
+                 `%SC2.Reads` = `%_SARS-COV-2_reads`, 
+                 `#iVar.Variants` = ivar_num_variants_identified, 
+                 `#BCFTools.Variants` = bcftools_variants_identified, 
+                 `#BEDTools.Failed.Amps` = bedtools_num_failed_amplicons, 
+                 `#SAMTools.Failed.Amps` = samtools_num_failed_amplicons, 
+                 `#N` = num_N, 
+                 `#Degenerate` = num_degenerage, 
+                 `#ACTG` = num_ACTG, 
+                 `#Total.Bases` = num_total, 
+                 Total.Reads.Analyzed = Total_Reads_Analyzed, 
+                 Mean.Cov.Depth = ave_cov_depth, 
+                 Vadr = vadr_status, 
+                 Vadr.All.ORF.Shift = vdr_sample_orfshift,
+                 AA.Changes.S = S_aa_INDELs,
+                 Length.Longest.Insert = len_largest_insertion, 
+                 Length.Longest.Del = len_largest_deletion,
+                 Mean.Depth.S,
+                 Percent.Pos.Min.Cov.S
 )
 
-# Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
+# Insert Sample.Name column into table at every nth column (params$sampleIDInsertFreq) position
 # how many times to insert sampleID column
 colReps <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
 # create and bind columns to insert
-sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.Name))) 
+sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.Name)))
+# Move Sample.Name to the first column
+sumTab <- relocate(sumTab, Sample.Name)
+# Grab the vector of column names
 sumTabColNames <- colnames(sumTab)
 # function to rename columns slightly more nicely. Note R won't allow redundant column names.
 colNamer <- function(c) {
@@ -143,6 +166,26 @@ for (i in 1:colReps) {
                      .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
             rename_with(colNamer, starts_with(paste0("V", i)))
 }
+
+# # Add global QC column
+# sumTab <- mutate(sumTab, 
+#                  Global.QC = case_when(
+#                                        Depth.Post.Trim < 100 ~ "FAIL",
+#                                        `#FastQC.R1` < fastqcRawThreshold ~  "#FastQC.R1",#"FAIL",
+#                                        `%Reads.Mapping.SC2` < perMappedReads ~ "%Reads.Mapping.SC2",  #"FAIL",
+#                                        ORFs.Passing.QC < numORFsThreshold ~ "ORFs.Passing.QC", #"FAIL",
+#                                        Coverage.S < sGeneCovThreshold ~ "Coverage.S",  #"FAIL",
+#                                        Pangolin == "None" ~ "Pangolin", #"FAIL",
+#                                        Pangolin.QC == "fail" ~ "Pangolin.QC",  "FAIL",
+#                                        `%N` >= perNThreshold ~ "%N",  #"FAIL",
+#                                        Percent.Ns.S >= perNThreshold ~ "Percent.Ns.S",   "FAIL",
+#                                        Vadr.S.ORF.Shift != sGeneFrameshiftThreshold ~ "Vadr.S.ORF.Shift", #"FAIL",
+#                                        TRUE ~ "pass"
+#                  )) %>%
+#           # mutate(Global.QC = cell_spec(Global.QC,
+#           #                              color = ifelse(Global.QC == "FAIL", "red", "black"), 
+#           #                              bold = ifelse(Global.QC == "FAIL", T, F))) %>%
+#           relocate(Global.QC)
 ```
 
 ```{r display-sum, echo=FALSE}

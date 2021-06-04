@@ -24,180 +24,252 @@ header-includes:
 - \cfoot{\textbf{Ver. No.}01}
 - \lfoot{\textbf{Doc. No.} EDLB.TE.C.032.F02}
 - \rfoot{\textbf{Effective Date:}TBD}
+classoption:
+  - landscape
 params:
   analysisDirFP: null
   runID: null
   seqDirFP: null
-  sampleIDInsertFreq: 4
+  sampleIDInsertFreq: 5
+  runNormal: TRUE
 
 ---
 
 ```{r index-comments, include=FALSE, eval=FALSE}
 # For rapid testing:
 rmarkdown::render(input = "Cecret/bin/report/clia_summary.Rmd", output_file = "clia_summary.pdf", output_format = "pdf_document", params = list(analysisDirFP = "../../../../testing", runID = "M3235-21-015", seqDirFP = "../../../../testing"))
+
+# To generate an empty form for CLIA form sign off (rarely used)
+rmarkdown::render(input = "Cecret/bin/report/clia_summary.Rmd", output_file = "clia_summary.pdf", output_format = "pdf_document", params = list(analysisDirFP = "../../../../testing", runID = "M3235-21-015", seqDirFP = "../../../../testing", runNormal = FALSE))
 ```
 
 ```{r setup1, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(formattable)
 library(knitr)
 library(kableExtra)
 library(rmarkdown)
 ```
 
-```{r thresholds, include=FALSE}
-fastqcRawThreshold <- 100000          # min number of raw reads accepted in fastqc_raw column
-seqycleanKeptReviewThreshold <- 90    # min percent of reads remaining after seqyclean (pass/review)
-seqycleanKeptFailThreshold <- 70      # min percent of reads remaining after seqyclean (review/fail)
-depthAfterTrimThreshold <- 100        # min depth after trimming
-covAfterTrimThreshold <- 95           # min coverage after trimming
-perHumanThreshold <- NULL             # max percentage human reads allowed per sample (not in use)
-perSC2Threshold <- 65                 # min percentage SC2 reads allowed per sample
-perNThreshold <- 10                   # max percentage N allowed in genome
-```
-
-```{r format-fnc, include=FALSE}
-highGood <- function(v, t) {
-  # accepts value and threshhold and returns green if value >= threshhold and gray if not
-  return(ifelse(v >= t, "lightgreen", "lightgray"))
-}
-```
-
-
-```{r read-sum, include=FALSE}
+```{r read-tabs, include=FALSE, eval=params$runNormal}
 # Read summary.txt in
 sumTab <- read_tsv(file.path(params$analysisDirFP, "summary.txt"))
-
-# This does all of the formatting for the table read in above and displayed in the next code chunk. It contains a mix of dplyr, formattable, and kableExtra commands.
-sumTab <- mutate(sumTab, sample = str_replace(sample, paste0("-", params$runID), "")) %>% 
-          # remember to mod column names to match if columns included change
-          select(-aligner_version, -ivar_version, -fastp_reads_passed) %>%
-          mutate(S_aa_INDELs = str_replace_all(S_aa_INDELs, c("," = ", ")))
-          # mutate(
-          #   pangolin_lineage = cell_spec(pangolin_lineage,
-          #                                color = ifelse(pangolin_lineage == "None", "red", "black"),
-          #                                bold = ifelse(pangolin_lineage == "None", T, F)),
-          #   pangolin_status = cell_spec(pangolin_status,
-          #                               color = ifelse(pangolin_status == "passed_qc", "black", "red"),
-          #                               bold = ifelse(pangolin_status == "passed_qc", F, T)),
-          #   fastqc_raw_reads_1 = color_bar(color = highGood(fastqc_raw_reads_1, fastqcRawThreshold))(fastqc_raw_reads_1),
-          #   fastqc_raw_reads_2 = color_bar(color = highGood(fastqc_raw_reads_2, fastqcRawThreshold))(fastqc_raw_reads_2),
-          #   seqyclean_percent_kept_after_cleaning = cell_spec(seqyclean_percent_kept_after_cleaning,
-          #                               background = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, "red", ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, "yellow", "white")),
-          #                               bold = ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptFailThreshold, T, ifelse(seqyclean_percent_kept_after_cleaning < seqycleanKeptReviewThreshold, T, F))),
-          #   depth_after_trimming = cell_spec(depth_after_trimming,
-          #                                    color = ifelse(depth_after_trimming >= depthAfterTrimThreshold, "black", "red"),
-          #                                    bold = ifelse(depth_after_trimming >= depthAfterTrimThreshold, F, T)),
-          #   coverage_after_trimming = cell_spec(coverage_after_trimming,
-          #                                       color = ifelse(coverage_after_trimming >= covAfterTrimThreshold, "black", "red"),
-          #                                       bold = ifelse(coverage_after_trimming >= covAfterTrimThreshold, F, T)),
-          #   # `%_human_reads` = cell_spec(`%_human_reads`,
-          #   #                                     color = ifelse(`%_human_reads` < perHumanThreshold, "black", "red"),
-          #   #                                     bold = ifelse(`%_human_reads` < perHumanThreshold, F, T)),
-          #   `%_SARS-COV-2_reads` = cell_spec(`%_SARS-COV-2_reads`,
-          #                                       color = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, "black", "red"),
-          #                                       bold = ifelse(`%_SARS-COV-2_reads` >= perSC2Threshold, F, T)),
-          #   `%_N` = cell_spec(`%_N`,
-          #                     color = ifelse(`%_N` >= perNThreshold, "red", "black"),
-          #                     bold = ifelse(`%_N` >= perNThreshold, T, F)),
-          #   vadr_status = cell_spec(vadr_status,
-          #                            color = ifelse(vadr_status == "PASS", "black", "red"),
-          #                            bold = ifelse(vadr_status == "PASS", F, T)))
-
-# Make column names nicer
-colnames(sumTab) <- c("Sample.ID", 
-                      "Sample.Name", 
-                      "Pangolin", 
-                      "Pangolin.QC", 
-                      "NextClade", 
-                      "#FastQC.R1", 
-                      "#FastQC.R2", 
-                      "#Seqyclean.Pairs", 
-                      "%Seqyclean.Pairs", 
-                      "Depth.Post.Trim", 
-                      "Coverage.Post.Trim", 
-                      "%Human.Reads", 
-                      "%SC2.Reads", 
-                      "#iVar.Variants", 
-                      "#BCFTools.Variants", 
-                      "#BEDTools.Failed.Amps", 
-                      "#SAMTools.Failed.Amps", 
-                      "#N", 
-                      "#Degenerate", 
-                      "#ACTG", 
-                      "#Total.Bases", 
-                      "Total.Reads.Analyzed", 
-                      "%N", 
-                      "Mean.Cov.Depth", 
-                      "%Reads.Mapping.SC2", 
-                      "Vadr", 
-                      "Vadr.All.ORF.Shift",
-                      "Vadr.S.ORF.Shift", 
-                      "AA.Changes.S",
-                      "Length.Longest.Insert", 
-                      "Length.Longest.Del",
-                      "ORFs.Passing.QC",
-                      "Coverage.S",
-                      "Mean.Depth.S",
-                      "Percent.Pos.Min.Cov.S",
-                      "Percent.Ns.S"
-)
-
-# split out AA.Changes.S into it's own table
-aaTab <- select(sumTab, Sample.Name, AA.Changes.S)
-sumTab <- select(sumTab, -AA.Changes.S)
-
-# Insert SampleID column into table at every nth column (params$sampleIDInsertFreq) position
-# how many times to insert sampleID column
-colReps <- floor(ncol(sumTab) / params$sampleIDInsertFreq) 
-# create and bind columns to insert
-sumTab <- bind_cols(sumTab, as_tibble(replicate(colReps, sumTab$Sample.Name))) 
-sumTabColNames <- colnames(sumTab)
-# function to rename columns slightly more nicely. Note R won't allow redundant column names.
-colNamer <- function(c) {
-  return(paste0("Sample.Name", str_replace(c, "V", "")))
-}
-# move new sampleID columns to right place
-for (i in 1:colReps) {
-  sumTab <- relocate(sumTab, 
-                     eval(paste0("V", i)), 
-                     .after = sumTabColNames[i*params$sampleIDInsertFreq]) %>%
-            rename_with(colNamer, starts_with(paste0("V", i)))
-}
 ```
 
-```{r display-sum, echo=FALSE, results='asis'}
-sampleIDIndices <- which(str_starts(colnames(sumTab), "Sample.Name"))
+```{r format-sumTab, include=FALSE, eval=params$runNormal}
+# Formatting summary.txt.
+sumTab <- select(sumTab, -aligner_version, -ivar_version, -fastp_reads_passed) %>%
+          mutate(S_aa_INDELs = str_replace_all(S_aa_INDELs, c("," = ", ")))
 
-for (s in 1:length(sampleIDIndices)) {
-  if (sampleIDIndices[s] == head(sampleIDIndices, n = 1)) {
-    i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq) - 2
-    y <- colnames(sumTab)[1:i]
-    z <- 2
-  } else {
-    if (sampleIDIndices[s] < tail(sampleIDIndices, n = 1)) {
-      i <- sampleIDIndices[s] + as.numeric(params$sampleIDInsertFreq)
-      y <- colnames(sumTab)[sampleIDIndices[s]:i]
-      z <- 1
-    } else {
-      i <- length(colnames(sumTab))
-      y <- colnames(sumTab)[sampleIDIndices[s]:i]
-      z <- 1
-    }
-  }
-    print(kbl(select(sumTab, all_of(y)),
+# Make summary.txt column names nicer
+sumTab <- select(sumTab,
+                 Sample.ID = sample_id, 
+                 Sample.Name = sample, 
+                 Pangolin = pangolin_lineage, 
+                 Pangolin.QC = pangolin_status, 
+                 NextClade = nextclade_clade, 
+                 `#FastQC.R1` = fastqc_raw_reads_1, 
+                 `#FastQC.R2` = fastqc_raw_reads_2, 
+                 `#Seqyclean.Pairs` = seqyclean_pairs_kept_after_cleaning, 
+                 `%Seqyclean.Pairs` = seqyclean_percent_kept_after_cleaning, 
+                 Depth.Post.Trim = depth_after_trimming, 
+                 Coverage.Post.Trim = coverage_after_trimming, 
+                 `%Human.Reads` = `%_human_reads`, 
+                 `%SC2.Reads` = `%_SARS-COV-2_reads`, 
+                 `#iVar.Variants` = ivar_num_variants_identified, 
+                 `#BCFTools.Variants` = bcftools_variants_identified, 
+                 `#BEDTools.Failed.Amps` = bedtools_num_failed_amplicons, 
+                 `#SAMTools.Failed.Amps` = samtools_num_failed_amplicons, 
+                 `#N` = num_N, 
+                 `#Degenerate` = num_degenerage, 
+                 `#ACTG` = num_ACTG, 
+                 `#Total.Bases` = num_total, 
+                 Total.Reads.Analyzed = Total_Reads_Analyzed, 
+                 `%N` = `%_N`, 
+                 Mean.Cov.Depth = ave_cov_depth, 
+                 `%Reads.Mapping.SC2` = `%_Reads_Matching_SC2_Ref`, 
+                 Vadr = vadr_status, 
+                 Vadr.All.ORF.Shift = vdr_sample_orfshift,
+                 Vadr.S.ORF.Shift = vdr_sgene_orftshift, 
+                 AA.Changes.S = S_aa_INDELs,
+                 Length.Longest.Insert = len_largest_insertion, 
+                 Length.Longest.Del = len_largest_deletion,
+                 pangoLEARN.v = pangoLEARN_version,
+                 `#Lineage.Subs` = pangolin_substitutions,
+                 `GenBank#`,
+                 ORFs.Passing.QC,
+                 Coverage.S,
+                 Mean.Depth.S,
+                 Percent.Pos.Min.Cov.S,
+                 Percent.Ns.S
+)
+```
+
+```{r format-sumTab-empty, include=FALSE, eval=ifelse(params$runNormal == FALSE, TRUE, FALSE)}
+#Make empty sumTab
+sumTab <- tibble(Sample.ID = character(), 
+                  Sample.Name = character(), 
+                  Pangolin = character(), 
+                  Pangolin.QC = character(), 
+                  NextClade = character(), 
+                  `#FastQC.R1` = numeric(), 
+                  `#FastQC.R2` = numeric(), 
+                  `#Seqyclean.Pairs` = numeric(), 
+                  `%Seqyclean.Pairs` = numeric(), 
+                  Depth.Post.Trim = numeric(), 
+                  Coverage.Post.Trim = numeric(), 
+                  `%Human.Reads` = numeric(), 
+                  `%SC2.Reads` = numeric(), 
+                  `#iVar.Variants` = numeric(), 
+                  `#BCFTools.Variants` = numeric(), 
+                  `#BEDTools.Failed.Amps` = numeric(), 
+                  `#SAMTools.Failed.Amps` = numeric(), 
+                  `#N` = numeric(), 
+                  `#Degenerate` = numeric(), 
+                  `#ACTG` = numeric(), 
+                  `#Total.Bases` = numeric(), 
+                  Total.Reads.Analyzed = numeric(), 
+                  `%N` = numeric(), 
+                  Mean.Cov.Depth = numeric(), 
+                  `%Reads.Mapping.SC2` = numeric(), 
+                  Vadr = character(), 
+                  Vadr.All.ORF.Shift = character(),
+                  Vadr.S.ORF.Shift = character(), 
+                  AA.Changes.S = character(),
+                  Length.Longest.Insert = numeric(), 
+                  Length.Longest.Del = numeric(),
+                  pangoLEARN.v = character(),
+                  `#Lineage.Subs` = numeric(),
+                  `GenBank#` = character(),
+                  ORFs.Passing.QC = numeric(),
+                  Coverage.S = numeric(),
+                  Mean.Depth.S = numeric(),
+                  Percent.Pos.Min.Cov.S = numeric(),
+                  Percent.Ns.S = numeric()) %>%
+  bind_rows(c(Sample.Name = NA))
+```
+
+
+```{r format-tabs, include=FALSE}
+# split out subtables for eLIMS and AA.Changes.S 
+aaTab <- select(sumTab, 
+                Sample.Name, 
+                `Spike Protein Substitutions` = AA.Changes.S) %>%
+         arrange(Sample.Name)
+elimsTab <- select(sumTab,
+                   Sample.Name,
+                   Average.Depth = Depth.Post.Trim,
+                   Percent.Genome.Coverage = Coverage.Post.Trim,
+                   Total.Reads = `#FastQC.R1`,
+                   Percent.Mapped.Reads = `%Reads.Mapping.SC2`,
+                   Open.Reading.Frames = ORFs.Passing.QC,
+                   S.Gene.Coverage = Coverage.S,
+                   Lineage = Pangolin,
+                   Number.Lineage.Defined.Substitutions = `#Lineage.Subs`,
+                   pangoLEARN.version = pangoLEARN.v,
+                   `GenBank.Accession#` = `GenBank#`) %>%
+            arrange(Sample.Name)
+qcTab <- select(sumTab,
+                Sample.Name,
+                Pangolin.QC,
+                `%Ambiguous.Base.Calls` = `%N`,
+                `%Ambiguous.Base.Calls.S` = Percent.Ns.S,
+                Frameshifts = Vadr.S.ORF.Shift) %>%
+          arrange(Sample.Name)
+sumTab <- select(sumTab,
+                 -AA.Changes.S,
+                 -Depth.Post.Trim,
+                 -Coverage.Post.Trim,
+                 -`#FastQC.R1`,
+                 -`%Reads.Mapping.SC2`,
+                 -ORFs.Passing.QC,
+                 -Coverage.S,
+                 -Pangolin,
+                 -`#Lineage.Subs`,
+                 -pangoLEARN.v,
+                 -`GenBank#`,
+                 -Pangolin.QC,
+                 -`%N`,
+                 -Percent.Ns.S,
+                 -Vadr.S.ORF.Shift) %>%
+          arrange(Sample.Name)
+
+# Round off some numbers to make them prettier
+elimsTab <- mutate(elimsTab,
+                   Percent.Mapped.Reads = round(Percent.Mapped.Reads, digits = 1),
+                   S.Gene.Coverage = round(S.Gene.Coverage, digits = 1),
+                   Average.Depth = round(Average.Depth, digits = 1),
+                   Percent.Genome.Coverage = round(Percent.Genome.Coverage, digits = 1))
+qcTab <- mutate(qcTab,
+                `%Ambiguous.Base.Calls` = round(`%Ambiguous.Base.Calls`, digits = 1),
+                `%Ambiguous.Base.Calls.S` = round(`%Ambiguous.Base.Calls.S`, digits = 1))
+sumTab <- mutate(sumTab,
+                 `%Seqyclean.Pairs` = round(`%Seqyclean.Pairs`, digits = 1),
+                 `%SC2.Reads` = round(`%SC2.Reads`, digits = 1),
+                 Mean.Cov.Depth = round(Mean.Cov.Depth, digits = 1))
+
+```
+
+\begin{center}
+\textbf{\huge{eLIMS Fields}}
+\end{center}
+
+```{r display-tabs, echo=FALSE, results='asis'}
+
+newTableSplittr <- function(t, f, c) {
+  # Where t is a tibble that is too wide to display on one page
+  # Where f is the frequency with which to split
+  # Where c is the column name to repeat at the beginning of each split
+  repeatCol <- select(t, matches(c))
+  t <- select(t, -matches(c))
+  myColNames <- colnames(t)
+  numSplits <- ceiling(length(myColNames) / f)
+  for (g in 1:numSplits) {
+    x <- ifelse(g * f <= length(myColNames), g * f, length(myColNames))
+    subT <- select(t, all_of(myColNames[(g * f - f + 1):x])) %>%
+      bind_cols(repeatCol) %>%
+      relocate(Sample.Name)
+    print(kbl(subT,
               booktabs = T,
+              longtable = T,
               align = "l") %>%
-          kable_styling(latex_options = "striped") %>%
-          column_spec(z, width = "15em"))
+          kable_styling(latex_options = c("striped", "repeat_header")) %>%
+          column_spec(1, width = "15em"))
+    cat('\\pagebreak')
+  }
+  return(cat('\\pagebreak'))
 }
+
+newTableSplittr(elimsTab, params$sampleIDInsertFreq, "Sample.Name")
 
 print(kbl(aaTab,
           booktabs = T,
+          longtable = T,
           align = "l") %>%
-      kable_styling(latex_options = "striped") %>%
+      kable_styling(latex_options = c("striped", "repeat_header")) %>%
       column_spec(1, width = "15em") %>%
-      column_spec(2, width = "30em")
-)
+      column_spec(2, width = "45em"))
+cat('\\pagebreak')
+```
+
+\begin{center}
+\textbf{\huge{Other QC Fields}}
+\end{center}
+
+```{r display-qcTab, echo=FALSE, results='asis'}
+print(kbl(qcTab,
+          booktabs = T,
+          longtable = T,
+          align = "l") %>%
+      kable_styling(latex_options = c("striped", "repeat_header")) %>%
+      column_spec(1, width = "15em"))
+cat('\\pagebreak')
+```
+
+\begin{center}
+\textbf{\huge{Other Dry Lab Fields}}
+\end{center}
+
+```{r display-sumTab, echo=FALSE, results='asis'}
+newTableSplittr(sumTab, params$sampleIDInsertFreq, "Sample.Name")
 ```

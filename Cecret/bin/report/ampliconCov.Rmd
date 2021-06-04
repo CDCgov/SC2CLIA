@@ -6,7 +6,7 @@ params:
   seqDirFP: null
   pacbamDir: "pacbam"
   pacbamFileSuffix: ".primertrim.sorted.pileup"
-  ampBED: "ref_docs/nCoV-2019.insert.bed"
+  ampBED: "/opt/nCoV-2019.insert.bed"
   ampMinCov: 30
   ampMeanCov: 100
   ampMaxNFail: 5
@@ -26,6 +26,8 @@ library(formattable)
 library(DT)
 # stop summarise messages https://rstats-tips.net/2020/07/31/get-rid-of-info-of-dplyr-when-grouping-summarise-regrouping-output-by-species-override-with-groups-argument/
 options(dplyr.summarise.inform = FALSE)
+# Note that Rmd files use the location of the Rmd file as their working directory during knitting. This causes problems when trying to unambiguously locate external dependencies that aren't in the same directory. Setting working directory below to address.
+knitr::opts_knit$set(root.dir = params$analysisDirFP)
 ```
 
 #### Per Amplicon Coverage Summary
@@ -39,7 +41,7 @@ ampInfo <- select(ampInfo, -TRASH, -REF)
 ```
 ```{r amp_cov, include=FALSE}
 # Read in the names of all of the files; note cache=TRUE for this block because it takes a long time to read everything in.
-pbFiles <- list.files(path = paste(params$analysisDirFP, params$pacbamDir, sep = "/"),
+pbFiles <- list.files(path = params$pacbamDir,
                       full.names = TRUE,
                       recursive = TRUE)
 
@@ -165,9 +167,9 @@ formattable(cov_sum_controls, list(
 ```{r spawn, include=FALSE}
 #echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 for (s in 1:nrow(cov_sum)) {
-  rmarkdown::render(input = "subpage_templates/ampliconDetailTemplate.Rmd", 
+  rmarkdown::render(input = "report/temp/ampliconDetailTemplate.Rmd", 
                     output_file = paste0(cov_sum[s,]$SampleID, "-amplicon-detail.html"), 
-                    output_dir = file.path(args$analysisDirFP, "report", "subpages"),
+                    output_dir = file.path("report", "subpages"),
                     params = list(covTable = filter(keepers, 
                                                     SampleID == cov_sum[s,]$SampleID),
                                   sampleID = cov_sum[s,]$SampleID,
