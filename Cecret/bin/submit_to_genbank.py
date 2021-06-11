@@ -1,21 +1,15 @@
-from ftplib import FTP
+from ftplib import FTP, all_errors
 import datetime
-import os
+import logging
+import sys
+# Change logging level
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('BasicLogger')
 __author__ = 'Mohit Thakur'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'Mohit Thakur'
 __email__ = '***REMOVED***'
 __status__ = 'Development'
-# class Genbank_handler:
-#     """Handler for the Genbank submission
-#        Attributes:
-#            hostname: String representing the sequence ID
-#            seq_subs: String consisting of the amino acid substitutions
-#            seq_sub_number: String value of how many substitutions there are
-#            seq_dels: String consisting of amino acid deletions
-#            seq_del_number: String value of how many deletions there are
-#     """
-#     pass
 def login(ftp, user, password):
     """
     Logs into a remote host using a username and password
@@ -24,47 +18,61 @@ def login(ftp, user, password):
     :param password: String of password
     :return: None
     """
-    ftp_response_message = ftp.login(user=user, passwd=password)
-    print(ftp_response_message)
-def make_subdir(ftp, subtype, subdir):
+    try:
+        response = ftp.login(user=user, passwd=password)
+        logger.info(response)
+    except all_errors as e:
+        # @ToDo Save the error in the database
+        sys.exit("Password is incorrect")
+def change_dir(ftp, dir):
     """
     Makes a subdirectory, after changing directory into
     the proper submission type
     :param ftp:  ftplib object
-    :param subtype: String {Test / Production}
+    :param dir: String directory to change to
+    :return: None
+    """
+    try:
+        response = ftp.cwd(dir)
+        logger.info(response)
+    except all_errors as e:
+        # @ToDo Save the error in the database
+        sys.exit("Cannot change to submission directory")
+def make_subdir(ftp, subdir):
+    """
+    Makes a subdirectory, after changing directory into
+    the proper submission type
+    :param ftp:  ftplib object
     :param subdir: String of new directory to make
     :return: None
     """
-    ftp_response_message = ftp.cwd(subtype)
-    print(ftp_response_message)
-    ftp_response_message = ftp.dir()
-    print(ftp_response_message)
-    ftp_response_message = ftp.mkd(subdir)
-    print(ftp_response_message)
-    ftp_response_message = ftp.cwd(subdir)
-    print(ftp_response_message)
-    ftp_response_message = ftp.dir()
-    print(ftp_response_message)
-def upload_files(ftp, **kwargs):
+    try:
+        response = ftp.mkd(subdir)
+        logger.info(response)
+    except all_errors as e:
+        # @ToDo Save the error in the database
+        sys.exit("Cannot create submission directory")
+def upload_file(ftp, file):
     """
     Upload files to server
     :param ftp: ftplib object
-    :param kwargs: all files to submit
-    :return:
+    :param file: the files to submit
+    :return: None
     """
-    for file in kwargs:
-        myfile = open(kwargs[file], 'rb')
-        ftp_command = "STOR %s" % myfile
-        # Transfer the file in binary mode
-        ftp_response_message = ftp.storbinary(ftp_command, fp=myfile)
-        print(ftp_response_message)
+    try:
+        with open(file, 'rb') as up_file:
+            response = ftp.storbinary('STOR ' + file, up_file)
+            logger.info(response)
+    except all_errors as e:
+        # @ToDo Save the error in the database
+        sys.exit("Cannot upload file")
 if __name__ == '__main__':
     # Login info
     host = 'ftp-private.ncbi.nlm.nih.gov'
     user = 'CDC-SC2CLIA'
     password = input("Enter password:")
     # Submission directory info
-    subtype = "Test"  # Production
+    type = "Test"  # Production
     now = datetime.datetime.now()
     subdir = "{}_{}".format(user, now.strftime("%Y.%m.%d-%H.%M.%S"))
     # Files for upload (assume in upload directory)
@@ -73,5 +81,11 @@ if __name__ == '__main__':
     submit_file = "submit.ready"
     with FTP(host) as genbank_ftp:
         login(genbank_ftp, user, password)
-        make_subdir(genbank_ftp, subtype, subdir)
-        upload_files(genbank_ftp, xml=xml_file, zip=zip_file)#, submit=submit_file)
+        change_dir(genbank_ftp, type)
+        make_subdir(genbank_ftp, subdir)
+        change_dir(genbank_ftp, subdir)
+        upload_file(genbank_ftp, xml_file)
+        upload_file(genbank_ftp, zip_file)
+        upload_file(genbank_ftp, submit_file)
+    # logger.info("Files have been uploaded to ", subdir)
+    # sys.exit()
