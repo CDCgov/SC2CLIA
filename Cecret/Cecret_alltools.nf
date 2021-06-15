@@ -103,7 +103,7 @@ if ( params.maxcpus < 5 ) {
 
 // Print path to run directory and the location of run results and summary file
 println("The files and directory for results is " + params.outdir)
-println("A table summarizing results will be created: ${params.outdir}/summary.txt and ${workflow.launchDir}/run_results.txt\n")
+println("A table summarizing results will be created: ${params.outdir}/summary.txt \n")
 
 // Initialize channels
 Channel
@@ -1041,10 +1041,19 @@ process pangolin {
 
     pangolin --outdir pangolin/!{sample} !{fasta} 2>> $err_file >> $log_file
 
-    pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
-    pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
-    pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
-    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '[[:digit:]]+[/][[:digit:]]+' || echo "NA" ) 
+    # pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
+    # pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
+    # pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
+    # pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 6 -d "," | grep -oE '[[:digit:]]+[/][[:digit:]]+' || echo "NA" ) 
+
+    # Pangolin v3 output format:
+    # taxon,lineage,conflict,ambiguity_score,scorpio_call,
+    # scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,
+    # pango_version,status,note
+    pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," )
+    pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 12 -d "," )
+    pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 10 -d "," )
+    pangolin_subs=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 13 -d "," ) 
 
     if [ -z "$pangolin_lineage" ] ; then pangolin_lineage="NA" ; fi
     if [ -z "$pangolin_status" ] ; then pangolin_status="NA" ; fi
@@ -1394,7 +1403,6 @@ process summary {
 process combined_summary {
   publishDir "${params.outdir}", mode: 'copy', overwrite: true, pattern: "summary.txt"
   publishDir "${params.outdir}", mode: 'copy', overwrite: true, pattern: "logs/summary/*.{log,err}"
-  publishDir "${workflow.launchDir}", mode: 'copy', overwrite: true, pattern: "run_results.txt"
   tag "summary"
   echo false
   cpus 1
@@ -1403,9 +1411,6 @@ process combined_summary {
   file(summary) from summary.collect()
 
   output:
-  file("summary.txt")
-  //file("run_results.txt")
-  file("run_results.txt") into combined_summary
   file("logs/summary/summary.${workflow.sessionId}.{log,err}") 
   file("summary.txt") into summary_ELIMS
 
@@ -1420,7 +1425,6 @@ process combined_summary {
     cat *.summary.txt | grep "sample_id" | head -n 1 > summary.txt
     cat *summary.txt | grep -v "sample_id" | sort | uniq >> summary.txt 2>> $err_file
 
-    cp summary.txt run_results.txt
   '''
 }
 
@@ -1750,24 +1754,18 @@ process post_process {
   tag "EDLB QA/QC metrics"
 
   input:
-  file run_results from combined_summary
   file summary from summary_ELIMS
 
   output:
-  file("run_results.txt") into post_process
+  file("summary.txt") into post_process
 
   script:
   """
-  # this file might be confusing, it is the same as the 'summary.txt' under each Run folder
-  if [ -f "$workflow.launchDir/$run_results" ]; then
-    rm $workflow.launchDir/$run_results
-  fi
-
   # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
   # make sure we have vcf module to use
-  if [ -f "$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img" ]; then
-    singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
-  fi
+  #if [ -f "$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img" ]; then
+  #  singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
+  #fi
   python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
           -o $params.outdir/summary.txt
 
@@ -1887,7 +1885,7 @@ process ncbi_upload {
   params.ncbi_upload  
 
   input:
-  file(run_results) from post_process
+  file(summary) from post_process
   
   output:
   file("ncbi_upload/samples.txt")
@@ -1918,6 +1916,5 @@ process ncbi_upload {
 
 workflow.onComplete {
     println("Pipeline completed at: $workflow.complete")
-    println("A summary of results can be found in a tab-delimited file: ${workflow.launchDir}/run_results.txt")
     println("Execution status: ${ workflow.success ? 'OK' : 'failed' }")
 }
