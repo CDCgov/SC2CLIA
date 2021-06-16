@@ -2,14 +2,21 @@ from ftplib import FTP, all_errors
 import datetime
 import logging
 import sys
+
+# Usage: python3 ./submit_to_genbank.py
+# Then input the password and hit enter. This script must be run from the folder
+# containing the submission.zip, submission.xml, and submit.ready files!
+
 # Change logging level
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('BasicLogger')
+
 __author__ = 'Mohit Thakur'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'Mohit Thakur'
 __email__ = '***REMOVED***'
-__status__ = 'Development'
+__status__ = 'Production'
+
 def login(ftp, user, password):
     """
     Logs into a remote host using a username and password
@@ -22,8 +29,8 @@ def login(ftp, user, password):
         response = ftp.login(user=user, passwd=password)
         logger.info(response)
     except all_errors as e:
-        # @ToDo Save the error in the database
         sys.exit("Password is incorrect")
+
 def change_dir(ftp, dir):
     """
     Makes a subdirectory, after changing directory into
@@ -36,8 +43,8 @@ def change_dir(ftp, dir):
         response = ftp.cwd(dir)
         logger.info(response)
     except all_errors as e:
-        # @ToDo Save the error in the database
         sys.exit("Cannot change to submission directory")
+
 def make_subdir(ftp, subdir):
     """
     Makes a subdirectory, after changing directory into
@@ -50,8 +57,8 @@ def make_subdir(ftp, subdir):
         response = ftp.mkd(subdir)
         logger.info(response)
     except all_errors as e:
-        # @ToDo Save the error in the database
         sys.exit("Cannot create submission directory")
+
 def upload_file(ftp, file):
     """
     Upload files to server
@@ -64,21 +71,25 @@ def upload_file(ftp, file):
             response = ftp.storbinary('STOR ' + file, up_file)
             logger.info(response)
     except all_errors as e:
-        # @ToDo Save the error in the database
         sys.exit("Cannot upload file")
+
 if __name__ == '__main__':
+
     # Login info
     host = 'ftp-private.ncbi.nlm.nih.gov'
     user = 'CDC-SC2CLIA'
     password = input("Enter password:")
+
     # Submission directory info
     type = "Test"  # Production
     now = datetime.datetime.now()
     subdir = "{}_{}".format(user, now.strftime("%Y.%m.%d-%H.%M.%S"))
+
     # Files for upload (assume in upload directory)
     xml_file = "submission.xml"
     zip_file = "submission.zip"
     submit_file = "submit.ready"
+
     with FTP(host) as genbank_ftp:
         login(genbank_ftp, user, password)
         change_dir(genbank_ftp, type)
@@ -87,5 +98,5 @@ if __name__ == '__main__':
         upload_file(genbank_ftp, xml_file)
         upload_file(genbank_ftp, zip_file)
         upload_file(genbank_ftp, submit_file)
-    # logger.info("Files have been uploaded to ", subdir)
-    # sys.exit()
+    print("Files uploaded successfully to Genbank")
+    print("Your submission folder is \n {}".format(subdir))
