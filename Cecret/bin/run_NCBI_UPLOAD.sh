@@ -49,15 +49,16 @@ fi
 mkdir $SUB_DIR
 zip -rm $SUB_DIR/submission.zip $FSA_FILE $SRC_FILE $SBT_TABLE
 
-# 5. Submission XML FILE
+# 5. Submission XML file
 python3 $BIN/csv_to_submissionXML.py
 mv submission.xml $SUB_DIR
 
 # 6. submit.ready
 touch $SUB_DIR/submit.ready && chmod 664 $SUB_DIR/submit.ready
 
-# 7. Cubmit_to_genbank.sh script copied into submission folder
+# 7. Submit_to_genbank scripts copied into submission folder
 cp $BIN/submit_to_genbank.sh $SUB_DIR
+cp $BIN/submit_to_genbank.py $SUB_DIR
 
 ### TO DO  check sequence_id
 # a)	sequence IDs must be unique for each sequence
