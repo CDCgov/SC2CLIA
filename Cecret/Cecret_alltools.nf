@@ -74,6 +74,8 @@ params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
 params.sc2ref = true // for calculating per. of reads pass qc and align to ref / total # reads passing QC
 params.ncbi_upload = true // for ncbi submission
+params.indel = true // for calculation of largest INDEL
+params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 
 // for optional contamination determination with kraken
 params.kraken2 = true // Switching to default on
@@ -627,6 +629,29 @@ process ivar_consensus {
   '''
 }
 
+process ivar_vcf {
+  publishDir "${params.outdir}", mode: 'copy',  pattern: "ivar_vcf/*.vcf"
+  tag "${sample}"
+
+  input:
+  set val(sample), file(tsv) from ivar_variant_vcf
+
+  output:
+  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam, ivar_vcf_pacbam_orf, ivar_vcf_indel
+
+  when:
+  params.ivar_vcf
+
+  script:
+  """
+  # convert ivar_variants tsv files into vcf files under ivar_vcf folder
+
+  mkdir -p ivar_vcf
+  python3 $workflow.launchDir/Cecret/bin/ivar_variants_to_vcf.py  ${tsv}  ivar_vcf/${sample}.vcf
+
+  """
+}
+
 process bcftools_variants {
   publishDir "${params.outdir}", mode: 'copy'
   tag "${sample}"
@@ -990,7 +1015,7 @@ process samtools_ampliconstats {
   set val(sample), file(bam), file(primer_bed) from trimmed_bams_ampliconstats
 
   output:
-  file("samtools_ampliconstats/${sample}_ampliconstats.txt")
+  tuple sample, file("samtools_ampliconstats/${sample}_ampliconstats.txt") into samtools_ampliconstats_dropout
   tuple sample, env(num_failed_amplicons) into samtools_ampliconstats_results
   file("logs/samtools_ampliconstats/${sample}.${workflow.sessionId}.{log,err}")
 
@@ -1009,6 +1034,30 @@ process samtools_ampliconstats {
     if [ -z "$num_failed_amplicons" ] ; then num_failed_amplicons=0 ; fi
   '''
 }
+
+process ampliconstats_dropout {
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus params.medcpus
+
+  when:
+  params.ampliconstats_dropout
+
+  input:
+  tuple sample, file(ampliconstats) from samtools_ampliconstats_dropout
+
+  output:
+  file ("amplicon_dropout_summary/${sample}.txt")
+
+  script:
+  """
+  mkdir -p amplicon_dropout_summary
+  python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -f ${ampliconstats} > amplicon_dropout_summary/${sample}.txt
+  """
+
+}
+
 
 process pangolin {
   publishDir "${params.outdir}", mode: 'copy'
@@ -1161,6 +1210,7 @@ process aocd_bwa {
 process aocd_samtools {
   tag "${sample}"
   echo false
+  cpus params.maxcpus
   //publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
   when:
@@ -1302,6 +1352,30 @@ process vadr {
   '''
 }
 
+
+process largest_indel {
+  tag "${sample}"
+  echo false
+  cpus params.medcpus
+
+  input:
+  tuple val(sample), file(vcf) from ivar_vcf_indel
+
+  when:
+  params.indel
+
+  output:
+  tuple sample, env(indel) into largest_indel_result
+
+  script:
+  """
+  # python3 is optional, shebang likely works
+  indel=`python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor_nf.py -f ${vcf}`
+  
+  """
+
+}
+
 consensus_results
 //tuple sample, env(num_N), env(num_ACTG), env(num_degenerate), env(num_total) into consensus_results
   .join(fastqc_1_results, remainder: true, by: 0)
@@ -1330,6 +1404,7 @@ consensus_results
   .join(vadr_sample_orfshift, remainder: true, by:0)
   .join(vadr_sgene_orfshift, remainder: true, by:0)
   .join(nextclade_parsed_out, remainder: true, by:0)
+  .join(largest_indel_result, remainder: true, by:0)
   .set { results }
 
 process summary {
@@ -1365,7 +1440,8 @@ process summary {
     val(vadr_result),
     val(vadr_sample_orfshift),
     val(vadr_sgene_orfshift),
-    val(nextclade_parsed_result) from results
+    val(nextclade_parsed_result),
+    val(indel) from results
 
   output:
   file("summary/${sample}.summary.txt") into summary
@@ -1395,8 +1471,12 @@ process summary {
     aaChange=`echo "!{nextclade_parsed_result}" | awk -F _ '{print $2}'` 
     if [[ $aaChange = '' ]]; then aaChange=NA;fi
 
-    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift\tS_aa_INDELs\tpangoLEARN_version\tpangolin_substitutions" > summary/!{sample}.summary.txt
-    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}\t${aaChange}\t!{pangoLEARN_version}\t!{pangolin_subs}" >> summary/!{sample}.summary.txt
+    # splitting up insertion/deletion from 'indel'
+    len_largest_insertion=`echo !{indel} | awk -F _ '{print $1}'`
+    len_largest_deletion=`echo !{indel} | awk -F _ '{print $2}'`
+
+    echo -e "sample_id\tsample\taligner_version\tivar_version\tpangolin_lineage\tpangolin_status\tnextclade_clade\tfastqc_raw_reads_1\tfastqc_raw_reads_2\tseqyclean_pairs_kept_after_cleaning\tseqyclean_percent_kept_after_cleaning\tfastp_reads_passed\tdepth_after_trimming\tcoverage_after_trimming\t%_human_reads\t%_SARS-COV-2_reads\tivar_num_variants_identified\tbcftools_variants_identified\tbedtools_num_failed_amplicons\tsamtools_num_failed_amplicons\tnum_N\tnum_degenerage\tnum_ACTG\tnum_total\tTotal_Reads_Analyzed\t%_N\tave_cov_depth\t%_Reads_Matching_SC2_Ref\tvadr_status\tvdr_sample_orfshift\tvdr_sgene_orftshift\tS_aa_INDELs\tpangoLEARN_version\tpangolin_substitutions\tlen_largest_insertion\tlen_largest_deletion" > summary/!{sample}.summary.txt
+    echo -e "${sample_id}\t!{sample}\t!{bwa_version}\t!{ivar_version}\t!{pangolin_lineage}\t!{pangolin_status}\t!{nextclade_clade}\t!{raw_1}\t!{raw_2}\t!{pairskept}\t!{perc_kept}\t!{reads_passed}\t!{depth}\t!{coverage}\t!{percentage_human}\t!{percentage_cov}\t!{ivar_variants}\t!{bcftools_variants}\t!{bedtools_num_failed_amplicons}\t!{samtools_num_failed_amplicons}\t!{num_N}\t!{num_degenerate}\t!{num_ACTG}\t!{num_total}\t${total_reads_analyzed}\t${percent_N}\t!{aocd_result}\t!{sc2ref_result}\t!{vadr_result}\t!{vadr_sample_orfshift}\t!{vadr_sgene_orfshift}\t${aaChange}\t!{pangoLEARN_version}\t!{pangolin_subs}\t${len_largest_insertion}\t${len_largest_deletion}" >> summary/!{sample}.summary.txt
   '''
 }
 
@@ -1723,56 +1803,17 @@ process combine_fastas {
   '''
 }
 
-process ivar_vcf {
-  publishDir "${params.outdir}", mode: 'copy',  pattern: "ivar_vcf/*.vcf"
-  tag "${sample}"
-
-  input:
-  set val(sample), file(tsv) from ivar_variant_vcf
-
-  output:
-  tuple sample, file("ivar_vcf/${sample}.vcf") into ivar_vcf_pacbam, ivar_vcf_pacbam_orf
-
-  when:
-  params.ivar_vcf
-
-  script:
-  """
-  # convert ivar_variants tsv files into vcf files under ivar_vcf folder
-
-  # old method: grabbing all data externally
-  #python3 $workflow.launchDir/Cecret/bin/ivar_variants.py -i $params.outdir/ivar_variants -o $params.outdir/ivar_vcf
-
-  mkdir -p ivar_vcf
-  # new method: utilizing nextflow internal data queuing
-  python3 $workflow.launchDir/Cecret/bin/ivar_variants_to_vcf.py  ${tsv}  ivar_vcf/${sample}.vcf
-
-  """
-}
-
-process post_process {
-  tag "EDLB QA/QC metrics"
+process elims_datasheet {
+  tag "ELIMS datasheet"
 
   input:
   file summary from summary_ELIMS
 
   output:
-  file("summary.txt") into post_process
+  file("summary.txt") into elims_datasheet
 
   script:
   """
-  # parse the vcf files and add len_largest_deletion, len_largest_insertion to the result file
-  # make sure we have vcf module to use
-  #if [ -f "$workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img" ]; then
-  #  singularity run $workflow.launchDir/SINGULARITY_CACHE/biocontainers-pyvcf-v0.6.8git20170215.476169c-1-deb_cv1.img
-  #fi
-  python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor.py -d $params.outdir/ivar_vcf \
-          -o $params.outdir/summary.txt
-
-  # parse the ampliconstats.txt files and add create a folder to hold amplicon dropout info
-  python3 $workflow.launchDir/Cecret/bin/amplicon_stat.py -d $params.outdir/samtools_ampliconstats \
-  -o $params.outdir/amplicon_dropout_summary
-
   # generate datasheet to push samples to ELIMS
   python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
   """
@@ -1885,7 +1926,7 @@ process ncbi_upload {
   params.ncbi_upload  
 
   input:
-  file(summary) from post_process
+  file(summary) from elims_datasheet
   
   output:
   file("ncbi_upload/samples.txt")
