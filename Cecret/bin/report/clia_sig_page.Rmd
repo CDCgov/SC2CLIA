@@ -21,9 +21,9 @@ header-includes:
 - \fancyhf{}
 - \setlength{\headheight}{23pt}
 - \chead{\textbf{Enteric Diseases Laboratory Branch SARS-CoV-2 Variant Whole Genome Sequencing Run Summary}}
-- \cfoot{\textbf{Ver. No.}01}
+- \cfoot{\textbf{Ver. No.}02}
 - \lfoot{\textbf{Doc. No.} EDLB.TE.C.032.F02}
-- \rfoot{\textbf{Effective Date:}TBD}
+- \rfoot{\textbf{Effective Date:} 05/13/2021}
 ---
 
 ```{r index-comments, include=FALSE, eval=FALSE}
@@ -39,3 +39,5 @@ library(rmarkdown)
 Reviewed by: _____________________________________   
 
 Date: ________________  
+
+Comments:  
