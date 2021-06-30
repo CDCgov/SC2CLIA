@@ -75,10 +75,9 @@ def upload_file(ftp, file):
 
 if __name__ == '__main__':
 
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("type")
-    parser.add_argument("user")
+    parser.add_argument("type", help="Set submission type: Test | Production")
+    parser.add_argument("user", help="Set username")
     args = parser.parse_args()
 
     if args.type == "Test":
@@ -86,20 +85,19 @@ if __name__ == '__main__':
     elif args.type == "Production":
         type = "Production"
     else:
-        sys.exit("Test or Production")
+        print("Invalid submission type set, defaulting to 'Test'")
+        type = "Test"
 
-    if args.user == " CDC-SC2CLIA":
-        user = 'CDC-SC2CLIA'
+    if args.user:
+        user = args.user
     else:
         sys.exit("Invalid user")
 
     # Login info
     host = 'ftp-private.ncbi.nlm.nih.gov'
-    #user = 'CDC-SC2CLIA'
     password = input("Enter password:")
 
     # Submission directory info
-    #type = "Test"  # Production
     now = datetime.datetime.now()
     subdir = "{}_{}".format(user, now.strftime("%Y.%m.%d-%H.%M.%S"))
 
