@@ -2,6 +2,7 @@ from ftplib import FTP, all_errors
 import datetime
 import logging
 import sys
+import argparse
 
 # Usage: python3 ./submit_to_genbank.py
 # Then input the password and hit enter. This script must be run from the folder
@@ -12,9 +13,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('BasicLogger')
 
 __author__ = 'Mohit Thakur'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'Mohit Thakur'
-__email__ = '***REMOVED***'
 __status__ = 'Production'
 
 def login(ftp, user, password):
@@ -75,13 +75,29 @@ def upload_file(ftp, file):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("type", help="Set submission type: Test | Production")
+    parser.add_argument("user", help="Set username")
+    args = parser.parse_args()
+
+    if args.type == "Test":
+        type = "Test"
+    elif args.type == "Production":
+        type = "Production"
+    else:
+        print("Invalid submission type set, defaulting to 'Test'")
+        type = "Test"
+
+    if args.user:
+        user = args.user
+    else:
+        sys.exit("Invalid user")
+
     # Login info
     host = 'ftp-private.ncbi.nlm.nih.gov'
-    user = 'CDC-SC2CLIA'
     password = input("Enter password:")
 
     # Submission directory info
-    type = "Test"  # Production
     now = datetime.datetime.now()
     subdir = "{}_{}".format(user, now.strftime("%Y.%m.%d-%H.%M.%S"))
 
