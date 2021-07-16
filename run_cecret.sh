@@ -70,12 +70,12 @@ fi
 
 # If Rscript option turned on, begin Report block
 # if [ ! ${RSCRIPT} ]; then
-if [ ! ${RSCRIPT} = true ]; then
-	echo "Completed Cecret pipeline";
-	exit 0;
-else
-	echo "Running R scripts to generate reports ...";
-fi
+# if [ ! ${RSCRIPT} = true ]; then
+# 	echo "Completed Cecret pipeline";
+# 	exit 0;
+# else
+# 	echo "Running R scripts to generate reports ...";
+# fi
 
 # R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
 # R_IMG= ***replace with your own path here***
@@ -117,14 +117,15 @@ seqDir=$(realpath $DATA)
 
 # move up 3 levels for the mounting point
 # MP=$PWD/../../..
-MP=***set the binding path (top level recommended) for R container***
-singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
 
-singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
-														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
+# MP=***set the binding path (top level recommended) for R container***
+# singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
 
-singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
+# singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
+# 														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
+
+# singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
 
 echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
 
-python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
+# python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt

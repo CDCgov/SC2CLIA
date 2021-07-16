@@ -1804,22 +1804,6 @@ process combine_fastas {
   '''
 }
 
-// process elims_datasheet {
-//   tag "ELIMS datasheet"
-
-//   input:
-//   file summary from summary_ELIMS
-
-//   output:
-//   file("summary.txt") into elims_datasheet
-
-//   script:
-//   """
-//   # generate datasheet to push samples to ELIMS
-//   python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
-//   """
-// }
-
 trimmed_bam_bai
   .join(ivar_vcf_pacbam, remainder:true, by:0)
   .set { pre_pacbam }
@@ -1927,14 +1911,14 @@ process ncbi_upload {
   params.ncbi_upload  
 
   input:
-  // file(summary) from elims_datasheet
   file(summary) from summary_NCBI_UPLOAD
   
   output:
-  file("ncbi_upload/samples.txt")
+  file("ncbi_upload/samples.txt") 
   file("ncbi_upload/author_template.csv") // these 2 need to be changed to the actual template names later
   file("ncbi_upload/submission_template.csv")
   file("ncbi_upload/run_NCBI_UPLOAD.sh")
+  env(token_ncbi) into ncbi_upload_results
 
   shell:
   '''
@@ -1954,8 +1938,65 @@ process ncbi_upload {
   cp !{workflow.launchDir}/Cecret/configs/author_template.csv  ncbi_upload/author_template.csv
   cp !{workflow.launchDir}/Cecret/configs/submission_template.csv  ncbi_upload/submission_template.csv
   cp !{workflow.launchDir}/Cecret/bin/run_NCBI_UPLOAD.sh ncbi_upload/run_NCBI_UPLOAD.sh && chmod 755 ncbi_upload/run_NCBI_UPLOAD.sh
+  
+  token_ncbi='finished'
   '''
 }
+
+process report {
+  tag "report"
+  echo true
+  publishDir "${params.outdir}", mode: 'copy'
+  cpus 4
+
+
+  input:
+  val(token_ncbi) from ncbi_upload_results
+  
+  output:
+  env(token_report) into report_results
+
+
+  shell:
+  '''
+
+  R_IMG= ***replace with your own path here***
+  runID=`(basename !{params.reads})`
+  analysisDir=!{params.outdir}
+  # seqDir=`(realpath !{params.reads})`
+  seqDir=!{params.reads}
+
+
+  # move up 3 levels for the mounting point
+  # MP=$PWD/../../..
+  MP=***set the binding path (top level recommended) for R container***
+  singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
+
+  singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
+                                 ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
+
+  singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
+
+  token_report='finished'
+
+  '''
+}
+
+
+process elims_datasheet {
+  tag "ELIMS datasheet"
+
+  input:
+  val(token_report) from report_results
+
+
+  script:
+  """
+  # generate datasheet to push samples to ELIMS
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s $params.outdir/summary.txt
+  """
+}
+
 
 workflow.onComplete {
     println("Pipeline completed at: $workflow.complete")
