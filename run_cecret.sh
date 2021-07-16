@@ -126,3 +126,5 @@ singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analys
 singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
 
 echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
+
+python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt

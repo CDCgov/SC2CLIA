@@ -1492,7 +1492,8 @@ process combined_summary {
 
   output:
   file("logs/summary/summary.${workflow.sessionId}.{log,err}") 
-  file("summary.txt") into summary_ELIMS
+  // file("summary.txt") into summary_ELIMS
+  file("summary.txt") into summary_NCBI_UPLOAD
 
   shell:
   '''
@@ -1803,21 +1804,21 @@ process combine_fastas {
   '''
 }
 
-process elims_datasheet {
-  tag "ELIMS datasheet"
+// process elims_datasheet {
+//   tag "ELIMS datasheet"
 
-  input:
-  file summary from summary_ELIMS
+//   input:
+//   file summary from summary_ELIMS
 
-  output:
-  file("summary.txt") into elims_datasheet
+//   output:
+//   file("summary.txt") into elims_datasheet
 
-  script:
-  """
-  # generate datasheet to push samples to ELIMS
-  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
-  """
-}
+//   script:
+//   """
+//   # generate datasheet to push samples to ELIMS
+//   python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s ${summary} 
+//   """
+// }
 
 trimmed_bam_bai
   .join(ivar_vcf_pacbam, remainder:true, by:0)
@@ -1926,7 +1927,8 @@ process ncbi_upload {
   params.ncbi_upload  
 
   input:
-  file(summary) from elims_datasheet
+  // file(summary) from elims_datasheet
+  file(summary) from summary_NCBI_UPLOAD
   
   output:
   file("ncbi_upload/samples.txt")
