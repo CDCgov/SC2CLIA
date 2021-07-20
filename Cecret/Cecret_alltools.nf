@@ -1943,59 +1943,59 @@ process ncbi_upload {
   '''
 }
 
-process report {
-  tag "report"
-  echo true
-  publishDir "${params.outdir}", mode: 'copy'
-  cpus 4
+// process report {
+//   tag "report"
+//   echo true
+//   publishDir "${params.outdir}", mode: 'copy'
+//   cpus 4
 
 
-  input:
-  val(token_ncbi) from ncbi_upload_results
+//   input:
+//   val(token_ncbi) from ncbi_upload_results
   
-  output:
-  env(token_report) into report_results
+//   output:
+//   env(token_report) into report_results
 
 
-  shell:
-  '''
+//   shell:
+//   '''
 
-  R_IMG= ***replace with your own path here***
-  runID=`(basename !{params.reads})`
-  analysisDir=!{params.outdir}
-  # seqDir=`(realpath !{params.reads})`
-  seqDir=!{params.reads}
-
-
-  # move up 3 levels for the mounting point
-  # MP=$PWD/../../..
-  MP=***set the binding path (top level recommended) for R container***
-  singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
-
-  singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
-                                 ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
-
-  singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
-
-  token_report='finished'
-
-  '''
-}
+//   R_IMG= ***replace with your own path here***
+//   runID=`(basename !{params.reads})`
+//   analysisDir=!{params.outdir}
+//   # seqDir=`(realpath !{params.reads})`
+//   seqDir=!{params.reads}
 
 
-process elims_datasheet {
-  tag "ELIMS datasheet"
+//   # move up 3 levels for the mounting point
+//   # MP=$PWD/../../..
+//   MP=***set the binding path (top level recommended) for R container***
+//   singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
 
-  input:
-  val(token_report) from report_results
+//   singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
+//                                  ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
+
+//   singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
+
+//   token_report='finished'
+
+//   '''
+// }
 
 
-  script:
-  """
-  # generate datasheet to push samples to ELIMS
-  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s $params.outdir/summary.txt
-  """
-}
+// process elims_datasheet {
+//   tag "ELIMS datasheet"
+
+//   input:
+//   val(token_report) from report_results
+
+
+//   script:
+//   """
+//   # generate datasheet to push samples to ELIMS
+//   python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s $params.outdir/summary.txt
+//   """
+// }
 
 
 workflow.onComplete {

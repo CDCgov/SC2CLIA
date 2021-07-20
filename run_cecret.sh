@@ -79,15 +79,7 @@ fi
 
 # R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r.sif
 # R_IMG= ***replace with your own path here***
-R_IMG=$CECRET_BASE/SINGULARITY_CACHE/singularity-r-v-2.0.sif
-R_folder=${PWD}/Cecret/bin/report
-ORF_folder=${PWD}/Cecret/bin
-
-config_folder=${PWD}/Cecret/configs
-
-# -b, -t
-bed1="MN908947.3-ORFs.bed"
-bed2="MN908947.3-ORF7b.bed"
+R_IMG= ***replace with your own path here***
 
 # -r, -a, and -s
 runID=$(basename $DATA)
@@ -115,17 +107,16 @@ seqDir=$(realpath $DATA)
 # 				${R_IMG} append_tables.R -a /OUTDIR  -f /OUTDIR/summary.txt -s /OUTDIR/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
 
 
-# move up 3 levels for the mounting point
-# MP=$PWD/../../..
 
-# MP=***set the binding path (top level recommended) for R container***
-# singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
+# bind path
+MP=***set the binding path (top level recommended) for R container***
+singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
 
-# singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
-# 														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
+singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
+														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
 
-# singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
+singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
 
 echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
 
-# python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
+python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
