@@ -4,7 +4,6 @@
 
 import os, sys, re, argparse
 import pandas as pd
-from functools import partial, reduce
 import numpy as np
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
@@ -24,12 +23,12 @@ out_formats = {
     "coverage_after_trimming":"Percent Genome Coverage",
     "fastqc_raw_reads_1":"Total Reads",
     "Total_Reads_Analyzed":"Mapped Reads",
-    "percent_mapped":"Percent Mapped Reads",
+    "%_Reads_Matching_SC2_Ref":"Percent Mapped Reads",
     "ORFs.Passing.QC":"Open Reading Frames",
     "Coverage.S":"S-gene Coverage",
     "S_aa_INDELs":"Spike Protein Substitutions",
     "pangolin_lineage":"Lineage",
-    "num_pangolin_subs":"Number of Lineage-Defined Substitutions",
+    "pangolin_substitutions":"Number of Lineage-Defined Substitutions",
     "pangoLEARN_version":"pangoLEARN Version",
     "genbank":"GenBank Accession #"
 }
@@ -82,9 +81,10 @@ def get_summary_data(filename, samples):
         sys.exit(1)
     # Modify to take in samples and only keeps where rows that are real samples
     summary_table = summary_table[summary_table["sample"].isin(samples)]
-    summary_subset = summary_table.loc[:,('sample','depth_after_trimming','coverage_after_trimming','fastqc_raw_reads_1', \
-                                          'Total_Reads_Analyzed','pangolin_lineage', 'ORFs.Passing.QC', 'Coverage.S', 'S_aa_INDELs')]
-    summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
+    summary_subset = summary_table.loc[:,('sample', 'depth_after_trimming', 'coverage_after_trimming', 'fastqc_raw_reads_1', \
+                                          'Total_Reads_Analyzed', '%_Reads_Matching_SC2_Ref', 'pangolin_lineage', 'ORFs.Passing.QC', \
+                                          'Coverage.S', 'S_aa_INDELs', 'pangolin_substitutions', 'pangoLEARN_version')]
+    #summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
     summary_subset['min_cov_threshold'] = 30
     summary_subset['CSID'] = summary_table['sample'].str.split('-').str[0]
     summary_subset['CUID'] = summary_table['sample'].str.split('-').str[1]
@@ -145,43 +145,14 @@ def main():
 
     summary_output = get_summary_data(summary_file, samples)  
 
-    # Use samples to traverse args.directory and get info about lineage substitutions and pangoLEARN vs
-    pangolin_list = []
-    for sample in samples:
-        pangolin_file = args.directory + '/pangolin/' + sample + '/lineage_report.csv'
-        if os.path.isfile(pangolin_file) == True:
-            try:
-                pangolin_data = pd.read_csv(pangolin_file)
-                pangolin_data.fillna('',inplace=True)
-            except Exception:
-                print(f"Could not import {pangolin_file} using Pandas")
-                pass
-            lineage_subs = pangolin_data.iloc[0]['note'].split(' ')[0]
-            pangoLEARN_version = pangolin_data.iloc[0]['pangoLEARN_version']
-            if lineage_subs == '':
-                data_trio = (sample, "No data", pangoLEARN_version)
-            elif re.search('\d+\/\d+', lineage_subs):
-                data_trio = (sample, lineage_subs, pangoLEARN_version)
-            else:
-                data_trio = (sample, "No data", pangoLEARN_version)
-            pangolin_list.append(data_trio)
-    pangolin_substitutions = pd.DataFrame(pangolin_list, columns = ['sample', 'num_pangolin_subs', 'pangoLEARN_version'])
-
-    # Merge all the info
-    # Note: can be done with just one merge  because there are only two dfs, but I've left it in case we add more
-    dfs = [summary_output, pangolin_substitutions] # add additional dfs as needed
-    merge = partial(pd.merge, on='sample', how='left') # merge object, partial function
-    full_data = reduce(merge, dfs) # apply the merge object to all the dfs
-
-
     # Rearrange columns 
     cols = ['CSID','CUID','min_cov_threshold','depth_after_trimming','coverage_after_trimming', \
-            'fastqc_raw_reads_1','Total_Reads_Analyzed','percent_mapped', 'S_aa_INDELs', 'genbank', \
-            'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'num_pangolin_subs','pangoLEARN_version', 'sample'] # add orfs, s-cov, genbank
+            'fastqc_raw_reads_1','Total_Reads_Analyzed','%_Reads_Matching_SC2_Ref', 'S_aa_INDELs', 'genbank', \
+            'ORFs.Passing.QC', 'Coverage.S', 'pangolin_lineage', 'pangolin_substitutions','pangoLEARN_version', 'sample'] # add orfs, s-cov, genbank
 
-    full_data = full_data[cols]
+    summary_output = summary_output[cols]
 
-    final_data = out_elims_data(full_data)
+    final_data = out_elims_data(summary_output)
 
     if os.path.exists(args.directory + '/report'):
         outfile = args.directory + "/report/push_to_elims.txt"
