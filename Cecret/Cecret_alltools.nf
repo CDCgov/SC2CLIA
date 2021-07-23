@@ -7,9 +7,6 @@ println("Version: v.20210211")
 println("")
 
 
-// TBA plot-ampliconstats
-// plot-ampliconstats results_SAMPLEID ampliconstats.txt
-
 params.reads = workflow.launchDir + '/Sequencing_reads/Raw'
 params.single_reads = workflow.launchDir + '/Sequencing_reads/Single'
 if ( params.reads == params.single_reads ) {
@@ -30,8 +27,7 @@ params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.b
 params.pacbamorf_orf_bed = workflow.projectDir + "/configs/MN908947.3-ORFs.bed"
 params.pacbamorf_orf7b_bed = workflow.projectDir + "/configs/MN908947.3-ORF7b.bed"
 
-// pacbamorfs
-params.pacbam_orfs = true
+
 
 // model files for SARS-CoV-2 (currently unusued param; not in config/)
 // params.vadr_mdir = workflow.projectDir + "/configs/vadr-models-corona-1.1.3-1"
@@ -40,18 +36,6 @@ params.trimmer = 'ivar' //  samtools
 params.cleaner = 'seqyclean' // fastp
 params.aligner = 'bwa' // minimap2
 
-// minimap2 paramaters
-params.minimap2_K = '20M' // stolen from monroe
-
-// param that coincides with the staphb/seqyclean:1.10.09 container run with singularity
-params.seqyclean_contaminant_file="/Adapters_plus_PhiX_174.fasta"
-params.seqyclean_minlen = 25
-
-// for ivar
-params.ivar_quality = 20
-params.ivar_frequencing_threshold = 0.6
-params.ivar_minimum_read_depth = 10 // default is 10
-params.mpileup_depth = 8000
 
 // to toggle off processes
 params.bcftools_variants = true // fails to download a lot
@@ -76,6 +60,24 @@ params.sc2ref = true // for calculating per. of reads pass qc and align to ref /
 params.ncbi_upload = true // for ncbi submission
 params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
+params.pacbam_orfs = true // pacbam orfs
+
+
+
+//# Workflow paramters --------------------------------------
+
+// minimap2 paramaters
+params.minimap2_K = '20M' // stolen from monroe
+
+// param that coincides with the staphb/seqyclean:1.10.09 container run with singularity
+params.seqyclean_contaminant_file="/Adapters_plus_PhiX_174.fasta"
+params.seqyclean_minlen = 25
+
+// for ivar
+params.ivar_quality = 20
+params.ivar_frequencing_threshold = 0.6
+params.ivar_minimum_read_depth = 10 // default is 10
+params.mpileup_depth = 8000
 
 // for optional contamination determination with kraken
 params.kraken2 = true // Switching to default on
@@ -1090,6 +1092,7 @@ process pangolin {
 
     pangolin --outdir pangolin/!{sample} !{fasta} 2>> $err_file >> $log_file
 
+    # Pangolin changed output format from V2.6
     # pangolin_lineage=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 2 -d "," | grep -v "lineage" )
     # pangolin_status=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 5 -d "," )
     # pangoLEARN_version=$(tail -n 1 pangolin/!{sample}/lineage_report.csv | cut -f 4 -d "," )
@@ -1160,16 +1163,13 @@ process nextcladeParse {
   set val(sample), file(csv) from nextclade_csv_out
 
   output:
-  //file("nextclade_parse/${sample}_nextclade_parsed.csv") into nextclade_parsed_out
   tuple sample, env(nextclade_parsed_result) into nextclade_parsed_out
 
 
  shell:
  '''
-    # mkdir -p nextclade_parse
-    # python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv} nextclade_parse/!{sample}_nextclade_parsed.csv
 
-    # the python script will return sth like: S_N501Y,P681H,A701V,T716I,D1118H,H69del,V70del,Y144del
+    # the python script will return parsed results like: S_N501Y,P681H,A701V,T716I,D1118H,H69del,V70del,Y144del
     nextclade_parsed_result=`python3 !{workflow.launchDir}/Cecret/bin/nextclade_aa_parser.py !{csv}`
 
  '''
@@ -1180,10 +1180,9 @@ seqyclean_aocd
   .join(consensus_aocd, remainder: true, by:0)
   .set { pre_aocd_bwa }
 
-process aocd_bwa {
+process coverage_depth_bwa {
   tag "${sample}"
   echo false
-  //publishDir "${params.outdir}/consensus/consensus-aligned/", mode: 'copy', pattern: '*.sam'
 
   when:
   params.aocd
@@ -1207,11 +1206,10 @@ process aocd_bwa {
   '''
 }
 
-process aocd_samtools {
+process coverage_depth_samtools {
   tag "${sample}"
   echo false
   cpus params.maxcpus
-  //publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
   when:
   params.aocd
@@ -1369,7 +1367,7 @@ process largest_indel {
 
   script:
   """
-  # python3 is optional, shebang likely works
+
   indel=`python3 $workflow.launchDir/Cecret/bin/vcf_parser_refactor_nf.py -f ${vcf}`
   
   """
@@ -1818,12 +1816,9 @@ process pacbam {
   publishDir "${params.outdir}", mode: 'copy'
 
   input:
-  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
-  //set val(sample), file(vcf) from ivar_vcf_pacbam
   tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam
 
   output:
-  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
   file("pacbam/${sample}/{odd,even}/*") into pacbam_out
 
 
@@ -1853,12 +1848,9 @@ process pacbam_orfs {
   publishDir "${params.outdir}", mode: 'copy'
 
   input:
-  //set val(sample), file(bam), file(bai) from trimmed_bam_bai
-  //set val(sample), file(vcf) from ivar_vcf_pacbam
   tuple val(sample), file(bam), file(bai), file(vcf) from pre_pacbam_orf
 
   output:
-  // file("pacbam/${sample}/{odd,even}/${sample}.primertrim.sorted.*") into pacbam_out
   file("pacbam_orf/${sample}/{orfs,ORF7b}/*") into pacbam_orfs_out
 
   when:
@@ -1915,7 +1907,7 @@ process ncbi_upload {
   
   output:
   file("ncbi_upload/samples.txt") 
-  file("ncbi_upload/author_template.csv") // these 2 need to be changed to the actual template names later
+  file("ncbi_upload/author_template.csv")
   file("ncbi_upload/submission_template.csv")
   file("ncbi_upload/run_NCBI_UPLOAD.sh")
   env(token_ncbi) into ncbi_upload_results
@@ -1943,59 +1935,6 @@ process ncbi_upload {
   '''
 }
 
-// process report {
-//   tag "report"
-//   echo true
-//   publishDir "${params.outdir}", mode: 'copy'
-//   cpus 4
-
-
-//   input:
-//   val(token_ncbi) from ncbi_upload_results
-  
-//   output:
-//   env(token_report) into report_results
-
-
-//   shell:
-//   '''
-
-//   R_IMG= ***replace with your own path here***
-//   runID=`(basename !{params.reads})`
-//   analysisDir=!{params.outdir}
-//   # seqDir=`(realpath !{params.reads})`
-//   seqDir=!{params.reads}
-
-
-//   # move up 3 levels for the mounting point
-//   # MP=$PWD/../../..
-//   MP=***set the binding path (top level recommended) for R container***
-//   singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
-
-//   singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
-//                                  ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
-
-//   singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 2>&1 >/dev/null
-
-//   token_report='finished'
-
-//   '''
-// }
-
-
-// process elims_datasheet {
-//   tag "ELIMS datasheet"
-
-//   input:
-//   val(token_report) from report_results
-
-
-//   script:
-//   """
-//   # generate datasheet to push samples to ELIMS
-//   python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s $params.outdir/summary.txt
-//   """
-// }
 
 
 workflow.onComplete {

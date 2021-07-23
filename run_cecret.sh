@@ -48,8 +48,7 @@ if [ $? -gt 0 ]; then
 	exit 1;
 fi
 
-nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR \
-							--kraken2 true --kraken2_db=$CECRET_BASE/kraken2_db
+nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
