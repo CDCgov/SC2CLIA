@@ -3,9 +3,32 @@
 ***
 
 #### Requires
-The Singularity container described in Cecret/configs/singularity-r.def. As of container version 2.0, all R-based scripts and versions.sh are included in this container and execute within it.  
+The Singularity container described in Cecret/configs/singularity-r.def. As of container version 2.0, all R-based scripts and versions.sh are included in this container and execute within it except for a few user-configurable files.  
 `singularity --bind /mnt,<hostMntPt> run --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
 Note that the mount point in the host directory tree must be high enough to include all required input files and output locations below it.  
+
+#### Configuration
+
+##### Customizing Report Headers and Footers for CLIA
+To customize the PDF that serves as the official record of the run and is signed by the CLIA Technical Supervisor, you must modify one file `clia_headers_template.tex` found in SC2/Cecret/bin/report.  
+
+Open the file in a text editor and scroll to the bottom.  
+* To modify the report title in the page headers, edit the following line. The existing header reads "SARS-CoV-2 Variant Whole Genome Sequencing Run Summary". `\chead{\textbf{SARS-CoV-2 Variant Whole Genome Sequencing Run Summary}}`
+* By default each page will be numbered in the lower right corner of the header, but since the signature sheet is rendered separately from the report, the signature page will always be numbered 1 even though it appears at the end of the final output PDF. You can resolve this by removing the line `\rhead{\thepage}` from the .tex file before rendering the signature page (usually performed only once on initial set up of the pipeline) and rendering the signature page without a page number, then putting the line back in before running the pipeline. This will result in a correctly numbered report with an unnumbered signature page at the end.
+* To customize the version number of your document in the footer, replace the "#" in the following line with the desired version identifier. `\cfoot{\textbf{Ver. No.} #}`
+* To customize the document identifier number in the footer, replace the "#" in the following line with the desired identifier. `\lfoot{\textbf{Doc. No.} #}`
+* To customize the effective date in the footer, modify the placeholder date of 01/01/1900 in the following line. `\rfoot{\textbf{Effective Date:} 01/01/1900}`  
+
+Once modifications are complete, save the file as `clia_headers.tex` in the same directory as the template (i.e. SC2/Cecret/bin/report).
+
+##### Rendering the CLIA Signature Page Template
+The CLIA signature page template file `clia_sig_page.Rmd` found in SC2/Cecret/bin/report must be manually rendered to create a PDF before running the pipeline. This PDF is reused by all subsequent analysis runs of the pipeline by appending it to the PDF of results tables outputted by each run.  
+
+To render this page, we recommend you first see the instructions in the above section regarding the customization of the page headers and footers. Once customization is complete, launch the container `sc2clia-cecret-r:version#.sif` in the directory SC2/SINGULARITY-CACHE. Note that you must perform the first run of the pipeline to trigger the download of the Singularity image from the third party repository or build the image from the source file SC2/Cecret/configs/singularity-r.def before it will be available. Assuming you have downloaded the image through the pipeline, navigate to the directory Cecret/SINGULARITY-CACHE and run the command `singularity exec --bind /mnt,<hostMntPt> singularity-r-v-2.1.sif Rscript ../Cecret/bin/report/render_clia_sig.R`. The PDF will automatically render as `clia_sig.pdf` in SC2/Cecret/bin/report.  
+
+Alternatively, if you have a reasonably modern version of R installed locally, you can render the file using that install instead of the Singularity image by running `Rscript Cecret/bin/report/render_clia_sig.R` from the SC2 directory.  
+
+If you wish to keep your entire records system digital for CLIA, we recommend you use a program such as Adobe Acrobat Pro to create fillable fields on the clia_sig.pdf file. 
 
 #### Use
 To view script options: `singularity run-help --app report <singularity-container-name.sif>`
