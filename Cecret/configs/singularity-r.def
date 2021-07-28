@@ -70,10 +70,10 @@ From: ubuntu:20.04
 %help
   Purpose: This container contains all dependencies to execute the R scripts for the Cecret pipeline written by CDC to analyze SARS-CoV-2 short read genomic assemblies under CLIA. 
   Usage: The container has 3 R scripts installed as separate apps within the container. Standard usage as a part of the Cecret pipeline process will involve 3 calls to the container.
-  singularity --bind /mnt,<hostMntPt> run --app orf_table singularity-r-v-2.0.sif <runID> <analysisDirFP>
-  singularity --bind /mnt,<hostMntPt> run --app append_tables singularity-r-v-2.0.sif <analysisDirFP> <file1FP> <file2FP>
-  singularity --bind /mnt,<hostMntPt> run --app report singularity-r-v-2.0.sif <runID> <analysisDirFP> <seqDirFP> 
-  Definitions: <runID> = Sequencing run ID (string); <analysisDirFP> = Cecret output directory full path (string); <seqDirFP> = Full path to sequencing run directory (string); <file1FP> = Table file 1 full path for append_tables.R (string); <file2FP> = Table file 2 full path for append_tables.R (string)
+  singularity --bind /mnt,<hostMntPt> run --app orf_table <containerName> <runID> <analysisDirFP>
+  singularity --bind /mnt,<hostMntPt> run --app append_tables <containerName> <analysisDirFP> <file1FP> <file2FP>
+  singularity --bind /mnt,<hostMntPt> run --app report <containerName> <runID> <analysisDirFP> <seqDirFP> 
+  Definitions: <runID> = Sequencing run ID (string); <analysisDirFP> = Cecret output directory full path (string); <seqDirFP> = Full path to sequencing run directory (string); <file1FP> = Table file 1 full path for append_tables.R (string); <file2FP> = Table file 2 full path for append_tables.R (string); <containerName> = The file name for this container (string)
 
 %test
   Rscript /opt/test_r_container.R
@@ -86,7 +86,7 @@ From: ubuntu:20.04
   exec Rscript /opt/orf_table.R -a $2 -r $1
 
 %apphelp orf_table
-  To view complete help for orf_table, run `singularity run-help --app orf_table <container>`.
+  To view complete help for orf_table, run `singularity exec --bind /mnt,<hostMntPt> <containerName> Rscript /opt/orf_table.R --help`.
 
 ##############################################
 # append_tables
@@ -96,7 +96,7 @@ From: ubuntu:20.04
   exec Rscript /opt/append_tables.R -a $1 -f $2 -s $3
 
 %apphelp append_tables
-  To view complete help for append_tables, run `singularity run-help --app append_tables <container>`.
+  To view complete help for append_tables, run `singularity exec --bind /mnt,<hostMntPt> <containerName> Rscript /opt/append_tables.R --help`.
 
 ##############################################
 # report
@@ -106,4 +106,4 @@ From: ubuntu:20.04
   exec Rscript /opt/config.R -a $2 -r $1 -s $3
 
 %apphelp report
-  To view complete help for report, run `singularity run-help --app report <container>`.
+  To view complete help for report, run `singularity exec --bind /mnt,<hostMntPt> <containerName> Rscript /opt/config.R --help`.
