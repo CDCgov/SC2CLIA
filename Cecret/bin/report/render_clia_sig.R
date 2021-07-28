@@ -17,12 +17,13 @@ Author: A. Jo Williams-Newkirk at ***REMOVED***
 Dependencies:
 R packages: docopt, testthat, rmarkdown
 
-Usage: render_clic_sig.R [-i <inputFile> -d <outputDir> -o <outputFile>]
+Usage: render_clia_sig.R [-r <inputRMD> -t <inputTEX> -d <outputDir> -o <outputFile>]
 config.R (-v | --version)
 config.R (-h | --help)
 
 Options:
--i <inputFile> --inputFile=<inputFile>      Input RMD file with path as needed; string [default: ../Cecret/bin/report/clia_sig_page.Rmd]
+-r <inputRMD> --inputRMD=<inputRMD>      Input RMD file with path as needed; string [default: ../Cecret/bin/report/clia_sig_page.Rmd]
+-t <inputTEX> --inputTEX=<inputTEX>         Input TEX file with path as needed; string [default: ../Cecret/bin/report/clia_headers.tex]
 -d <outputDir> --outputDir=<outputDir>      Output directory with path as needed; string [default: ../Cecret/bin/report]
 -o <outputFile> --outputFile=<outputFile>   Output file name without path; string [default: clia_sig_page.pdf]
 -h --help                                   Show this help and exit
@@ -32,9 +33,11 @@ Options:
 args <- docopt(doc = doc, version = ver)
 
 # Test the input args for validity
-test_that("Input file is .RMD and exists", {
-  expect_match(args$inputFile, "*.Rmd$", ignore.case = TRUE)
-  expect_true(file.exists(args$inputFile))
+test_that("Input files are .RMD and .TEX and exist", {
+  expect_match(args$inputRMD, "*.Rmd$", ignore.case = TRUE)
+  expect_true(file.exists(args$inputRMD))
+  expect_match(args$inputTEX, "*.tex$", ignore.case = TRUE)
+  expect_true(file.exists(args$inputTEX))
   })
 
 test_that("Output file is PDF without path and output directory exists", {
@@ -44,4 +47,4 @@ test_that("Output file is PDF without path and output directory exists", {
   })
 
 # Render the pdf
-rmarkdown::render(input = args$inputFile, output_format = "pdf_document", output_dir = args$outputDir, output_file = args$outputFile)
+rmarkdown::render(input = args$inputRMD, output_format = "pdf_document", output_dir = args$outputDir, output_file = args$outputFile)
