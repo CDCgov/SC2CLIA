@@ -50,8 +50,6 @@ From: ubuntu:20.04
   ../bin/report/_site.yml /opt
   ../bin/report/about.Rmd /opt
   ../bin/report/ampliconCov.Rmd /opt
-  ../bin/report/clia_sig_page_digsig.pdf /opt
-  ../bin/report/clia_sig_page.Rmd /opt
   ../bin/report/clia_summary.Rmd /opt
   ../bin/report/config.R /opt
   ../bin/report/index.Rmd /opt
@@ -67,7 +65,7 @@ From: ubuntu:20.04
 %labels
   Author A. Jo Williams-Newkirk
   Email ***REMOVED***
-  Version 2.0
+  Version 2.1.1
 
 %help
   Purpose: This container contains all dependencies to execute the R scripts for the Cecret pipeline written by CDC to analyze SARS-CoV-2 short read genomic assemblies under CLIA. 
