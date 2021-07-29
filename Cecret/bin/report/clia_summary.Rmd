@@ -1,30 +1,8 @@
 ---
-output: pdf_document
-header-includes:
-- \usepackage{booktabs}
-- \usepackage{longtable}
-- \usepackage{array}
-- \usepackage{multirow}
-- \usepackage{wrapfig}
-- \usepackage{float}
-- \usepackage{colortbl}
-- \usepackage{pdflscape}
-- \usepackage{tabu}
-- \usepackage{threeparttable}
-- \usepackage{threeparttablex}
-- \usepackage[normalem]{ulem}
-- \usepackage{makecell}
-- \usepackage{xcolor}
-- \AtBeginDocument{\let\maketitle\relax}
-- \usepackage{fancyhdr}
-- \pagestyle{fancy}
-- \fancyhf{}
-- \setlength{\headheight}{23pt}
-- \chead{\textbf{Enteric Diseases Laboratory Branch SARS-CoV-2 Variant Whole Genome Sequencing Run Summary}}
-- \rhead{\thepage}
-- \cfoot{\textbf{Ver. No.}01}
-- \lfoot{\textbf{Doc. No.} EDLB.TE.C.032.F02}
-- \rfoot{\textbf{Effective Date:} 05/13/2021}
+output: 
+  pdf_document:
+    includes:
+      in_header: "clia_headers.tex"
 classoption:
   - landscape
 params:
