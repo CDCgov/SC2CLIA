@@ -52,7 +52,7 @@ params.nextcladeParse = true
 params.pangolin = true
 params.bamsnap = false // can be really slow
 params.rename = false
-params.pacbam = true // for running pacbam
+params.pacbam_amplicons = true // for running pacbam_amplicons
 params.ivar_vcf = true // for converting ivar_variants tsv file into vcf file
 params.vadr = true
 params.aocd = true // for calculating average overall coverage depth
@@ -1810,7 +1810,7 @@ trimmed_bam_bai_orf
   .join(ivar_vcf_pacbam_orf, remainder:true, by:0)
   .set { pre_pacbam_orf }
 
-process pacbam {
+process pacbam_amplicons {
   tag "${sample}"
   echo false
   publishDir "${params.outdir}", mode: 'copy'
@@ -1823,7 +1823,7 @@ process pacbam {
 
 
   when:
-  params.pacbam
+  params.pacbam_amplicons
 
   shell:
   '''
