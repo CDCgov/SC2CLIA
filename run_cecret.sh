@@ -60,7 +60,13 @@ if [ ! -f "$OUTDIR/summary.txt" ]; then
 fi
 
 # for generating ORF(open reading frame) metrics and pdf reports
-R_IMG= ***replace with your own path here***
+# R_IMG= ***replace with your own path here***
+
+R_IMG=${PWD}/SINGULARITY_CACHE/sc2clia-cecret-r_v2.1.0
+if [ ! -f "$R_IMG" ]; then
+	singularity pull $R_IMG library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest
+fi
+
 
 runID=$(basename $DATA)
 analysisDir=$OUTDIR
