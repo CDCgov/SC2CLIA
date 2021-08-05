@@ -5,7 +5,7 @@
 #$ -pe smp 8
 
 # NOTE:
-# this script should only be run in $CECRET_BASE or your local git repo folder
+# this script should only be run in your local git repo folder
 # this script can be called upon as: ./run_cecret.sh -d sample_folder
 
 usage() { echo "Usage: $0 <-d  specify data folder>" 1>&2; exit 1; }
@@ -35,9 +35,10 @@ if [ ! -f "$DATA/SampleSheet.csv" ]; then
 fi
 
 
-CECRET_BASE= ***replace with your own path here***
 CECRET_NEXTFLOW=$PWD/Cecret/Cecret_alltools.nf
-CONFIG=$PWD/Cecret/configs/singularity.config
+CONFIG=$PWD/Cecret/configs/internal/singularity.config
+CONFIG_FILE=$PWD/Cecret/configs/internal/settings.ini
+R_IMG=$(grep -i R_IMG $CONFIG_FILE | cut -f 2 -d "=")
 
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
@@ -62,7 +63,7 @@ fi
 # for generating ORF(open reading frame) metrics and pdf reports
 # R_IMG= ***replace with your own path here***
 
-R_IMG=${PWD}/SINGULARITY_CACHE/sc2clia-cecret-r_v2.1.0
+# R_IMG=${PWD}/SINGULARITY_CACHE/sc2clia-cecret-r_v2.1.0
 if [ ! -f "$R_IMG" ]; then
 	singularity pull $R_IMG library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest
 fi
