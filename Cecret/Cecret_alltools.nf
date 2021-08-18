@@ -61,6 +61,7 @@ params.ncbi_upload = true // for ncbi submission
 params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 params.pacbam_orfs = true // pacbam orfs
+params.filter = true // filter human reads
 
 
 
@@ -353,7 +354,7 @@ bwa_version
 
 bwa_sams
   .concat(minimap2_sams)
-  .set { sams }
+  .into { sams ; sams_filter }
 
 process fastqc {
   publishDir "${params.outdir}", mode: 'copy'
@@ -427,6 +428,50 @@ process sort {
     samtools index aligned/!{sample}.sorted.bam 2>> $err_file >> $log_file
   '''
 }
+
+
+
+
+params.filter_options = ''
+process filter {
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus 4
+  container 'staphb/samtools:1.12'
+
+  when:
+  params.filter
+
+  input:
+  set val(sample), file(sam) from sams_filter
+
+  output:
+  tuple sample, file("${task.process}/${sample}_filtered_{R1,R2}.fastq.gz") optional true into filtered_reads
+  file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true
+  file("logs/${task.process}/${sample}.${workflow.sessionId}.{log,err}")
+
+  shell:
+  '''
+    mkdir -p !{task.process} logs/!{task.process}
+    log_file=logs/!{task.process}/!{sample}.!{workflow.sessionId}.log
+    err_file=logs/!{task.process}/!{sample}.!{workflow.sessionId}.err
+    # time stamp + capturing tool versions
+    date | tee -a $log_file $err_file > /dev/null
+    samtools --version >> $log_file
+    samtools sort -n !{sam} 2>> $err_file | \
+      samtools fastq -F 4 !{params.filter_options} \
+      -s !{task.process}/!{sample}_filtered_unpaired.fastq.gz \
+      -1 !{task.process}/!{sample}_filtered_R1.fastq.gz \
+      -2 !{task.process}/!{sample}_filtered_R2.fastq.gz \
+      2>> $err_file >> $log_file
+  '''
+}
+
+
+
+
+
 
 pre_trim_bams
   .combine(primer_bed)
