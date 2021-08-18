@@ -76,12 +76,12 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 - [pacbam_orfs](https://bitbucket.org/CibioBCG/pacbam/src/master) - for characterization of genomic regions and single nucleotide positions (for ORFs)
 - [nextcladeParse](https://clades.nextstrain.org/) - for parsing nextclade csv file and generating aa change stats
 - [ivar_vcf](https://andersen-lab.github.io/ivar/html/manualpage.html) - for converting ivar_variants tsv file into standard vcf file
-- [coverage_depth (bwa,samtools)](../Cecret_alltools.nf) - for calculating average read coverage over non-N consensus positions
-- [sc2ref](../Cecret_alltools.nf) - for calculating percentage of reads passing QC that align to reference
-- [ncbi_upload](../Cecret_alltools.nf) - for ncbi GenBank submission
+- [coverage_depth (bwa,samtools)](../Cecret/Cecret_alltools.nf) - for calculating average read coverage over non-N consensus positions
+- [sc2ref](../Cecret/Cecret_alltools.nf) - for calculating percentage of reads passing QC that align to reference
+- [ncbi_upload](../Cecret/Cecret_alltools.nf) - for ncbi GenBank submission
 - [mqc](https://github.com/ewels/MultiQC) - for generating MultiQC report
-- [largest_indel](../Cecret_alltools.nf) - for calculating largest INDEL length
-- [ampliconstats_dropout](../Cecret_alltools.nf) - for generating amplicon drop outs stats
+- [largest_indel](../Cecret/Cecret_alltools.nf) - for calculating largest INDEL length
+- [ampliconstats_dropout](../Cecret/Cecret_alltools.nf) - for generating amplicon drop outs stats
 
 #### Additional EDLB custom scripts:
 - [Custom R Singularity container definition file](R_singularity_README.md) - building and using the custom Singularity container used to execute all R scripts in the pipeline
