@@ -12,6 +12,7 @@ suppressMessages(library(rmarkdown))
 doc <- "Description: run this script to generate a report from Cecret pipeline outputs in HTML.
 
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 
 Dependencies:
 R packages: docopt, testthat, rmarkdown

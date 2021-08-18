@@ -12,6 +12,7 @@ suppressMessages(library(rlist))
 # Parse the args with docopt (will always be character strings)
 doc <- "Description: run this script to generate a table of ORF coverage statistics.
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 Dependencies:
 R packages: docopt, testthat, tidyverse, rlist
 Usage: orf_table.R -r <runID> -a <analysisDirFP> [-s <pacbamFileSuf> -b <bedFile1FP> -t <bedFile2FP> -p <pacbamDir> -m <minCov> -c <concensusDir> -f <consensusFileSuf> -d <meanDepthQC -l <covQC>]

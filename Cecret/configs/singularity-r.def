@@ -46,7 +46,7 @@ From: ubuntu:20.04
 %files
   ../bin/append_tables.R /opt
   ../bin/orf_table.R /opt
-  ../bin/versions.sh /opt
+  ../bin/report/versions.sh /opt
   ../bin/report/_site.yml /opt
   ../bin/report/about.Rmd /opt
   ../bin/report/ampliconCov.Rmd /opt
@@ -65,6 +65,7 @@ From: ubuntu:20.04
 %labels
   Author A. Jo Williams-Newkirk
   Email ***REMOVED***
+  Support SC2CLIA-Cecret@cdc.gov
   Version 2.1.1
 
 %help

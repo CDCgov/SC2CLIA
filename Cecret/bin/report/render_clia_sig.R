@@ -13,9 +13,10 @@ suppressMessages(library(tidyverse))
 doc <- "Description: run this script to generate a PDF signature page template to be used when generating CLIA reports through the Cecret pipeline.
 
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 
 Dependencies:
-R packages: docopt, testthat, rmarkdown
+R packages: docopt, testthat, rmarkdown, tidyverse
 
 Usage: render_clia_sig.R [-r <inputRMD> -t <inputTEX> -d <outputDir> -o <outputFile>]
 config.R (-v | --version)

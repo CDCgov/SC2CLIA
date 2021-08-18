@@ -13,9 +13,10 @@ suppressMessages(library(tidyverse))
 doc <- "Description: run this script to generate a blank CLIA report with signature page commonly used when generating CLIA validation packages for review.
 
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 
 Dependencies:
-R packages: docopt, testthat, rmarkdown
+R packages: docopt, testthat, rmarkdown, tidyverse
 
 Usage: render_clia_report_blank.R [-r <inputRMD> -t <inputTEX> -s <inputSig> -d <outputDir> -o <outputFile>]
 config.R (-v | --version)
