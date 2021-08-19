@@ -6,7 +6,7 @@ params:
   seqDirFP: null
   pacbamDir: "pacbam"
   pacbamFileSuffix: ".primertrim.sorted.pileup"
-  ampBED: "/opt/nCoV-2019.insert.bed"
+  ampBED: null
   ampMinCov: 30
   ampMeanCov: 100
   ampMaxNFail: 5
