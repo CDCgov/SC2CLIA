@@ -17,15 +17,24 @@ if ( params.reads == params.single_reads ) {
 }
 params.outdir = workflow.launchDir + '/cecret'
 
-// reference files for SARS-CoV-2 (part of the github repository)
-params.reference_genome = workflow.projectDir + "/configs/MN908947.3.fasta"
-params.gff_file = workflow.projectDir + "/configs/MN908947.3.gff"
-params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
 
-params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
-params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
-params.pacbamorf_orf_bed = workflow.projectDir + "/configs/MN908947.3-ORFs.bed"
-params.pacbamorf_orf7b_bed = workflow.projectDir + "/configs/MN908947.3-ORF7b.bed"
+
+
+// // reference files for SARS-CoV-2 (part of the github repository)
+//     params.reference_genome = workflow.projectDir + "/configs/MN908947.3.fasta"
+    // params.gff_file = workflow.projectDir + "/configs/MN908947.3.gff"
+    // params.primer_bed = workflow.projectDir + "/configs/artic_V3_nCoV-2019.bed"
+
+    // params.pacbam_odd_bed = workflow.projectDir + "/configs/nCoV-2019.insert.odd.bed"
+    // params.pacbam_even_bed = workflow.projectDir + "/configs/nCoV-2019.insert.even.bed"
+    // params.pacbamorf_orf_bed = workflow.projectDir + "/configs/MN908947.3-ORFs.bed"
+    // params.pacbamorf_orf7b_bed = workflow.projectDir + "/configs/MN908947.3-ORF7b.bed"
+
+
+
+
+
+
 
 
 
@@ -66,22 +75,6 @@ params.pacbam_orfs = true // pacbam orfs
 
 //# Workflow paramters --------------------------------------
 
-// minimap2 paramaters
-params.minimap2_K = '20M' // stolen from monroe
-
-// param that coincides with the staphb/seqyclean:1.10.09 container run with singularity
-params.seqyclean_contaminant_file="/Adapters_plus_PhiX_174.fasta"
-params.seqyclean_minlen = 25
-
-// for ivar
-params.ivar_quality = 20
-params.ivar_frequencing_threshold = 0.6
-params.ivar_minimum_read_depth = 10 // default is 10
-params.mpileup_depth = 8000
-
-// for optional contamination determination with kraken
-params.kraken2 = true // Switching to default on
-params.kraken2_db = ''
 
 // for optional route of tree generation and counting snps between samples
 params.relatedness = false
