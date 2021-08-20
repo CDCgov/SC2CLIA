@@ -1,3 +1,50 @@
+# Report README
+
+## TOC
+* [Inputs](#inputs)
+* [Function](#function)
+* [Outputs](#outputs)
+* [Dependencies](#dependencies)
+* [NOTE](#note)
+* [Contributing](#contributing)
+
+## Inputs
+_Describe the input files here._
+
+## Function
+_In as much detail as you care to provide, what does the process do with the inputs? Links to dependency docs may also be appropriate here._
+
+## Outputs
+_Describe the output files here._
+
+## Dependencies
+_List any process-specific dependencies. These could be executables or custom scripts. Provide links._
+- The Singularity container described in [singularity-r.def](../Cecret/configs/singularity-r.def). For details on obtaining and using container, see the [README](R_singularity_README.md).
+- Scripts (within the Singularity container unless noted)
+    - [config.R](../Cecret/bin/report/config.R) controls the rendering of the html and pdf versions of the report. View the help document using `singularity exec --bind /mnt,<hostMntPt> <containerName> Rscript /opt/config.R --help`. Note that the mount point in the host directory tree must be high enough to include all required input files and output locations below it.
+  - HTML report
+    - [index.Rmd](../Cecret/bin/report/index.Rmd) produces an easier to read version of summary.txt from the Cecret analysis output.
+    - [runInfo.Rmd](../Cecret/bin/report/runInfo.Rmd) produces an easier to read version of SampleSheet.csv in the sequencer output directory.
+    - [runQC.Rmd](../Cecret/bin/report/runQC.Rmd) produces a page with links to MultiQC report and displays insert size histograms for each sample.
+    - [ampliconCov.Rmd](../Cecret/bin/report/ampliconCov.Rmd) produces detailed amplicon coverage analysis for each sample. Calls [ampliconDetailTemplate.Rmd](../Cecret/bin/report/subpage_templates/ampliconDetailTemplate.Rmd) to generate subpages.
+    - [sGene.Rmd](../Cecret/bin/report/sGene.Rmd) blank for future development.
+    - [about.Rmd](../Cecret/bin/report/about.Rmd) produces a list of output directories and the version of component software used to generate them.
+  - PDF report
+    - [clia_headers_template.tex](../Cecret/bin/report/clia_headers_template.tex) is a template document customizing the PDF report's page headers and footers. See #note for more information. Found only in repo, not in Singularity container.
+    - [clia_sig_page.Rmd](../Cecret/bin/report/clia_sig_page.Rmd) is manually rendered to create a PDF with signature lines for CLIA documentation. See #note for more information. Found only in repo, not in Singularity container.
+    - [clia_summary.Rmd](../Cecret/bin/report/clia_summary.Rmd) produces a PDF containing tables of the information found in the Cecret output summary.txt organized in a way that is easier for the CLIA supervisor to review.
+    - [render_clia_sig.R](../Cecret/bin/report/render_clia_sig.R) renders a signature PDF that is reused each time a report is generated. See #note for more information.
+    - [render_clia_report_blank.R](../Cecret/bin/report/render_clia_report_blank.R) renders a blank version of a PDF report. Typical use is inclusion in CLIA certification packages. See #note for more information. Found only in repo, not in Singularity container.
+- Reference files (within repo unless otherwise noted)
+  - 
+`singularity --bind /mnt,<hostMntPt> run --app report <singularity_container_name.sif> <runID> <analysisDirFP> <seqDirFP>`  
+Note that the mount point in the host directory tree must be high enough to include all required input files and output locations below it.  
+
+## Note
+_Anything else that is useful to know._
+
+
+
 ### Cecret Report README Stub
 
 ***
