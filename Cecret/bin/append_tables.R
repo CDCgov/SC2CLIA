@@ -11,6 +11,7 @@ suppressMessages(library(tidyverse))
 # Parse the args with docopt (will always be character strings)
 doc <- "Description: run this script to merge two tables in delimited files. By default overwrites input file 1.
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 Dependencies:
 R packages: docopt, testthat, tidyverse
 Usage: append_tables.R -a <analysisDirFP> -f <file1FP> -s <file2FP> [-o <outputFileFP> -d <delimiter1> -e <delimiter2> -i <idCol1> -c <idCol2>]

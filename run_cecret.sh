@@ -8,11 +8,12 @@
 # this script should only be run in $CECRET_BASE or your local git repo folder
 # this script can be called upon as: ./run_cecret.sh -d sample_folder
 
-usage() { echo "Usage: $0 <-d  specify data folder>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 <-d  specify data folder> <-p specify profile in config>" 1>&2; exit 1; }
 
-while getopts "d:" o; do
+while getopts "d:p:" o; do
 	case $o in
 		d) DATA=${OPTARG} ;;
+		p) PROFILE=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
@@ -48,7 +49,7 @@ if [ $? -gt 0 ]; then
 	exit 1;
 fi
 
-nextflow run $CECRET_NEXTFLOW -c $CONFIG --reads $DATA --outdir $OUTDIR
+nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdir $OUTDIR 
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
