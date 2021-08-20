@@ -5,8 +5,8 @@
 #$ -pe smp 8
 
 # NOTE:
-# this script should only be run in $CECRET_BASE or your local git repo folder
-# this script can be called upon as: ./run_cecret.sh -d sample_folder
+# this script should only be run in your local git repo folder
+# this script can be called upon as: ./run_cecret.sh -d sample_folder -p profile (default to v3)
 
 usage() { echo "Usage: $0 <-d  specify data folder> <-p specify profile in config>" 1>&2; exit 1; }
 
@@ -36,7 +36,6 @@ if [ ! -f "$DATA/SampleSheet.csv" ]; then
 fi
 
 
-CECRET_BASE= ***replace with your own path here***
 CECRET_NEXTFLOW=$PWD/Cecret/Cecret_alltools.nf
 CONFIG=$PWD/Cecret/configs/singularity.config
 
@@ -49,7 +48,12 @@ if [ $? -gt 0 ]; then
 	exit 1;
 fi
 
-nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdir $OUTDIR 
+# check if there is profile argument
+if [ -z "${PROFILE}" ]; then
+	PROFILE=v3  # default to v3 profile
+fi
+
+nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdir $OUTDIR
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
