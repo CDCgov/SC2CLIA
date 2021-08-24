@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Author: Rong Jin ***REMOVED***, Jo Williams ***REMOVED***
+# Support: SC2CLIA-Cecret@cdc.gov
 # Date: 2021-04-15
 # Use: ./versions.sh <cecretOutputDirFullPath> 
 # Function: Run from the Cecret bin directory to collect component software versions. Currently launched by config.R in bin/report.

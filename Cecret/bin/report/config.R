@@ -12,11 +12,12 @@ suppressMessages(library(rmarkdown))
 doc <- "Description: run this script to generate a report from Cecret pipeline outputs in HTML.
 
 Author: A. Jo Williams-Newkirk at ***REMOVED***
+Support: SC2CLIA-Cecret@cdc.gov
 
 Dependencies:
 R packages: docopt, testthat, rmarkdown
 
-Usage: config.R -r <runID> -a <analysisDirFP> -s <seqDirFP>
+Usage: config.R -r <runID> -a <analysisDirFP> -s <seqDirFP> -b <ampBEDFP>
 config.R (-v | --version)
 config.R (-h | --help)
 
@@ -24,6 +25,7 @@ Options:
 -r <runID> --runID=<runID>                            Sequencing run ID; string
 -a <analysisDirFP> --analysisDirFP=<analysisDirFP>    Cecret output directory full path; string
 -s <seqDirFP> --seqDirFP=<seqDirFP>                   Full path to sequencing run directory; string
+-b <ampBEDFP> -- ampBEDFP=<ampBEDFP>                  Amplicon BED file full path; string
 -h --help                                             Show this help and exit
 -v --version                                          Show version and exit"
 
@@ -68,6 +70,17 @@ lapply(moreFiles, FUN = function(x) file.copy(file.path("/opt", x), file.path(ar
 
 # Do the html rendering
 lapply(rmdFiles, FUN = function(x) render(input = file.path(args$analysisDirFP, "report", "temp", x), output_format = "html_document", params = params, output_dir = file.path(args$analysisDirFP, "report")))
+
+render(input = file.path(args$analysisDirFP, 
+                         "report", 
+                         "temp", 
+                         "ampliconCov.Rmd"), 
+       output_format = "html_document", 
+       params = list(runID = args$runID,
+                     analysisDirFP = args$analysisDirFP,
+                     seqDirFP = args$seqDirFP,
+                     ampBED = args$ampBEDFP), 
+       output_dir = file.path(args$analysisDirFP, "report"))
 
 # Render the CLIA summary-signature page as PDF
 render(input = file.path(args$analysisDirFP, "report", "temp", "clia_summary.Rmd"), 
