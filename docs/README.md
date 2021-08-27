@@ -69,6 +69,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 - [snp-dists](https://github.com/tseemann/snp-dists) - for relatedness determination (optional, relatedness must be set to "true")
 - [iqtree](http://www.iqtree.org/) - for phylogenetic tree generation (optional, relatedness must be set to "true")
 - [bamsnap](https://github.com/parklab/bamsnap) - to create images of SNPs
+- [filter](../Cecret/Cecret_alltools.nf) - to filter out human DNA from the reads
 
 #### EDLB custom NextFlow processes are:
 - [vadr](https://github.com/ncbi/vadr) - for annotating fastas like NCBI (different than Erin's version)
@@ -98,9 +99,11 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 
 ## Note
 
-1. running the above script will generate a folder 'Run_(current timestamp)' with all the resulting files/folders in it
+1. running the above script will generate a folder 'Run_current-timestamp_runID' with all the resulting files/folders in it
 
 2. the sample data in the `data_folder`should have a flat structure without being in additional sub-folders
+
+3. [internal folder](../Cecret/configs/internal). We use this folder to hold any path/domain specific files/variables.
 
 ## Contributing
 
