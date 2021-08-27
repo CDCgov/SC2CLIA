@@ -55,9 +55,50 @@ class Orf_Stats:
 
         def orfStats(self):
 
+                orfstats = []
+
+                for i in bed1Stats:
+
+                        length = bed1Stats[1] - bed1Stats[0]
+
+                        orfSeq = concensus[bed1Stats[0]:bed2Stats[1]]
+
+                        orfID = bed1Stats[2]
+
+                        numNs = numberNs(orfSeq)
+
+                        percenNs = (numNs/length)*100
+
+                        coverageList = pacbamSlice(pacbamInfo,bed1Stats[0],bed1Stats[1])
 
 
 
+
+def pacbamSlice(pacbam,start,end):
+
+        coverageList = []
+
+        for i in pacbam:
+
+                i = i.split('\t')
+
+                if i[1] >= start and i[1] <= end:
+
+                        coverageList.append(i[8])
+
+
+        return(coverageList)
+
+
+def numberNs(orfSeq):
+
+        numNs = 0
+
+        for i in  orfSeq:
+                if i == 'N':
+                        numNs+=1
+
+        return(numNs)
 
 def consensusReader(consenusFile):
 
