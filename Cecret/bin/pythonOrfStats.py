@@ -10,7 +10,7 @@ class Bed_stats:
                 self.bed2 = str(bed2)
 
         def bed1Stats(self):
-                with open(bed1,'r') as f:
+                with open(self.bed1,'r') as f:
                         bed1Info = f.readlines()
                 f.close()
 
@@ -28,7 +28,7 @@ class Bed_stats:
                 return(bed1Stats)
 
         def bed2Stats(self):
-                with open(bed2,'r') as f:
+                with open(self.bed2,'r') as f:
                         bed2Info = f.readlines()
                 f.close()
 
@@ -47,7 +47,7 @@ class Bed_stats:
 
 class Orf_Stats:
 
-        def __init__(self,consensus,bed1Stats,bed2Stats,pacbamInfo):
+        def __init__(self, consensus, bed1Stats, bed2Stats, pacbamInfo):
                 self.consensus = consensus
                 self.bed1Stats = bed1Stats
                 self.bed2Stats = bed2Stats
@@ -57,19 +57,21 @@ class Orf_Stats:
 
                 orfstats = []
 
-                for i in bed1Stats:
+                for i in self.bed1Stats:
 
-                        length = bed1Stats[1] - bed1Stats[0]
+                        length = i[1] - i[0]
 
-                        orfSeq = consensus[bed1Stats[0]:bed2Stats[1]]
+                        orfSeq = self.consensus[i[0]:i[1]]
 
-                        orfID = bed1Stats[2]
+                        orfID = i[2]
 
                         numNs = numberNs(orfSeq)
 
                         percenNs = (numNs/length)*100
 
-                        coverageList = pacbamSlice(pacbamInfo,bed1Stats[0],bed1Stats[1])
+                        coverageList = pacbamSlice(self.pacbamInfo, i[0], i[1])
+
+#adding a comment
 
 
 def pacbamSlice(pacbam,start,end):
