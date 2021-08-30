@@ -61,7 +61,7 @@ class Orf_Stats:
 
                         length = bed1Stats[1] - bed1Stats[0]
 
-                        orfSeq = concensus[bed1Stats[0]:bed2Stats[1]]
+                        orfSeq = consensus[bed1Stats[0]:bed2Stats[1]]
 
                         orfID = bed1Stats[2]
 
@@ -70,8 +70,6 @@ class Orf_Stats:
                         percenNs = (numNs/length)*100
 
                         coverageList = pacbamSlice(pacbamInfo,bed1Stats[0],bed1Stats[1])
-
-
 
 
 def pacbamSlice(pacbam,start,end):
