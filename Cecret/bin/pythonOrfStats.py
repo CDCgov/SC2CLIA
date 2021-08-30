@@ -1,6 +1,7 @@
 import os
 import argparse
 import glob
+import statistics
 
 class Bed_stats:
 
@@ -47,17 +48,16 @@ class Bed_stats:
 
 class Orf_Stats:
 
-        def __init__(self, consensus, bed1Stats, bed2Stats, pacbamInfo):
+        def __init__(self, consensus, bedStats, pacbamInfo):
                 self.consensus = consensus
-                self.bed1Stats = bed1Stats
-                self.bed2Stats = bed2Stats
+                self.bedStats = bedStats
                 self.pacbamInfo = pacbamInfo
 
         def orfStats(self):
 
                 orfstats = []
 
-                for i in self.bed1Stats:
+                for i in self.bedStats:
 
                         length = i[1] - i[0]
 
@@ -71,7 +71,32 @@ class Orf_Stats:
 
                         coverageList = pacbamSlice(self.pacbamInfo, i[0], i[1])
 
-#adding a comment
+                        coverCalcs = (coverageCalc(coverageList,args.min_cov))
+
+                        minCovPercen = coverCalcs[1]/length*100
+
+                        covPercen = coverCalcs[0]/length*100
+
+                        orfStat=[orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs]
+
+                        orfstats.append(orfStat)
+
+                return(orfstats)
+
+def coverageCalc(coverageList,minCov):
+
+        covCount = 0
+        minCovCount = 0
+        meanDepth = statistics.mean(coverageList)
+
+        for i in coverageList:
+                if i == 0:
+                        covCount +=1
+                elif i >= minCov:
+                        minCovCount +=1
+
+
+        return(covCount,minCovCount,meanDepth)
 
 
 def pacbamSlice(pacbam,start,end):
