@@ -146,7 +146,9 @@ if __name__ == '__main__':
 
         parser = argparse.ArgumentParser(description='Script to take report ORF stats')
 
-        parser.add_argument('bed_file',type=str,help='Path to the bed file')
+        parser.add_argument('bed_file1',type=str,help='Path to the bed file')
+
+        parser.add_argument('bed_file2',type=str,help='Path to second bed file')
 
         parser.add_argument('pacbam_dir',type=str,help='Path to the directory containing pacbam files')
 
