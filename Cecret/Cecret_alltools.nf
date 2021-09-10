@@ -71,7 +71,10 @@ params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 params.pacbam_orfs = true // pacbam orfs
 params.filter = true // filter human reads
+params.bbmap = false // calculate hit ratio of filtered reads mapping to human DNA
 
+// params.queue = 'default'
+// params.fastQueue = ${params.queue}-hi
 
 
 //# Workflow paramters --------------------------------------
@@ -441,7 +444,7 @@ process filter {
 
   output:
   tuple sample, file("${task.process}/${sample}_filtered_{R1,R2}.fastq.gz") optional true into filtered_reads
-  file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true
+  file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true into filtered_unpaired_reads
   file("logs/${task.process}/${sample}.${workflow.sessionId}.{log,err}")
 
   shell:
@@ -462,7 +465,58 @@ process filter {
 }
 
 
+process bbmap {
+  publishDir "${params.outdir}", mode: 'copy'
+  tag "${sample}"
+  echo false
+  cpus params.maxcpus
+  container 'staphb/bbtools:38.86'
+  containerOptions '--bind /mnt,***set the binding path (top level recommended) for R container***'
 
+  when:
+  params.bbmap
+
+  input:
+  set val(sample), file(reads) from filtered_reads
+  file(unpaired_reads) from filtered_unpaired_reads
+
+  output:
+  file("${task.process}/${sample}_filtered.fasta")
+  file("${task.process}/${sample}_filtered_duked.fasta") optional true into bbmap_result
+  file("${task.process}/${sample}_filtered_unpaired.fasta")
+  file("${task.process}/${sample}_filtered_unpaired_duked.fasta") 
+
+  shell:
+  '''
+    bbmap.sh \
+      ref=!{params.bb_ref} \
+      path=!{params.bb_path} \
+      in=!{reads[0]} \
+      in2=!{reads[1]} \
+      outm=!{task.process}/!{sample}_filtered.fasta \
+      minratio=0.9
+
+    bbduk.sh \
+      in=!{task.process}/!{sample}_filtered.fasta \
+      out=!{task.process}/!{sample}_filtered_duked.fasta \
+      entropy=0.7
+
+    bbmap.sh \
+      ref=!{params.bb_ref} \
+      path=!{params.bb_path} \
+      in=!{unpaired_reads} \
+      outm=!{task.process}/!{sample}_filtered_unpaired.fasta \
+      minratio=0.9
+
+    bbduk.sh \
+      in=!{task.process}/!{sample}_filtered_unpaired.fasta \
+      out=!{task.process}/!{sample}_filtered_unpaired_duked.fasta \
+      entropy=0.7
+
+
+  '''
+
+}
 
 
 
