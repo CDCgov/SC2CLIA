@@ -73,9 +73,6 @@ params.pacbam_orfs = true // pacbam orfs
 params.filter = true // filter human reads
 params.bbmap = false // calculate hit ratio of filtered reads mapping to human DNA
 
-// params.queue = 'default'
-// params.fastQueue = ${params.queue}-hi
-
 
 //# Workflow paramters --------------------------------------
 
