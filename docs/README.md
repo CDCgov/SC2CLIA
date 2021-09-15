@@ -48,7 +48,9 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 ## USAGE
 
 1. Run the following script at your base folder(replace `data_folder` with the path to your data; r is for generating report files)  
- `./run_cecret.sh - d data_folder `  (there is an optional flag `-p` to apply a different profile(default to v3) in the config file)
+ `./run_cecret.sh - d data_folder `    
+ (there is an optional flag `-p` to apply a different profile (default to v3) in the config file)  
+ (there is an optional flag `-b` to turn on bbmap process: map filtered reads to human genome GRCh38)  
  
 ## Main Components
 
