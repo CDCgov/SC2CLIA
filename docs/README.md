@@ -83,6 +83,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 - [mqc](mqc_README.md) - for generating MultiQC report
 - [largest_indel](largest_indel_README.md) - for calculating largest INDEL length
 - [ampliconstats_dropout](ampliconstats_dropout_README.md) - for generating amplicon drop outs stats
+- [bbmap](bbmap_README.md) - for mapping filtered reads to human genome GRCh38
 
 #### Additional EDLB custom scripts:
 - [Custom R Singularity container definition file](R_singularity_README.md) - building and using the custom Singularity container used to execute all R scripts in the pipeline
