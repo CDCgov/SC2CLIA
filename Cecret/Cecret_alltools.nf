@@ -1975,6 +1975,32 @@ process ncbi_upload {
 
 
 
+process bbmap {
+  //publishDir "${params.outdir}", mode: 'copy'
+  tag "bbmap on filtered reads"
+  echo true
+  cpus params.maxcpus
+  //errorStrategy 'ignore'
+  container "${params.BB_IMG}"
+  containerOptions "--bind /mnt,${params.BB_BIND}"
+
+
+  when:
+  params.bbmap
+
+
+  input:
+  val(token_ncbi) from ncbi_upload_results
+ 
+
+  shell:
+  '''
+  !{workflow.launchDir}/Cecret/bin/bbtool.sh -p !{params.BB_PATH} -r !{params.BB_REF} -o !{params.outdir}
+
+  '''
+
+}
+
 workflow.onComplete {
     println("Pipeline completed at: $workflow.complete")
     println("Execution status: ${ workflow.success ? 'OK' : 'failed' }")
