@@ -71,7 +71,6 @@ params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 params.pacbam_orfs = true // pacbam orfs
 params.filter = true // filter human reads
-params.bbmap2 = true
 
 
 
@@ -1976,18 +1975,18 @@ process ncbi_upload {
 
 
 
-process bbmap2 {
+process bbmap {
   //publishDir "${params.outdir}", mode: 'copy'
   tag "bbmap on filtered reads"
   echo true
   cpus params.maxcpus
   //errorStrategy 'ignore'
-  container 'staphb/bbtools:38.86'
-  containerOptions '--bind /mnt,***set the binding path (top level recommended) for R container***'
+  container "${params.BB_IMG}"
+  containerOptions "--bind /mnt,${params.BB_BIND}"
 
 
   when:
-  params.bbmap2
+  params.bbmap
 
 
   input:
@@ -1996,10 +1995,7 @@ process bbmap2 {
 
   shell:
   '''
-  BB_PATH= ***replace with your own path here***
-  BB_REF= ***replace with your own path here***
-
-  !{workflow.launchDir}/Cecret/bin/bbmap2.sh -p $BB_PATH -r $BB_REF -o !{params.outdir}
+  !{workflow.launchDir}/Cecret/bin/bbtool.sh -p !{params.BB_PATH} -r !{params.BB_REF} -o !{params.outdir}
 
   '''
 

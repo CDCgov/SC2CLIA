@@ -1,32 +1,23 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 <-i  specify bbmap img name>" \
-						  "<-l  specify bbmap docker URL>" \
-						  "<-p  specify bbmap ref path>" \
+usage() { echo "Usage: $0 <-p  specify bbmap ref path>" \
 						  "<-r  specify bbmap ref name>" \
-						  "<-o  specify reads directory> " \
-						  "<-b  specify singularity binding path>" 1>&2; exit 1; }
+						  "<-o  specify reads directory> " 1>&2; exit 1; }
 
-while getopts "i:l:p:r:o:b:" o; do
+while getopts "p:r:o:" o; do
 	case $o in
-		i) BB_IMG=${OPTARG} ;;
-		l) BB_LIB=${OPTARG} ;;
 		p) BB_PATH=${OPTARG} ;;
 		r) BB_REF=${OPTARG} ;;
 		o) OUTDIR=${OPTARG} ;;
-		b) BIND=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
 
-# # all arguments are required
-# if [ -z "${BB_IMG}" ] || [ -z "${BB_LIB}" ] || [ -z "${BB_PATH}" ] || [ -z "${BB_REF}" ] || [ -z "${OUTDIR}" ] || [ -z "${BIND}" ]; then
-#     usage
-# fi
+# all arguments are required
+if [ -z "${BB_PATH}" ] || [ -z "${BB_REF}" ] || [ -z "${OUTDIR}" ]; then
+    usage
+fi
 
-# if [ ! -f "$BB_IMG" ]; then
-# 	singularity pull $BB_IMG $BB_LIB
-# fi
 
 # compile inlist, in2list, outmlist for bbwrap.sh
 mkdir -p ${OUTDIR}/filter/bbmap
@@ -44,7 +35,6 @@ for file in ${OUTDIR}/filter/*.gz; do
 	fi
 done
 
-# singularity run --bind /mnt,$BIND $BB_IMG bbwrap.sh \
 bbwrap.sh \
 			ref=$BB_REF \
 			path=$BB_PATH \
@@ -53,7 +43,6 @@ bbwrap.sh \
 			outmlist=${OUTDIR}/filter/bbmap/outm_paired.txt \
 			minratio=0.9 >/dev/null 2>&1
 
-# singularity run --bind /mnt,$BIND $BB_IMG bbwrap.sh \
 bbwrap.sh \
 			ref=$BB_REF \
 			path=$BB_PATH \
@@ -65,7 +54,6 @@ bbwrap.sh \
 for file in ${OUTDIR}/filter/bbmap/*.fasta; do
 	if [ -s $file ]; then
 		mv $file ${file}.fasta
-		# singularity run --bind /mnt,$BIND $BB_IMG bbduk.sh \
 		bbduk.sh \
 					in=${file}.fasta \
 					out=$file \
@@ -85,3 +73,8 @@ for file in ${OUTDIR}/filter/bbmap/*.fasta; do
     fi
     echo "$(basename $temp), we found $hits hits out of $num_total sequences, with hit_ratio = $percent_hit%" >> ${OUTDIR}/filter/bbmap/bbmap_result.txt
 done
+
+# remove everything except the bbmap result file
+mv ${OUTDIR}/filter/bbmap/bbmap_result.txt ${OUTDIR}/filter/bbmap_result.txt 
+rm ${OUTDIR}/filter/bbmap/*
+mv ${OUTDIR}/filter/bbmap_result.txt ${OUTDIR}/filter/bbmap/bbmap_result.txt
