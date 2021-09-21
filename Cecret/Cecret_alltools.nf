@@ -492,8 +492,8 @@ process bbmap {
     mkdir -p !{task.process}
 
     bbmap.sh \
-      ref=!{params.bb_ref} \
-      path=!{params.bb_path} \
+      ref=!{params.BB_REF} \
+      path=!{params.BB_PATH} \
       in=!{reads[0]} \
       in2=!{reads[1]} \
       outm=!{task.process}/!{sample}_filtered.fasta \
@@ -517,8 +517,8 @@ process bbmap {
 
     # process unpaired reads
     bbmap.sh \
-      ref=!{params.bb_ref} \
-      path=!{params.bb_path} \
+      ref=!{params.BB_REF} \
+      path=!{params.BB_PATH} \
       in=!{unpaired_reads} \
       outm=!{task.process}/!{sample}_filtered_unpaired.fasta \
       minratio=0.9 \
@@ -2057,33 +2057,6 @@ process ncbi_upload {
   '''
 }
 
-
-
-process bbmap {
-  //publishDir "${params.outdir}", mode: 'copy'
-  tag "bbmap on filtered reads"
-  echo true
-  cpus params.maxcpus
-  //errorStrategy 'ignore'
-  container "${params.BB_IMG}"
-  containerOptions "--bind /mnt,${params.BB_BIND}"
-
-
-  when:
-  params.bbmap
-
-
-  input:
-  val(token_ncbi) from ncbi_upload_results
- 
-
-  shell:
-  '''
-  !{workflow.launchDir}/Cecret/bin/bbtool.sh -p !{params.BB_PATH} -r !{params.BB_REF} -o !{params.outdir}
-
-  '''
-
-}
 
 workflow.onComplete {
     println("Pipeline completed at: $workflow.complete")
