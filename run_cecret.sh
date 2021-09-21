@@ -7,9 +7,9 @@
 # NOTE:
 # this script should only be run in your local git repo folder
 # this script can be called upon as: ./run_cecret.sh -d sample_folder -p profile (default to v3)
-
+# add -b b (any letter will do) argument if you want to run bbmap on filtered reads
 usage() { echo "Usage: $0 <-d  specify data folder> <-p specify profile in config>" \
-						  "<-b  type any letter to trigger using bbmap> " 1>&2; exit 1; }
+						 "<-b  type any letter to trigger using bbmap> " 1>&2; exit 1; }
 
 while getopts "d:p:b:" o; do
 	case $o in
@@ -37,6 +37,13 @@ if [ ! -f "$DATA/SampleSheet.csv" ]; then
 	exit 1;
 fi
 
+# check flag on bbmap
+if [ -n "${BBMAP}" ]; then
+	BBMAP=true
+else
+	BBMAP=false
+fi
+
 
 CECRET_NEXTFLOW=$PWD/Cecret/Cecret_alltools.nf
 CONFIG=$PWD/Cecret/configs/internal/singularity.config
@@ -44,10 +51,6 @@ CONFIG=$PWD/Cecret/configs/internal/singularity.config
 CONFIG_FILE=$PWD/Cecret/configs/internal/settings.ini
 R_IMG=$(grep -i R_IMG $CONFIG_FILE | cut -f 2 -d "=")
 R_LIB=$(grep -i R_LIB $CONFIG_FILE | cut -f 2 -d "=")
-BB_IMG=$(grep -i BB_IMG $CONFIG_FILE | cut -f 2 -d "=")
-BB_LIB=$(grep -i BB_LIB $CONFIG_FILE | cut -f 2 -d "=")
-BB_PATH=$(grep -i BB_PATH $CONFIG_FILE | cut -f 2 -d "=")
-BB_REF=$(grep -i BB_REF $CONFIG_FILE | cut -f 2 -d "=")
 
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
@@ -63,7 +66,7 @@ if [ -z "${PROFILE}" ]; then
 	PROFILE=v3  # default to v3 profile
 fi
 
-nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdir $OUTDIR
+nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdir $OUTDIR --bbmap $BBMAP
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
@@ -88,7 +91,7 @@ seqDir=$(realpath $DATA)
 
 # bind path
 MP=***set the binding path (top level recommended) for R container***
-singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir >/dev/null 2>&1
+singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir  >/dev/null 2>&1
 
 singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
 														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
@@ -99,9 +102,13 @@ echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
 
 python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
 
-# run bbmap on filtered reads
-if [ -n "${BBMAP}" ]; then
-	echo "calling bbmap on the filtered reads..."
-	${PWD}/Cecret/bin/bbmap.sh -b $MP -i $BB_IMG -l $BB_LIB -p $BB_PATH -r $BB_REF -o $OUTDIR
-	echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
-fi
+
+# grep: print out all lines that contain either 'withName' or 'container'
+# sed: remove 'withName:', 'container =', all single quotes, all leading spaces and tabs, all lines that have '\\'
+# sed: replace '{' with ':'
+# sed: delete all empty lines
+# awk: if a line ends with ':', replace '\n' with '\t'
+grep -E 'withName|container' ${PWD}/Cecret/configs/containers_fixedversion.config | \
+	sed -e "s/withName://;s/container =//;s/{/:/;s/'//g;s/^[ \t]*//;s/\/\/.*//g" | \
+	sed '/^$/d' | awk '{ if ($0 ~ /.*:$/) {ORS="\t";print $0} else{ORS="\n";print $0} }' | sort \
+	> $OUTDIR/containers_version.txt

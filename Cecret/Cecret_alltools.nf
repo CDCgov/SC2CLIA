@@ -71,7 +71,6 @@ params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 params.pacbam_orfs = true // pacbam orfs
 params.filter = true // filter human reads
-params.bbmap = false // calculate hit ratio of filtered reads mapping to human DNA
 
 
 //# Workflow paramters --------------------------------------
@@ -440,8 +439,9 @@ process filter {
   set val(sample), file(sam) from sams_filter
 
   output:
-  tuple sample, file("${task.process}/${sample}_filtered_{R1,R2}.fastq.gz") optional true into filtered_reads
-  file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true into filtered_unpaired_reads
+  // tuple sample, file("${task.process}/${sample}_filtered_{R1,R2}.fastq.gz") optional true into filtered_reads
+  // file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true into filtered_unpaired_reads
+  tuple sample, file("${task.process}/${sample}_filtered_{R1,R2}.fastq.gz"), file("${task.process}/${sample}_filtered_unpaired.fastq.gz") optional true into filtered_reads
   file("logs/${task.process}/${sample}.${workflow.sessionId}.{log,err}")
 
   shell:
@@ -462,59 +462,92 @@ process filter {
 }
 
 
+if ( params.maxcpus < 8 ) {
+  params.bbmapcpus = 2
+} else {
+  params.bbmapcpus = params.maxcpus.intdiv(4)
+}
 process bbmap {
-  publishDir "${params.outdir}", mode: 'copy'
+  //publishDir "${params.outdir}", mode: 'copy'
   tag "${sample}"
   echo false
-  cpus params.maxcpus
-  container 'staphb/bbtools:38.86'
-  containerOptions '--bind /mnt,***set the binding path (top level recommended) for R container***'
+  containerOptions "--bind /mnt,${params.BB_BIND}"
+  maxForks params.bbmapcpus
 
   when:
   params.bbmap
 
   input:
-  set val(sample), file(reads) from filtered_reads
-  file(unpaired_reads) from filtered_unpaired_reads
+  tuple val(sample), file(reads), file(unpaired_reads) from filtered_reads
 
   output:
-  file("${task.process}/${sample}_filtered.fasta")
-  file("${task.process}/${sample}_filtered_duked.fasta") optional true into bbmap_result
-  file("${task.process}/${sample}_filtered_unpaired.fasta")
-  file("${task.process}/${sample}_filtered_unpaired_duked.fasta") 
+  //file("${task.process}/${sample}_filtered.fasta")
+  //file("${task.process}/${sample}_filtered_duked.fasta")
+  //file("${task.process}/${sample}_filtered_unpaired.fasta")
+  //file("${task.process}/${sample}_filtered_unpaired_duked.fasta") 
+  file("${task.process}/${sample}_bbmap_result.txt") optional true into bbmap_result_files
 
   shell:
   '''
+    mkdir -p !{task.process}
+
     bbmap.sh \
       ref=!{params.bb_ref} \
       path=!{params.bb_path} \
       in=!{reads[0]} \
       in2=!{reads[1]} \
       outm=!{task.process}/!{sample}_filtered.fasta \
-      minratio=0.9
+      minratio=0.9 \
+      t=!{params.bbmapcpus}
 
+    # run bbduk.sh to weed out low-complexity sequences
     bbduk.sh \
       in=!{task.process}/!{sample}_filtered.fasta \
       out=!{task.process}/!{sample}_filtered_duked.fasta \
       entropy=0.7
 
+    hits=$(grep '>' !{task.process}/!{sample}_filtered_duked.fasta | wc -l)
+    num_total=$(gunzip -c !{params.outdir}/filter/!{sample}_filtered_R1.fastq.gz | echo $((`wc -l`/4)))
+    if (( $num_total == 0 )); then
+      percent_hit=NA
+    else
+      percent_hit=$(echo "$hits $num_total" | awk '{printf "%.3f", $1*100/$2}')
+    fi
+    echo "!{sample}_filtered_R1.fastq.gz, found $hits hits out of $num_total sequences, hit_ratio = $percent_hit%" >> !{task.process}/!{sample}_bbmap_result.txt
+
+    # process unpaired reads
     bbmap.sh \
       ref=!{params.bb_ref} \
       path=!{params.bb_path} \
       in=!{unpaired_reads} \
       outm=!{task.process}/!{sample}_filtered_unpaired.fasta \
-      minratio=0.9
+      minratio=0.9 \
+      t=!{params.bbmapcpus}
 
     bbduk.sh \
       in=!{task.process}/!{sample}_filtered_unpaired.fasta \
       out=!{task.process}/!{sample}_filtered_unpaired_duked.fasta \
       entropy=0.7
 
+    hits=$(grep '>' !{task.process}/!{sample}_filtered_unpaired_duked.fasta | wc -l)
+    num_total=$(gunzip -c !{params.outdir}/filter/!{sample}_filtered_unpaired.fastq.gz | echo $((`wc -l`/4)))
+    if (( $num_total == 0 )); then
+      percent_hit=NA
+    else
+      percent_hit=$(echo "$hits $num_total" | awk '{printf "%.3f", $1*100/$2}')
+    fi
+    echo "!{sample}_filtered_unpaired.fastq.gz, found $hits hits out of $num_total sequences, hit_ratio = $percent_hit%" >> !{task.process}/!{sample}_bbmap_result.txt
+
 
   '''
 
 }
 
+bbmap_result_files
+  .collectFile(name: "bbmap_result.txt",
+    keepHeader: false,
+    sort: true,
+    storeDir: "${params.outdir}/bbmap")
 
 
 pre_trim_bams
@@ -997,7 +1030,7 @@ process kraken2 {
   publishDir "${params.outdir}", mode: 'copy'
   tag "${sample}"
   echo false
-  cpus params.maxcpus
+  //cpus params.maxcpus
 
   when:
   params.kraken2
@@ -1298,7 +1331,7 @@ process coverage_depth_bwa {
 process coverage_depth_samtools {
   tag "${sample}"
   echo false
-  cpus params.maxcpus
+  //cpus params.maxcpus
 
   when:
   params.aocd
