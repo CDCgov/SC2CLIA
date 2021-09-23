@@ -45,7 +45,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 2. [Obtain the R Singularity container](R_Singularity_README.md) by downloading or building your own copy  
 [image url in settings.ini file](../Cecret/configs/internal/settings.ini)
 
-3. Make sure to update configuration files with your own custom paths in [config folder](README.md#config-folder) - see Config folder below
+3. Make sure to update configuration files with your own custom paths in [config folder](README.md#configs-folder) - see Config folder below
 
 
 ## USAGE
