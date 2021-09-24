@@ -103,12 +103,12 @@ echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
 python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
 
 
-# grep: print out all lines that contain either 'withName' or 'container'
+# grep: print out all lines that contain either 'withName' or '//container'
 # sed: remove 'withName:', 'container =', all single quotes, all leading spaces and tabs, all lines that have '\\'
 # sed: replace '{' with ':'
 # sed: delete all empty lines
 # awk: if a line ends with ':', replace '\n' with '\t'
-grep -E 'withName|container' ${PWD}/Cecret/configs/containers_fixedversion.config | \
-	sed -e "s/withName://;s/container =//;s/{/:/;s/'//g;s/^[ \t]*//;s/\/\/.*//g" | \
-	sed '/^$/d' | awk '{ if ($0 ~ /.*:$/) {ORS="\t";print $0} else{ORS="\n";print $0} }' | sort \
-	> $OUTDIR/containers_version.txt
+sed -e "s/^[ \t]*//" ${PWD}/Cecret/configs/containers_fixedversion_hash.config | grep -E '^withName|\/\/container' | \
+        sed -e "s/withName://;s/container =//;s/{/:/;s/'//g;s/\/\///g" | \
+        sed '/^$/d' | awk '{ if ($0 ~ /.*:$/) {ORS="\t";print $0} else{ORS="\n";print $0} }' | sort \
+        > $OUTDIR/containers_version.txt
