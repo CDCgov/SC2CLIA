@@ -1,7 +1,7 @@
-import os
 import argparse
 import glob
 import statistics
+import csv
 
 class Bed_stats:
 
@@ -59,23 +59,50 @@ class Orf_Stats:
 
                 for i in self.bedStats:
 
-                        length = i[1] - i[0]
+                        try:
+                                length = i[1] - i[0]
+                        except:
+                                length = 'NA'
 
-                        orfSeq = self.consensus[i[0]:i[1]]
+                        try:
+                                orfSeq = self.consensus[i[0]:i[1]]
+                        except:
+                                orfSeq = 'NA'
 
-                        orfID = i[2]
+                        try:
+                                orfID = i[2]
+                        except:
+                                orfID = 'NA'
 
-                        numNs = numberNs(orfSeq)
+                        try:
+                                numNs = numberNs(orfSeq)
+                        except:
+                                numNs = 'NA'
 
-                        percenNs = (numNs/length)*100
+                        try:
+                                percenNs = (numNs/length)*100
+                        except:
+                                percenNs = 'NA'
 
-                        coverageList = pacbamSlice(self.pacbamInfo, i[0], i[1])
+                        try:
+                                coverageList = pacbamSlice(self.pacbamInfo, i[0], i[1])
+                        except:
+                                coverageList = 'NA'
 
-                        coverCalcs = (coverageCalc(coverageList,args.min_cov))
+                        try:
+                                coverCalcs = (coverageCalc(coverageList,args.min_cov))
+                        except:
+                                coverCalcs = 'NA'
 
-                        minCovPercen = coverCalcs[1]/length*100
+                        try:
+                                minCovPercen = coverCalcs[1]/length*100
+                        except:
+                                minCovPercen = 'NA'
 
-                        covPercen = coverCalcs[0]/length*100
+                        try:
+                                covPercen = coverCalcs[0]/length*100
+                        except:
+                                covPercen = 'NA'
 
                         orfStat=[orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs]
 
@@ -162,5 +189,43 @@ if __name__ == '__main__':
 
         args = parser.parse_args()
 
+        bedFileClass = Bed_stats(args.bed_file1,args.bed_file2)
 
+        bed1Stats = bedFileClass.bed1Stats()
+        bed2Stats = bedFileClass.bed2Stats()
 
+        consensusFiles = sorted(glob.glob(args.consensus_dir+'.fa'))
+
+        orfInfo = []
+
+        for consensus in consensusFiles:
+
+                basename = consensus.split('/')[-1]
+
+                pacbams = sorted(glob.glob(args.pacbam_dir+basename+'*/*/*'))
+
+                consensusSeq = consensusReader(consensus)
+
+                consensusSeq = consensusSeq[1]
+
+                pacbamOrfs = pacbamReader(pacbams[1])
+
+                pacbamOrf7b = pacbamReader(pacbams[0])
+
+                orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs)
+
+                orf = orfClass.orfStats()
+
+                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b)
+
+                orf7b = orf7bClass.orfStats()
+
+                orf.append(orf7b)
+
+                orfInfo.append(orf)
+
+        for i in orfInfo:
+
+                with open('orf_stats','w',newline='') as f:
+                        orfOut = csv.writer(f,delimiter='\t')
+                        orfOut.writerow(i)
