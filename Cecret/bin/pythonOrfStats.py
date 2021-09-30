@@ -39,8 +39,8 @@ class Bed_stats:
                         orfStat = []
 
                         i = i.split('\t')
-                        orfStat.append(i[1])
-                        orfStat.append(i[2])
+                        orfStat.append(int(i[1]))
+                        orfStat.append(int(i[2]))
                         orfStat.append(i[3])
                         bed2Stats.append(orfStat)
 
@@ -60,11 +60,8 @@ class Orf_Stats:
 
                 for i in self.bedStats:
 
-                        print(i)
-
                         try:
                                 length = int(i[1]) - int(i[0])
-                                print(length)
                         except:
                                 length = 'NA'
 
@@ -75,19 +72,19 @@ class Orf_Stats:
 
                         try:
                                 orfID = i[2]
-                                print(orfID)
                         except:
                                 orfID = 'NA'
 
                         try:
                                 numNs = numberNs(orfSeq)
-                                print(numNs)
+
+                                if length == 0:
+                                        numNs = 'NA'
                         except:
                                 numNs = 'NA'
 
                         try:
                                 percenNs = (numNs/length)*100
-                                print(percenNs)
                         except:
                                 percenNs = 'NA'
 
@@ -98,19 +95,16 @@ class Orf_Stats:
 
                         try:
                                 coverCalcs = (coverageCalc(coverageList,self.min_cov))
-                                print(coverCalcs[2],coverCalcs[1])
                         except:
-                                coverCalcs = 'NA'
+                                coverCalcs = ['NA','NA','NA']
 
                         try:
                                 minCovPercen = coverCalcs[1]/length*100
-                                print(minCovPercen)
                         except:
                                 minCovPercen = 'NA'
 
                         try:
                                 covPercen = coverCalcs[0]/length*100
-                                print(covPercen)
                         except:
                                 covPercen = 'NA'
 
@@ -210,8 +204,6 @@ if __name__ == '__main__':
 
         consensusFiles = sorted(glob.glob(args.consensus_dir+'*.fa'))
 
-        orfInfo = []
-
         for consensus in consensusFiles:
 
                 basename = consensus.split('/')[-1]
@@ -224,24 +216,32 @@ if __name__ == '__main__':
 
                 consensusSeq = consensusSeq[1]
 
-                pacbamOrfs = pacbamReader(pacbams[1])
+                try:
+                        pacbamOrfs = pacbamReader(pacbams[1])
+                except:
+                        pacbamOrfs = 'NA'
 
-                pacbamOrf7b = pacbamReader(pacbams[0])
+                try:
+                        pacbamOrf7b = pacbamReader(pacbams[0])
+                except:
+                        pacbamOrf7b = 'NA'
 
                 orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs,args.min_cov)
 
                 orf = orfClass.orfStats()
 
+                for i in orf:
+                        with open('orf_stats', 'a', newline='') as f:
+                                orfOut = csv.writer(f, delimiter='\t')
+                                orfOut.writerow(i)
+
                 orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov)
 
                 orf7b = orf7bClass.orfStats()
 
-                orf.append(orf7b)
+                for i in orf7b:
+                        with open('orf_stats', 'a', newline='') as f:
+                                orfOut = csv.writer(f, delimiter='\t')
+                                orfOut.writerow(i)
 
-                orfInfo.append(orf)
 
-        for i in orfInfo:
-
-                with open('orf_stats','w',newline='') as f:
-                        orfOut = csv.writer(f,delimiter='\t')
-                        orfOut.writerow(i)
