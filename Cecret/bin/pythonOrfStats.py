@@ -217,6 +217,7 @@ if __name__ == '__main__':
         consensusFiles = sorted(glob.glob(args.consensus_dir+'*.fa'))
 
         for consensus in consensusFiles:
+
                 basename = consensus.split('/')[-1]
 
                 basename = basename.split('.')[0]
@@ -242,7 +243,7 @@ if __name__ == '__main__':
                 orf = orfClass.orfStats()
 
                 for i in orf:
-                        with open(args.pacbam_dir+'orf_stats.tsv', 'a', newline='') as f:
+                        with open('orf_stats.tsv', 'a', newline='') as f:
                                 orfOut = csv.writer(f, delimiter='\t')
                                 orfOut.writerow(i)
 
@@ -253,7 +254,7 @@ if __name__ == '__main__':
 
                 for i in orf:
                         if i[1] == 'S':
-                                oSstat = open(args.pacbam_dir+'orf_stat_summary.tsv','a',newline='')
+                                oSstat = open('orf_stat_summary.tsv','a',newline='')
                                 print(i[0]+'\t'+str(ocPass)+'\t'+str(i[3])+'\t'+str(i[4])+'\t'+str(i[6])+'\t'+str(i[8]),file=oSstat)
 
 
@@ -262,7 +263,7 @@ if __name__ == '__main__':
                 orf7b = orf7bClass.orfStats()
 
                 for i in orf7b:
-                        with open(args.pacbam_dir+'orf_stats.tsv', 'a', newline='') as f:
+                        with open('orf_stats.tsv', 'a', newline='') as f:
                                 orfOut = csv.writer(f, delimiter='\t')
                                 orfOut.writerow(i)
 
