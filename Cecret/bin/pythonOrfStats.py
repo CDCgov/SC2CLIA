@@ -48,13 +48,14 @@ class Bed_stats:
 
 class Orf_Stats:
 
-        def __init__(self, consensus, bedStats, pacbamInfo,min_cov,meanDepth,per_cov):
+        def __init__(self, consensus, bedStats, pacbamInfo,min_cov,meanDepth,per_cov,basename):
                 self.consensus = consensus
                 self.bedStats = bedStats
                 self.pacbamInfo = pacbamInfo
                 self.min_cov = min_cov
                 self.meanDepth = meanDepth
                 self.per_cov = per_cov
+                self.basename = basename
 
         def orfStats(self):
 
@@ -118,7 +119,7 @@ class Orf_Stats:
                         except:
                                 QC = 'Fail'
 
-                        orfStat=[orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs,QC]
+                        orfStat=[self.basename,orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs,QC]
 
                         orfstats.append(orfStat)
 
@@ -237,7 +238,7 @@ if __name__ == '__main__':
                 except:
                         pacbamOrf7b = 'NA'
 
-                orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs,args.min_cov,args.mean_depth,args.per_cov)
+                orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs,args.min_cov,args.mean_depth,args.per_cov,basename)
 
                 orf = orfClass.orfStats()
 
@@ -246,18 +247,23 @@ if __name__ == '__main__':
                                 orfOut = csv.writer(f, delimiter='\t')
                                 orfOut.writerow(i)
 
+                ocPass = 0
                 for i in orf:
-                        if i[0] == 'S':
-                                with open('orf_stat_summary.tsv','a',newline='') as j:
-                                        sOrfOut = csv.writer(j,delimiter='\t')
-                                        sOrfOut.writerow(i)
+                        if i[9] == 'Pass':
+                                ocPass += 1
 
-                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov,args.mean_depth,args.per_cov)
+                for i in orf:
+                        if i[1] == 'S':
+                                oSstat = open('orf_stat_summary.tsv','a',newline='')
+                                print(i[0]+'\t'+str(ocPass)+'\t'+str(i[3])+'\t'+str(i[4])+'\t'+str(i[6])+'\t'+str(i[8]),file=oSstat)
+
+
+                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov,args.mean_depth,args.per_cov,basename)
 
                 orf7b = orf7bClass.orfStats()
 
                 for i in orf7b:
-                        with open('orf_stats', 'a', newline='') as f:
+                        with open('orf_stats.tsv', 'a', newline='') as f:
                                 orfOut = csv.writer(f, delimiter='\t')
                                 orfOut.writerow(i)
 
