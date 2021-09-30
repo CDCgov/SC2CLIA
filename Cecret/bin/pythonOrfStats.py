@@ -20,9 +20,9 @@ class Bed_stats:
                 for i in bed1Info:
                         orfStat = []
 
-                        i.split('\t')
-                        orfStat.append(i[1])
-                        orfStat.append(i[2])
+                        i = i.split('\t')
+                        orfStat.append(int(i[1]))
+                        orfStat.append(int(i[2]))
                         orfStat.append(i[3])
                         bed1Stats.append(orfStat)
 
@@ -38,7 +38,7 @@ class Bed_stats:
                 for i in bed2Info:
                         orfStat = []
 
-                        i.split('\t')
+                        i = i.split('\t')
                         orfStat.append(i[1])
                         orfStat.append(i[2])
                         orfStat.append(i[3])
@@ -48,10 +48,11 @@ class Bed_stats:
 
 class Orf_Stats:
 
-        def __init__(self, consensus, bedStats, pacbamInfo):
+        def __init__(self, consensus, bedStats, pacbamInfo,min_cov):
                 self.consensus = consensus
                 self.bedStats = bedStats
                 self.pacbamInfo = pacbamInfo
+                self.min_cov = min_cov
 
         def orfStats(self):
 
@@ -59,8 +60,11 @@ class Orf_Stats:
 
                 for i in self.bedStats:
 
+                        print(i)
+
                         try:
-                                length = i[1] - i[0]
+                                length = int(i[1]) - int(i[0])
+                                print(length)
                         except:
                                 length = 'NA'
 
@@ -71,16 +75,19 @@ class Orf_Stats:
 
                         try:
                                 orfID = i[2]
+                                print(orfID)
                         except:
                                 orfID = 'NA'
 
                         try:
                                 numNs = numberNs(orfSeq)
+                                print(numNs)
                         except:
                                 numNs = 'NA'
 
                         try:
                                 percenNs = (numNs/length)*100
+                                print(percenNs)
                         except:
                                 percenNs = 'NA'
 
@@ -90,17 +97,20 @@ class Orf_Stats:
                                 coverageList = 'NA'
 
                         try:
-                                coverCalcs = (coverageCalc(coverageList,args.min_cov))
+                                coverCalcs = (coverageCalc(coverageList,self.min_cov))
+                                print(coverCalcs[2],coverCalcs[1])
                         except:
                                 coverCalcs = 'NA'
 
                         try:
                                 minCovPercen = coverCalcs[1]/length*100
+                                print(minCovPercen)
                         except:
                                 minCovPercen = 'NA'
 
                         try:
                                 covPercen = coverCalcs[0]/length*100
+                                print(covPercen)
                         except:
                                 covPercen = 'NA'
 
@@ -117,9 +127,9 @@ def coverageCalc(coverageList,minCov):
         meanDepth = statistics.mean(coverageList)
 
         for i in coverageList:
-                if i == 0:
+                if i != 0:
                         covCount +=1
-                elif i >= minCov:
+                if i >= minCov:
                         minCovCount +=1
 
 
@@ -134,9 +144,11 @@ def pacbamSlice(pacbam,start,end):
 
                 i = i.split('\t')
 
-                if i[1] >= start and i[1] <= end:
+                if int(i[1]) >= start and int(i[1]) <= end:
 
-                        coverageList.append(i[8])
+                        cov = int(i[8].strip('\n'))
+
+                        coverageList.append(cov)
 
 
         return(coverageList)
@@ -166,6 +178,8 @@ def pacbamReader(pacbamFile):
                 pacbamInfo = f.readlines()
         f.close()
 
+        del pacbamInfo[0]
+
         return(pacbamInfo)
 
 
@@ -194,7 +208,7 @@ if __name__ == '__main__':
         bed1Stats = bedFileClass.bed1Stats()
         bed2Stats = bedFileClass.bed2Stats()
 
-        consensusFiles = sorted(glob.glob(args.consensus_dir+'.fa'))
+        consensusFiles = sorted(glob.glob(args.consensus_dir+'*.fa'))
 
         orfInfo = []
 
@@ -202,7 +216,9 @@ if __name__ == '__main__':
 
                 basename = consensus.split('/')[-1]
 
-                pacbams = sorted(glob.glob(args.pacbam_dir+basename+'*/*/*'))
+                basename = basename.split('.')[0]
+
+                pacbams = sorted(glob.glob(args.pacbam_dir+basename+'/*/*.sorted.pileup'))
 
                 consensusSeq = consensusReader(consensus)
 
@@ -212,11 +228,11 @@ if __name__ == '__main__':
 
                 pacbamOrf7b = pacbamReader(pacbams[0])
 
-                orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs)
+                orfClass = Orf_Stats(consensusSeq,bed1Stats,pacbamOrfs,args.min_cov)
 
                 orf = orfClass.orfStats()
 
-                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b)
+                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov)
 
                 orf7b = orf7bClass.orfStats()
 
