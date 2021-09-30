@@ -80,9 +80,15 @@ analysisDir=$OUTDIR
 seqDir=$(realpath $DATA)
 
 
+python3 ${PWD}/Cecret/bin/pythonOrfStats.py \
+	${PWD}/Cecret/configs/MN908947.3-ORFs.bed \
+	${PWD}/Cecret/configs/MN908947.3-ORF7b.bed \
+	$OUTDIR/pacbam_orf/ \
+	$OUTDIR/consensus/ 
+
 # bind path
 MP=***set the binding path (top level recommended) for R container***
-singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
+#singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir 2>&1 >/dev/null
 
 singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
 														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv 2>&1 >/dev/null
