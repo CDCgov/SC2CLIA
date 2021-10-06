@@ -5,12 +5,26 @@ import csv
 
 class Bed_stats:
 
+        """Bed file information parsed
+
+        Attributes:
+                bed1: String representing the file path to the first bed file
+                bed2: String representing the file path to the second bed file
+        """
+
         def __init__(self,bed1,bed2):
+
+                """Creates a new Bed_stats object"""
 
                 self.bed1 = str(bed1)
                 self.bed2 = str(bed2)
 
         def bed1Stats(self):
+
+                """Function returning list of lists the contain the orf stats
+                   Parses the bed file and indexes out the information
+                """
+
                 with open(self.bed1,'r') as f:
                         bed1Info = f.readlines()
                 f.close()
@@ -29,6 +43,11 @@ class Bed_stats:
                 return(bed1Stats)
 
         def bed2Stats(self):
+
+                """Function returning list of lists the contain the orf stats
+                   Parses the bed file and indexes out the information
+                """
+
                 with open(self.bed2,'r') as f:
                         bed2Info = f.readlines()
                 f.close()
@@ -48,7 +67,22 @@ class Bed_stats:
 
 class Orf_Stats:
 
+        """Parsed consensus and pacbam files to generate relavent orf stats
+
+        Attributes:
+                consensus: String of nucleotide sequence for an input genome
+                bedStats: Class of Bed_stats
+                pacbamInfo: List of parsed pcabam file information
+                min_cov: Int of the minimum required coverage
+                meanDepth: Int of the minimum required mean depth
+                per_cov: Int of the minimum required percent coverage
+                basename: String of the basename of the file
+        """
+
         def __init__(self, consensus, bedStats, pacbamInfo,min_cov,meanDepth,per_cov,basename):
+
+                """Creates a new Orf_Stats class object"""
+
                 self.consensus = consensus
                 self.bedStats = bedStats
                 self.pacbamInfo = pacbamInfo
@@ -58,6 +92,21 @@ class Orf_Stats:
                 self.basename = basename
 
         def orfStats(self):
+
+                """Function that performs several operations
+                        First retrieves the length of orf from bedStats
+                        Second slices the orf from the consensus sequence using bedStats start and stop info
+                        Third retrieves the orf ID from bedStats
+                        Fourth Counts number of N's in the orfSeq
+                                Sends orf sequence to numberN's function
+                        Fifth calculates the percentage of N's in orfSeq
+                        Sixth slices out relavent pacbam stats from pacbamInfo
+                        Seventh sends coverageList to CoverageCalc function
+                        Eighth calculates the percentage of bases with minimum coverage
+                        Ninth calculates the percent total coverage
+
+                        Returns above calculations
+                """
 
                 orfstats = []
 
@@ -128,6 +177,17 @@ class Orf_Stats:
 
 def coverageCalc(coverageList,minCov):
 
+        """Function parsing coverageList for
+
+
+        :param coverageList: List of pacbam coverage information
+        :param minCov: Int of minimum passing coverage
+        :return:
+                covCount: Int of bases with coverage
+                minCovCount: Int of bases with minimum coverage
+                meanDepth: Int mean coverage stat
+        """
+
         covCount = 0
         minCovCount = 0
         meanDepth = statistics.mean(coverageList)
@@ -143,6 +203,15 @@ def coverageCalc(coverageList,minCov):
 
 
 def pacbamSlice(pacbam,start,end):
+
+        """Function to slice out relevant pacbam information
+
+        :param pacbam: List pacbam covereage
+        :param start: Int start position slice
+        :param end: Int end position for slice
+        :return:
+                coverageList: List sliced from pacbam
+        """
 
         coverageList = []
 
@@ -162,6 +231,13 @@ def pacbamSlice(pacbam,start,end):
 
 def numberNs(orfSeq):
 
+        """Function to count number of N's in a sequence
+
+        :param orfSeq: Str of orf sequence
+        :return:
+                numNs: Int number of N's
+        """
+
         numNs = 0
 
         for i in  orfSeq:
@@ -172,6 +248,13 @@ def numberNs(orfSeq):
 
 def consensusReader(consenusFile):
 
+        """Function to read in consensus file
+
+        :param consenusFile: Str path to consensus file
+        :return:
+                consensus: List of read in consensus file info
+        """
+
         with open(consenusFile,'r') as f:
                 consensus = f.readlines()
         f.close()
@@ -179,6 +262,14 @@ def consensusReader(consenusFile):
         return(consensus)
 
 def pacbamReader(pacbamFile):
+
+        """Function to read in pacbam files
+                deletes of header before return
+
+        :param pacbamFile: Str file path to pacbam file
+        :return:
+                pacbamInfo: List of read in pabam file info
+        """
 
         with open(pacbamFile,'r') as f:
                 pacbamInfo = f.readlines()
@@ -193,13 +284,13 @@ if __name__ == '__main__':
 
         parser = argparse.ArgumentParser(description='Script to take report ORF stats')
 
-        parser.add_argument('bed_file1',type=str,help='Path to the bed file')
+        parser.add_argument('bed_file1',type=str,help='Path to the bed file. Default Cecret/configs/MN908947.3-ORFs')
 
-        parser.add_argument('bed_file2',type=str,help='Path to second bed file')
+        parser.add_argument('bed_file2',type=str,help='Path to second bed file. Default Cecret/configs/MN908947.3-ORF7b')
 
-        parser.add_argument('pacbam_dir',type=str,help='Path to the directory containing pacbam files')
+        parser.add_argument('pacbam_dir',type=str,help='Path to the directory containing pacbam files. Default is pacbam_orf')
 
-        parser.add_argument('consensus_dir',type=str,help='Path to the consensus files')
+        parser.add_argument('consensus_dir',type=str,help='Path to the consensus files. Default is consensus')
 
         parser.add_argument('min_cov',nargs='?',type=int,default=30,help='Enter the minimum coverage threshold')
 
