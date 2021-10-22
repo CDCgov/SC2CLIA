@@ -80,11 +80,11 @@ analysisDir=$OUTDIR
 seqDir=$(realpath $DATA)
 
 
-python3 ${PWD}/Cecret/bin/pythonOrfStats.py \
-	${PWD}/Cecret/configs/MN908947.3-ORFs.bed \
-	${PWD}/Cecret/configs/MN908947.3-ORF7b.bed \
-	$OUTDIR/pacbam_orf/ \
-	$OUTDIR/consensus/ 
+# python3 ${PWD}/Cecret/bin/pythonOrfStats.py \
+# 	${PWD}/Cecret/configs/MN908947.3-ORFs.bed \
+# 	${PWD}/Cecret/configs/MN908947.3-ORF7b.bed \
+# 	$OUTDIR/pacbam_orf/ \
+# 	$OUTDIR/consensus/ 
 
 # bind path
 MP=***set the binding path (top level recommended) for R container***

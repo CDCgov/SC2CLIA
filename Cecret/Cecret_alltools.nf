@@ -1928,6 +1928,24 @@ process ncbi_upload {
   '''
 }
 
+process pythonOrfStats {
+  tag "pythonOrfStats"
+  echo false
+
+  input:
+  val(token_ncbi) from ncbi_upload_results
+
+  script:
+  """
+
+  python3 $workflow.launchDir/Cecret/bin/pythonOrfStats.py \
+          $workflow.launchDir/Cecret/configs/MN908947.3-ORFs.bed \
+          $workflow.launchDir/Cecret/configs/MN908947.3-ORF7b.bed \
+          $params.outdir/pacbam_orf/ \
+          $params.outdir/consensus/ 
+
+  """
+}
 
 
 workflow.onComplete {
