@@ -161,14 +161,14 @@ class Orf_Stats:
                                 covPercen = 'NA'
 
                         try:
-                                if float(coverCalcs[2]) >= int(self.meanDepth) or float(minCovPercen) >= int(self.per_cov):
+                                if float(coverCalcs[2]) >= int(self.meanDepth) and float(minCovPercen) >= int(self.per_cov) and float(covPercen) >= int(self.min_cov):
                                         QC = 'Pass'
                                 else:
                                         QC = 'Fail'
                         except:
                                 QC = 'Fail'
 
-                        orfStat=[self.basename,orfID,length,covPercen,coverCalcs[2],round(coverCalcs[1],2),minCovPercen,numNs,percenNs,QC]
+                        orfStat=[self.basename,orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs,QC]
 
                         orfstats.append(orfStat)
 
@@ -199,7 +199,7 @@ def coverageCalc(coverageList,minCov):
                         minCovCount +=1
 
 
-        return(covCount,minCovCount,meanDepth)
+        return(covCount,minCovCount,round(meanDepth,2))
 
 
 def pacbamSlice(pacbam,start,end):
@@ -340,6 +340,10 @@ if __name__ == '__main__':
 
                 orf = orfClass.orfStats()
 
+                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov,args.mean_depth,args.per_cov,basename)
+
+                orf7b = orf7bClass.orfStats()
+
                 for i in orf:
                         with open(f'{args.pacbam_dir}/orf_stats.tsv', 'a', newline='') as f:
                                 orfOut = csv.writer(f, delimiter='\t')
@@ -350,15 +354,15 @@ if __name__ == '__main__':
                         if i[9] == 'Pass':
                                 ocPass += 1
 
+                for i in orf7b:
+                        if i[9] == 'Pass':
+                                ocPass += 1
+
                 for i in orf:
                         if i[1] == 'S':
                                 oSstat = open(f'{args.pacbam_dir}/orf_stats_summary.tsv','a',newline='')
                                 print(i[0]+'\t'+str(ocPass)+'\t'+str(i[3])+'\t'+str(i[4])+'\t'+str(i[6])+'\t'+str(i[8]),file=oSstat)
 
-
-                orf7bClass = Orf_Stats(consensusSeq,bed2Stats,pacbamOrf7b,args.min_cov,args.mean_depth,args.per_cov,basename)
-
-                orf7b = orf7bClass.orfStats()
 
                 for i in orf7b:
                         with open(f'{args.pacbam_dir}/orf_stats.tsv', 'a', newline='') as f:
