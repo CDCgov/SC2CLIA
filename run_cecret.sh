@@ -91,8 +91,6 @@ seqDir=$(realpath $DATA)
 
 # bind path
 MP=***set the binding path (top level recommended) for R container***
-singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir  >/dev/null 2>&1
-
 singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
 														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
 
@@ -101,7 +99,6 @@ singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir 
 echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
 
 python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
-
 
 # grep: print out all lines that contain either 'withName' or 'container'
 # sed: remove 'withName:', 'container =', all single quotes, all leading spaces and tabs, all lines that have '\\'
