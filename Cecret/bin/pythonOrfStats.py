@@ -136,7 +136,7 @@ class Orf_Stats:
                                 numNs = 'NA'
 
                         try:
-                                percenNs = (numNs/length)*100
+                                percenNs = round((numNs/length)*100,2)
                         except:
                                 percenNs = 'NA'
 
@@ -151,24 +151,24 @@ class Orf_Stats:
                                 coverCalcs = ['NA','NA','NA']
 
                         try:
-                                minCovPercen = coverCalcs[1]/length*100
+                                minCovPercen = round(coverCalcs[1]/length*100,2)
                         except:
                                 minCovPercen = 'NA'
 
                         try:
-                                covPercen = coverCalcs[0]/length*100
+                                covPercen = round(coverCalcs[0]/length*100,2)
                         except:
                                 covPercen = 'NA'
 
                         try:
-                                if int(coverCalcs[2]) >= int(self.meanDepth) or int(minCovPercen) >= int(self.per_cov):
+                                if float(coverCalcs[2]) >= int(self.meanDepth) or float(minCovPercen) >= int(self.per_cov):
                                         QC = 'Pass'
                                 else:
                                         QC = 'Fail'
                         except:
                                 QC = 'Fail'
 
-                        orfStat=[self.basename,orfID,length,covPercen,coverCalcs[2],coverCalcs[1],minCovPercen,numNs,percenNs,QC]
+                        orfStat=[self.basename,orfID,length,covPercen,coverCalcs[2],round(coverCalcs[1],2),minCovPercen,numNs,percenNs,QC]
 
                         orfstats.append(orfStat)
 
