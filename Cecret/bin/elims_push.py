@@ -34,10 +34,20 @@ out_formats = {
 }
 
 # Make the second row (required for the ELIMS database)
+# db_row = ["SAMPLECONTAINERS.SAMPLECONTAINERS.EXTERNAL_ID.", \
+#           "SAMPLECONTAINERS.SAMPLECONTAINERS.CONTAINERID.", \
+#           "SAMPLECONTAINERS_DEPTID.SAMPLECONTAINERS_DEPTID.CONTAINER_DEPTID.", \
+#           "ORDTASK.ORDTASK.QCTYPE.", \
+#           "RESULTS.RESULTS.TESTNO.", \
+#           "RESULTS.RESULTS.SINONYM.", \
+#           "RESULTS.RESULTS.REP.", \
+#           "RESULTS.RESULTS.NUMRES.", \
+#           "RESULTS.RESULTS.RN1.", \
+#           "RESULTS.RESULTS.RN2."
+# ]
 db_row = ["SAMPLECONTAINERS.SAMPLECONTAINERS.EXTERNAL_ID.", \
           "SAMPLECONTAINERS.SAMPLECONTAINERS.CONTAINERID.", \
           "SAMPLECONTAINERS_DEPTID.SAMPLECONTAINERS_DEPTID.CONTAINER_DEPTID.", \
-          "ORDTASK.ORDTASK.QCTYPE.", \
           "RESULTS.RESULTS.TESTNO.", \
           "RESULTS.RESULTS.SINONYM.", \
           "RESULTS.RESULTS.REP.", \
@@ -45,7 +55,6 @@ db_row = ["SAMPLECONTAINERS.SAMPLECONTAINERS.EXTERNAL_ID.", \
           "RESULTS.RESULTS.RN1.", \
           "RESULTS.RESULTS.RN2."
 ]
-
 
 # Get sample names to traverse through folders for pangolin info
 def get_samples(filename):
@@ -67,7 +76,7 @@ def get_samples(filename):
         print(f"Could not import {filename} using Pandas")
         sys.exit(1)
     # Get only the real samples (exclude controls) - right now excluding if it contains PC, NC, WA, or CA
-    non_sample_pattern = "^PC-|-PC-|^NC-|-NC-|^CA|^WA|^Undetermined"
+    non_sample_pattern = "^PC-|-PC-|^NC-|-NC-|^CA|^WA|^Undetermined|^HEC|^Water"
     filter = summary_table['sample'].str.contains(non_sample_pattern)
     summary_table = summary_table[~filter]
     return(summary_table['sample']) 
@@ -86,8 +95,10 @@ def get_summary_data(filename, samples):
                                           'Coverage.S', 'S_aa_INDELs', 'pangolin_substitutions', 'pangoLEARN_version')]
     #summary_subset['percent_mapped'] = (summary_subset['Total_Reads_Analyzed'] / summary_subset['fastqc_raw_reads_1'])*100
     summary_subset['min_cov_threshold'] = 30
-    summary_subset['CSID'] = summary_table['sample'].str.split('-').str[0]
-    summary_subset['CUID'] = summary_table['sample'].str.split('-').str[1]
+    # to split on either '-' or '_', by replacing possible '-' to '_' first
+    summary_table['sample'] = summary_table['sample'].str.replace('-','_',n=1,regex=False)
+    summary_subset['CSID'] = summary_table['sample'].str.split('_',n=1).str[0]
+    summary_subset['CUID'] = summary_table['sample'].str.split('_',n=1).str[1]
     summary_subset['genbank'] = ''    
     # add orfs, s-cov
     return(summary_subset)
@@ -98,12 +109,14 @@ def out_elims_data(summary_df):
     long_data = pd.melt(summary_df, id_vars=['CSID','CUID', 'sample'], var_name='Analyte (required)', value_name='Raw Result (required)')
     long_data = long_data.rename(columns = {'sample':'CDC Local Aliquot ID'}) # We need a place to store full sample, so Jo can use it for report
     #long_data['CDC Local Aliquot ID'] = '' # Old version left this as a blank field, which is out eLIMS wants it
-    long_data['QC Type'] = 'N/A'
+    #long_data['QC Type'] = 'N/A'
     long_data['Test Name'] = 'SARS-CoV-2 Genetic Analysis'
     long_data['Replicate'] = ''
     long_data['Interpretation'] = ''
     long_data['QA Analysis'] = ''
-    cols = ['CSID','CUID','CDC Local Aliquot ID','QC Type','Test Name','Analyte (required)', \
+    # cols = ['CSID','CUID','CDC Local Aliquot ID','QC Type','Test Name','Analyte (required)', \
+    #         'Replicate','Raw Result (required)','Interpretation','QA Analysis']
+    cols = ['CSID','CUID','CDC Local Aliquot ID','Test Name','Analyte (required)', \
             'Replicate','Raw Result (required)','Interpretation','QA Analysis']
     long_data = long_data[cols]
     long_data.sort_values(by=['CSID','CUID'], inplace=True) # ignore_index=True is only available after Pandas 1.0.0, M3 is still on 0.25.0

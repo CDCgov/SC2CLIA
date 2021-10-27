@@ -48,7 +48,9 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 ## USAGE
 
 1. Run the following script at your base folder(replace `data_folder` with the path to your data; r is for generating report files)  
- `./run_cecret.sh - d data_folder `  (there is an optional flag `-p` to apply a different profile(default to v3) in the config file)
+ `./run_cecret.sh - d data_folder `    
+ (there is an optional flag `-p` to apply a different profile (default to v3) in the config file)  
+ (there is an optional flag `-b` to turn on bbmap process: map filtered reads to human genome GRCh38)  
  
 ## Main Components
 
@@ -69,6 +71,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 - [snp-dists](https://github.com/tseemann/snp-dists) - for relatedness determination (optional, relatedness must be set to "true")
 - [iqtree](http://www.iqtree.org/) - for phylogenetic tree generation (optional, relatedness must be set to "true")
 - [bamsnap](https://github.com/parklab/bamsnap) - to create images of SNPs
+- [filter](../Cecret/Cecret_alltools.nf) - to filter out human DNA from the reads
 
 #### EDLB custom NextFlow processes are:
 - [vadr](https://github.com/ncbi/vadr) - for annotating fastas like NCBI (different than Erin's version)
@@ -82,6 +85,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 - [mqc](mqc_README.md) - for generating MultiQC report
 - [largest_indel](largest_indel_README.md) - for calculating largest INDEL length
 - [ampliconstats_dropout](ampliconstats_dropout_README.md) - for generating amplicon drop outs stats
+- [bbmap](bbmap_README.md) - for mapping filtered reads to human genome GRCh38
 
 #### Additional EDLB custom scripts:
 - [Custom R Singularity container definition file](R_singularity_README.md) - building and using the custom Singularity container used to execute all R scripts in the pipeline
@@ -98,9 +102,11 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 
 ## Note
 
-1. running the above script will generate a folder 'Run_(current timestamp)' with all the resulting files/folders in it
+1. running the above script will generate a folder 'Run_current-timestamp_runID' with all the resulting files/folders in it
 
 2. the sample data in the `data_folder`should have a flat structure without being in additional sub-folders
+
+3. [internal folder](../Cecret/configs/internal). We use this folder to hold any path/domain specific files/variables.
 
 ## Contributing
 
