@@ -1,16 +1,14 @@
 # SC2CLIA
 
-A SARS-CoV-2 pipeline built on Dr. Erin Young's Cecret StaphB pipeline and adapted for CLIA reporting and validation
-
-Active development by EDLB
+A SARS-CoV-2 Nextflow pipeline for Clinical Laboratories Improvements Amendments (CLIA) compliant variant calling and spike protein substitution prediction with additional tools for quality control, CLIA-ready reports, and consensus sequence uploads to NCBI. SC2CLIA was built around Dr. Erin Young's Cecret pipeline and StaPh-B's collection of bioinformatics software containers by bioinformaticians from the Enteric Diseases Laboratory Branch at the Centers for Disease Control and Prevention with assistance from the Respiratory Viruses Branch
 
 ## TOC
 * [Description](#description)
 * [Requirements](#requirements)
-* [INSTALL](#install)
-* [USAGE](#usage)
+* [Install](#install)
+* [Usage](#usage)
 * [Main Components](#main-components)
-* [NOTE](#note)
+* [Note](#note)
 * [Contributing](#contributing)
 * [Future Plans](#future-plans)
 * [Resources](#resources)
@@ -35,7 +33,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 
 
 
-## INSTALL
+## Install
 
 (We haven't elaborated here because these instructions will change when we containerize the pipeline.)
 
@@ -48,7 +46,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
 3. Make sure to update configuration files with your own custom paths in [config folder](README.md#configs-folder) - see Config folder below
 
 
-## USAGE
+## Usage
 
 1. Run the following script at your base folder(replace `data_folder` with the path to your data; r is for generating report files)  
  `./run_cecret.sh - d data_folder `    
@@ -57,7 +55,7 @@ Cecret is a workflow developed by Dr. Erin Young' for SARS-COV-2 sequencing with
  
 ## Main Components
 
-#### original Cecret processes by Dr. Erin are:
+#### original Cecret processes by Dr. Young are:
 
 - [seqyclean](https://github.com/ibest/seqyclean) - for cleaning reads
 - [fastp](https://github.com/OpenGene/fastp) - for cleaning reads ; optional, faster alternative to seqyclean
@@ -116,9 +114,9 @@ The configs folder contains some important reference files, configuration files 
 
 ## Note
 
-1. running the above script will generate a folder 'Run_current-timestamp_runID' with all the resulting files/folders in it
+1. Running the above script will generate a folder 'Run_<current-timestamp>_<runID>' with all the resulting analysis, output, and QC files/folders in it
 
-2. the sample data in the `data_folder`should have a flat structure without being in additional sub-folders
+2. The fastq data for all samples in an analysis should be in a single input `data_folder`. 
 
 
 ## Contributing
