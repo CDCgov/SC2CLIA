@@ -1,6 +1,6 @@
 # SC2CLIA
 
-A SARS-CoV-2 Nextflow pipeline for Clinical Laboratories Improvements Amendments (CLIA) compliant variant calling and spike protein substitution prediction with additional tools for quality control, CLIA-ready reports, and consensus sequence uploads to NCBI. SC2CLIA was built around Dr. Erin Young's Cecret pipeline and StaPh-B's collection of bioinformatics software containers by bioinformaticians from the Enteric Diseases Laboratory Branch at the Centers for Disease Control and Prevention with assistance from the Respiratory Viruses Branch
+A SARS-CoV-2 Nextflow pipeline for Clinical Laboratories Improvements Amendments (CLIA) compliant variant calling and spike protein substitution prediction with additional tools for quality control, CLIA-ready reports, and consensus sequence uploads to NCBI. 
 
 ## TOC
 * [Description](#description)
