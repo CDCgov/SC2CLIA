@@ -31,6 +31,7 @@ The SC2CLIA Cecret pipeline is designed to analyze SARS-CoV-2 sequencing with th
 
 3. [Singularity](https://singularity.lbl.gov/install-linux)  version 3.7 is recommended. run `singularity --version` in your terminal <br>
    ***Warning: version 3.5 does not work***
+   ***Warning: Singularity will use the default tmp dirtory for temporary storage, enough space is required. You might want to set SINGULARITY_TMPDIR to a directory which has enough space***
 
 4. Cecret workflow installed.  Read more about Cecret [here](https://github.com/UPHL-BioNGS/Cecret/tree/erin-dev).
 
@@ -42,7 +43,7 @@ The SC2CLIA Cecret pipeline is designed to analyze SARS-CoV-2 sequencing with th
 `git clone https://github.com/cdcent/SC2CLIA.git` 
 
 2. [Obtain the R Singularity container](R_Singularity_README.md) by downloading or building your own copy  
-[image url in settings.ini file](../Cecret/configs/internal/settings.ini)
+[image url in settings.ini file](../Cecret/configs/internal/settings.ini) - note if you just want to use the default version, the pipeline will automatically download the R Singularity container
 
 3. Make sure to update configuration files with your own custom paths in [config folder](README.md#configs-folder) - see Config folder below
 

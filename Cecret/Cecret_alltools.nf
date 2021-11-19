@@ -2096,24 +2096,22 @@ process report {
 
   shell:
   '''
-  get_container_version.sh -i !{workflow.launchDir}/Cecret/configs/containers_fixedversion.config \
+  get_container_version.sh -i !{params.containers_config} \
                            -o !{params.outdir}/containers_version.txt
 
-  R_IMG=' ***replace with your own path here***'
-  R_LIB='library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest'
   MP='***set the binding path (top level recommended) for R container***'
 
-  if [ ! -f "$R_IMG" ]; then
-    singularity pull $R_IMG $R_LIB
+  if [ ! -f "!{params.R_IMG}" ]; then
+    singularity pull !{params.R_IMG} !{params.R_LIB}
   fi
 
   runID=$(basename !{params.reads})
   seqDir=$(realpath !{params.reads})
 
-  singularity run --bind /mnt,$MP --app append_tables $R_IMG !{params.outdir} !{params.outdir}/summary.txt \
+  singularity run --bind /mnt,$MP --app append_tables !{params.R_IMG} !{params.outdir} !{params.outdir}/summary.txt \
                                !{params.outdir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
 
-  singularity run --bind /mnt,$MP --app report $R_IMG $runID !{params.outdir} $seqDir >/dev/null 2>&1
+  singularity run --bind /mnt,$MP --app report !{params.R_IMG} $runID !{params.outdir} $seqDir >/dev/null 2>&1
 
   token_report='finished'
 
