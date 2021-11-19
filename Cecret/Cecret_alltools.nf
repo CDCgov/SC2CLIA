@@ -543,11 +543,13 @@ process bbmap {
 
 }
 
-bbmap_result_files
-  .collectFile(name: "bbmap_result.txt",
-    keepHeader: false,
-    sort: true,
-    storeDir: "${params.outdir}/bbmap")
+if (params.bbmap) {
+  bbmap_result_files
+    .collectFile(name: "bbmap_result.txt",
+      keepHeader: false,
+      sort: true,
+      storeDir: "${params.outdir}/bbmap")
+}
 
 
 pre_trim_bams

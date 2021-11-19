@@ -48,10 +48,6 @@ fi
 CECRET_NEXTFLOW=$PWD/Cecret/Cecret_alltools.nf
 CONFIG=$PWD/Cecret/configs/internal/singularity.config
 
-CONFIG_FILE=$PWD/Cecret/configs/internal/settings.ini
-R_IMG=$(grep -i R_IMG $CONFIG_FILE | cut -f 2 -d "=")
-R_LIB=$(grep -i R_LIB $CONFIG_FILE | cut -f 2 -d "=")
-
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
 
