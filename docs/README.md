@@ -41,7 +41,7 @@ The SC2CLIA Cecret pipeline is designed to analyze SARS-CoV-2 sequencing with th
 ## Install
 
 1. Copy the Github repository to a folder  
-`git clone https://github.com/cdcent/SC2CLIA.git` 
+`git clone https://github.com/CDCgov/SC2CLIA.git` 
 
 2. [Obtain the R Singularity container](R_Singularity_README.md) by downloading or building your own copy  
 [image url in settings.ini file](../Cecret/configs/internal/settings.ini)   -   note if you just want to use the default version, the pipeline will automatically download the R Singularity container
