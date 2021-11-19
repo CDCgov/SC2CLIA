@@ -44,9 +44,18 @@ The SC2CLIA Cecret pipeline is designed to analyze SARS-CoV-2 sequencing with th
 `git clone https://github.com/cdcent/SC2CLIA.git` 
 
 2. [Obtain the R Singularity container](R_Singularity_README.md) by downloading or building your own copy  
-[image url in settings.ini file](../Cecret/configs/internal/settings.ini) - note if you just want to use the default version, the pipeline will automatically download the R Singularity container
+[image url in settings.ini file](../Cecret/configs/internal/settings.ini)   -   note if you just want to use the default version, the pipeline will automatically download the R Singularity container
 
 3. Make sure to update configuration files with your own custom paths in [config folder](README.md#configs-folder) - see Config folder below
+
+### [WARNING]
+
+- ***You will need to prepare your own version of report.pdf and report.tex (and put them under Cecret/configs/internal/). Otherwise the 2nd to last 'report' process will throw out an error***.
+- ***In Cecret/configs/internal/singularity.config, line #109, we currently set errorStrategy to ‘ignore’ for now, it better to be set to ‘retry’ once the above issue is fixed***.
+- ***In Cecret/configs/internal/singularity.config, you will need to fill in the path for ‘kraken2_db’ and ‘bbmap’, although bbmap process is turned off by default, and kraken part will just not run without the db***. 
+- ***In Cecret/Cecret_alltools.nf, line #2102, you will need to set MP= to the correct path (which is the mount point for R container, usually we set it to top level directory)***
+
+ 
 
 
 ## Usage
