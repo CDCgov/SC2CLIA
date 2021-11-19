@@ -2059,6 +2059,82 @@ process ncbi_upload {
   '''
 }
 
+process pythonOrfStats {
+  tag "pythonOrfStats"
+  echo false
+
+  input:
+  val(token_ncbi) from ncbi_upload_results
+
+  output:
+  env(token_orf) into pythonOrfStats_results
+
+  script:
+  """
+  python3 $workflow.launchDir/Cecret/bin/pythonOrfStats.py \
+          $params.pacbamorf_orf_bed \
+          $params.pacbamorf_orf7b_bed \
+          $params.outdir/pacbam_orf/ \
+          $params.outdir/consensus/ 
+
+  token_orf='finished'
+
+  """
+}
+
+process report {
+  tag "report"
+  echo false
+  // container 'library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest'
+  // containerOptions "--bind /mnt,${params.BB_BIND}"
+
+  input:
+  val(token_orf) from pythonOrfStats_results
+
+  output:
+  env(token_report) into report_results
+
+  shell:
+  '''
+  get_container_version.sh -i !{workflow.launchDir}/Cecret/configs/containers_fixedversion.config \
+                           -o !{params.outdir}/containers_version.txt
+
+  R_IMG=' ***replace with your own path here***'
+  R_LIB='library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest'
+  MP='***set the binding path (top level recommended) for R container***'
+
+  if [ ! -f "$R_IMG" ]; then
+    singularity pull $R_IMG $R_LIB
+  fi
+
+  runID=$(basename !{params.reads})
+  seqDir=$(realpath !{params.reads})
+
+  singularity run --bind /mnt,$MP --app append_tables $R_IMG !{params.outdir} !{params.outdir}/summary.txt \
+                               !{params.outdir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
+
+  singularity run --bind /mnt,$MP --app report $R_IMG $runID !{params.outdir} $seqDir >/dev/null 2>&1
+
+  token_report='finished'
+
+
+  '''
+}
+
+
+process elims_push {
+  tag "elims_push"
+  echo false
+
+  input:
+  val(token_report) from report_results
+
+  script:
+  """
+  python3 $workflow.launchDir/Cecret/bin/elims_push.py -d $params.outdir -s $params.outdir/summary.txt
+
+  """
+}
 
 workflow.onComplete {
     println("Pipeline completed at: $workflow.complete")

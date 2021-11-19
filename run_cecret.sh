@@ -48,10 +48,6 @@ fi
 CECRET_NEXTFLOW=$PWD/Cecret/Cecret_alltools.nf
 CONFIG=$PWD/Cecret/configs/internal/singularity.config
 
-CONFIG_FILE=$PWD/Cecret/configs/internal/settings.ini
-R_IMG=$(grep -i R_IMG $CONFIG_FILE | cut -f 2 -d "=")
-R_LIB=$(grep -i R_LIB $CONFIG_FILE | cut -f 2 -d "=")
-
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 OUTDIR=$PWD/Run_${current_time}_$(basename $DATA)
 
@@ -70,45 +66,3 @@ nextflow run $CECRET_NEXTFLOW -c $CONFIG -profile $PROFILE --reads $DATA --outdi
 
 # Stops the ^H character from being printed after running Nextflow
 stty erase ^H
-
-# Check for final summary file
-if [ ! -f "$OUTDIR/summary.txt" ]; then
-	echo "Run failed to complete...";
-	exit 1;
-fi
-
-# for generating ORF(open reading frame) metrics and pdf reports
-# R_IMG=${PWD}/SINGULARITY_CACHE/sc2clia-cecret-r_v2.1.0
-if [ ! -f "$R_IMG" ]; then
-	singularity pull $R_IMG $R_LIB
-fi
-
-
-runID=$(basename $DATA)
-analysisDir=$OUTDIR
-seqDir=$(realpath $DATA)
-
-
-# bind path
-MP=***set the binding path (top level recommended) for R container***
-singularity run --bind /mnt,$MP --app orf_table $R_IMG $runID $analysisDir  >/dev/null 2>&1
-
-singularity run --bind /mnt,$MP --app append_tables $R_IMG $analysisDir ${analysisDir}/summary.txt \
-														   ${analysisDir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
-
-singularity run --bind /mnt,$MP --app report $R_IMG $runID $analysisDir $seqDir >/dev/null 2>&1
-
-echo "Done at" $(date "+%Y.%m.%d-%H.%M.%S")
-
-python3 ${PWD}/Cecret/bin/elims_push.py -d $OUTDIR -s $OUTDIR/summary.txt
-
-
-# grep: print out all lines that contain either 'withName' or '//container'
-# sed: remove 'withName:', 'container =', all single quotes, all leading spaces and tabs, all lines that have '\\'
-# sed: replace '{' with ':'
-# sed: delete all empty lines
-# awk: if a line ends with ':', replace '\n' with '\t'
-sed -e "s/^[ \t]*//" ${PWD}/Cecret/configs/containers_fixedversion_hash.config | grep -E '^withName|\/\/container' | \
-        sed -e "s/withName://;s/container =//;s/{/:/;s/'//g;s/\/\///g" | \
-        sed '/^$/d' | awk '{ if ($0 ~ /.*:$/) {ORS="\t";print $0} else{ORS="\n";print $0} }' | sort \
-        > $OUTDIR/containers_version.txt
