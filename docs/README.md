@@ -50,13 +50,11 @@ The SC2CLIA Cecret pipeline is designed to analyze SARS-CoV-2 sequencing with th
 
 ### [WARNING]
 
-- ***You will need to prepare your own version of report.pdf and report.tex (and put them under Cecret/configs/internal/). Otherwise the 2nd to last 'report' process will throw out an error***.
-- ***In Cecret/configs/internal/singularity.config, line #109, we currently set errorStrategy to ‘ignore’ for now, it better to be set to ‘retry’ once the above issue is fixed***.
-- ***In Cecret/configs/internal/singularity.config, you will need to fill in the path for ‘kraken2_db’ and ‘bbmap’, although bbmap process is turned off by default, and kraken part will just not run without the db***. 
-- ***In Cecret/Cecret_alltools.nf, line #2102, you will need to set MP= to the correct path (which is the mount point for R container, usually we set it to top level directory)***
+- ***In order to run the pipeline as is, in Cecret/Cecret_alltools.nf, line #2103 and #2135, you will need to set MP= to the correct path (which is the mount point for R container, usually we set it to top level directory)***
 
- 
+- ***We turned off the report process. In order to run it, you will need to prepare your own version of report.pdf and report.tex (and put them under Cecret/configs/internal/), and set params.report = true in Cecret/Cecret_alltools.nf, line #74***
 
+- ***We turned off the Kraken2 and bbmap processes. In order to run them, in Cecret/configs/internal/singularity.config, you will need to fill in the correct path for ‘kraken2_db’ and ‘bbmap’, and set params.bbmap and params.kraken2 to true there as well***. 
 
 ## Usage
 

@@ -71,6 +71,7 @@ params.indel = true // for calculation of largest INDEL
 params.ampliconstats_dropout = true // for extraction of ampliconstats' FDEPTH, FPCOV values
 params.pacbam_orfs = true // pacbam orfs
 params.filter = true // filter human reads
+params.report = false // R report process
 
 
 //# Workflow paramters --------------------------------------
@@ -2082,8 +2083,8 @@ process pythonOrfStats {
   """
 }
 
-process report {
-  tag "report"
+process append_tables {
+  tag "append_tables"
   echo false
   // container 'library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest'
   // containerOptions "--bind /mnt,${params.BB_BIND}"
@@ -2092,7 +2093,7 @@ process report {
   val(token_orf) from pythonOrfStats_results
 
   output:
-  env(token_report) into report_results
+  env(token_append_tables) into append_tables_results, append_tables_results2
 
   shell:
   '''
@@ -2111,10 +2112,36 @@ process report {
   singularity run --bind /mnt,$MP --app append_tables !{params.R_IMG} !{params.outdir} !{params.outdir}/summary.txt \
                                !{params.outdir}/pacbam_orf/orf_stats_summary.tsv >/dev/null 2>&1
 
+  token_append_tables='finished'
+
+
+  '''
+}
+
+process report {
+  tag "report"
+  echo false
+  // container 'library://ajwnewkirk/default/sc2clia-cecret-r_v2.1.0:latest'
+  // containerOptions "--bind /mnt,${params.BB_BIND}"
+
+  input:
+  val(token_append_tables) from append_tables_results2
+
+  when:
+  params.report
+
+  shell:
+  '''
+  MP='***set the binding path (top level recommended) for R container***'
+
+  if [ ! -f "!{params.R_IMG}" ]; then
+    singularity pull !{params.R_IMG} !{params.R_LIB}
+  fi
+
+  runID=$(basename !{params.reads})
+  seqDir=$(realpath !{params.reads})
+
   singularity run --bind /mnt,$MP --app report !{params.R_IMG} $runID !{params.outdir} $seqDir >/dev/null 2>&1
-
-  token_report='finished'
-
 
   '''
 }
@@ -2125,7 +2152,7 @@ process elims_push {
   echo false
 
   input:
-  val(token_report) from report_results
+  val(token_append_tables) from append_tables_results
 
   script:
   """
